@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newsletter Betreff-Generator</title>
+<style>
+  :root {
+    --dark: #1F2937;
+    --accent: #2563EB;
+    --bg: #F9FAFB;
+    --border: #D1D5DB;
+    --green: #059669;
+    --red: #DC2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    margin: 0;
+    padding: 0 0 80px 0;
+  }
+  header {
+    background: var(--dark);
+    color: #fff;
+    padding: 24px 20px;
+  }
+  header h1 { margin: 0 0 6px 0; font-size: 22px; }
+  header p { margin: 0; color: #D1D5DB; font-size: 14px; }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 16px;
+    margin: 0 0 14px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--dark);
+  }
+  label {
+    display: block;
+    font-weight: bold;
+    font-size: 13px;
+    margin: 14px 0 4px 0;
+  }
+  .hint {
+    font-weight: normal;
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 2px;
+  }
+  input[type=text] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  button.primary {
+    margin-top: 18px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+  }
+  button.primary:disabled { background: #93C5FD; cursor: not-allowed; }
+  .msg { font-size: 13px; margin-top: 12px; white-space: pre-wrap; }
+  .msg.error { color: var(--red); }
+  .variant {
+    margin-top: 12px;
+    background: #F3F4F6;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .variant .tag {
+    display: inline-block;
+    margin-bottom: 6px;
+    padding: 2px 8px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+  .variant .betreff { font-weight: bold; }
+  .variant .preview { color: #4B5563; margin-top: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Newsletter Betreff-Generator</h1>
+  <p>Skill 7: Erzeugt 3-5 Varianten fuer Betreffzeile + Preview-Text zu einem Thema mit vorhandenem Copy-Text.</p>
+</header>
+<div class="container">
+  <div class="card">
+    <h2>Kunde</h2>
+    <input type="hidden" id="kundenname">
+    <label>Thema (optional)
+      <span class="hint">Exakter Thementext aus dem Redaktionsplan. Leer lassen, um automatisch das erste Thema mit Copy-Text aber ohne Betreff-Varianten zu waehlen.</span>
+    </label>
+    <input type="text" id="thema" placeholder="z.B. Herbst-Vorschau: Neue Taschenkollektion">
+    <button class="primary" id="btn" onclick="generate()">Betreff-Varianten generieren</button>
+    <div class="msg" id="msg"></div>
+    <div id="resultBox"></div>
+  </div>
+</div>
+<script>
+async function generate() {
+  var btn = document.getElementById('btn');
+  var msg = document.getElementById('msg');
+  var resultBox = document.getElementById('resultBox');
+  var kundenname = document.getElementById('kundenname').value.trim();
+  var thema = document.getElementById('thema').value.trim();
+  resultBox.innerHTML = '';
+  if (!kundenname) {
+    msg.className = 'msg error';
+    msg.textContent = 'Bitte Kundenname eingeben.';
+    return;
+  }
+  btn.disabled = true;
+  msg.className = 'msg';
+  msg.textContent = 'Betreff-Varianten werden generiert ...';
+  try {
+    var res = await fetch('/.netlify/functions/betreff-generator', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kundenname: kundenname, thema: thema })
+    });
+    var data = await res.json();
+    if (!res.ok) {
+      msg.className = 'msg error';
+      msg.textContent = data.error || 'Unbekannter Fehler.';
+      return;
+    }
+    msg.className = 'msg';
+    msg.textContent = 'Varianten erstellt fuer: ' + data.thema;
+    var html = '';
+    data.variants.forEach(function (v) {
+      html +=
+        '<div class="variant">' +
+        (v.ansatz ? '<span class="tag">' + String(v.ansatz).replace(/</g, '&lt;') + '</span>' : '') +
+        '<div class="betreff">' + String(v.betreff || '').replace(/</g, '&lt;') + '</div>' +
+        '<div class="preview">' + String(v.preview || '').replace(/</g, '&lt;') + '</div>' +
+        '</div>';
+    });
+    resultBox.innerHTML = html;
+  } catch (err) {
+    msg.className = 'msg error';
+    msg.textContent = 'Netzwerkfehler: ' + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

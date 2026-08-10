@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kunde loeschen (intern)</title>
+<style>
+  :root {
+    --dark: #1F2937;
+    --accent: #2563EB;
+    --bg: #F9FAFB;
+    --border: #D1D5DB;
+    --red: #DC2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    margin: 0;
+    padding: 0 0 80px 0;
+  }
+  header {
+    background: var(--red);
+    color: #fff;
+    padding: 24px 20px;
+  }
+  header h1 { margin: 0 0 6px 0; font-size: 22px; }
+  header p { margin: 0; color: #FEE2E2; font-size: 14px; }
+  .container { max-width: 620px; margin: 0 auto; padding: 20px; }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  label { display: block; font-weight: bold; font-size: 13px; margin: 14px 0 4px 0; }
+  .hint { font-weight: normal; font-size: 12px; color: #6B7280; }
+  input[type=text] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  .results { margin-top: 8px; }
+  .result-item {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-top: 6px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .result-item:hover { background: #F3F4F6; }
+  .result-item.selected { border-color: var(--accent); background: #EFF6FF; }
+  .selected-box {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: #FEF2F2;
+    border: 1px solid #FCA5A5;
+    border-radius: 6px;
+  }
+  .selected-box b { color: var(--red); }
+  button.danger {
+    margin-top: 12px;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    background: var(--red);
+    color: #fff;
+  }
+  button.danger:disabled { background: #FCA5A5; cursor: not-allowed; }
+  .msg { font-size: 13px; margin-top: 12px; white-space: pre-wrap; }
+  .msg.error { color: var(--red); }
+  .msg.success { color: #059669; }
+  .empty-hint { font-size: 13px; color: #6B7280; margin-top: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Kunde loeschen (intern)</h1>
+  <p>Nur fuer die Agentur. Verschiebt den kompletten Kundenordner in den Drive-Papierkorb (30 Tage wiederherstellbar). Klaviyo-Daten bleiben unangetastet.</p>
+</header>
+<div class="container">
+  <div class="card">
+    <label>Kundenname suchen
+      <span class="hint">Ab 2 Buchstaben, z.B. "thi" findet "Thielemann".</span>
+    </label>
+    <input type="text" id="search" placeholder="Suchbegriff eingeben ...">
+    <div class="results" id="results"></div>
+    <div class="empty-hint" id="emptyHint"></div>
+
+    <div id="selectedWrap" style="display:none;">
+      <div class="selected-box">
+        Ausgewaehlt: <b id="selectedName"></b><br>
+        Zum Bestaetigen den vollen Namen exakt erneut eingeben:
+        <input type="text" id="confirmName" placeholder="Namen exakt eingeben" style="margin-top:8px;">
+        <button class="danger" id="deleteBtn" onclick="deleteCustomer()">Endgueltig in Papierkorb verschieben</button>
+      </div>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+<script>
+var selected = null;
+var searchInput = document.getElementById('search');
+var resultsBox = document.getElementById('results');
+var emptyHint = document.getElementById('emptyHint');
+var debounceTimer = null;
+
+searchInput.addEventListener('input', function () {
+  clearTimeout(debounceTimer);
+  var q = searchInput.value.trim();
+  resultsBox.innerHTML = '';
+  emptyHint.textContent = '';
+  hideSelected();
+  if (q.length < 2) return;
+  debounceTimer = setTimeout(function () { runSearch(q); }, 300);
+});
+
+async function runSearch(q) {
+  try {
+    var res = await fetch('/.netlify/functions/kunde-suchen?q=' + encodeURIComponent(q));
+    var data = await res.json();
+    if (!res.ok) {
+      emptyHint.textContent = data.error || 'Fehler bei der Suche.';
+      return;
+    }
+    var matches = data.matches || [];
+    if (!matches.length) {
+      emptyHint.textContent = 'Keine Treffer.';
+      return;
+    }
+    resultsBox.innerHTML = '';
+    matches.forEach(function (m) {
+      var div = document.createElement('div');
+      div.className = 'result-item';
+      div.textContent = m.name;
+      div.onclick = function () { selectCustomer(m); };
+      resultsBox.appendChild(div);
+    });
+  } catch (err) {
+    emptyHint.textContent = 'Netzwerkfehler: ' + err.message;
+  }
+}
+
+function selectCustomer(m) {
+  selected = m;
+  document.querySelectorAll('.result-item').forEach(function (el) {
+    el.classList.toggle('selected', el.textContent === m.name);
+  });
+  document.getElementById('selectedName').textContent = m.name;
+  document.getElementById('selectedWrap').style.display = 'block';
+  document.getElementById('confirmName').value = '';
+  document.getElementById('msg').textContent = '';
+}
+
+function hideSelected() {
+  selected = null;
+  document.getElementById('selectedWrap').style.display = 'none';
+}
+
+async function deleteCustomer() {
+  var msg = document.getElementById('msg');
+  var btn = document.getElementById('deleteBtn');
+  var confirmName = document.getElementById('confirmName').value.trim();
+  if (!selected) return;
+  if (!confirmName) {
+    msg.className = 'msg error';
+    msg.textContent = 'Bitte Namen zur Bestaetigung eingeben.';
+    return;
+  }
+  btn.disabled = true;
+  msg.className = 'msg';
+  msg.textContent = 'Wird verschoben ...';
+  try {
+    var res = await fetch('/.netlify/functions/kunde-loeschen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folderId: selected.id, folderName: selected.name, confirmName: confirmName })
+    });
+    var data = await res.json();
+    if (!res.ok) {
+      msg.className = 'msg error';
+      msg.textContent = data.error || 'Unbekannter Fehler.';
+      btn.disabled = false;
+      return;
+    }
+    msg.className = 'msg success';
+    msg.textContent = 'Erledigt: ' + data.folderName + ' wurde in den Papierkorb verschoben.\n' + data.note;
+    hideSelected();
+    searchInput.value = '';
+    resultsBox.innerHTML = '';
+  } catch (err) {
+    msg.className = 'msg error';
+    msg.textContent = 'Netzwerkfehler: ' + err.message;
+    btn.disabled = false;
+  }
+}
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

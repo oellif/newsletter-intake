@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zielgruppen-Segment-Mapper</title>
+<style>
+  :root {
+    --dark: #1F2937;
+    --accent: #2563EB;
+    --bg: #F9FAFB;
+    --border: #D1D5DB;
+    --green: #059669;
+    --red: #DC2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    margin: 0;
+    padding: 0 0 80px 0;
+  }
+  header {
+    background: var(--dark);
+    color: #fff;
+    padding: 24px 20px;
+  }
+  header h1 { margin: 0 0 6px 0; font-size: 22px; }
+  header p { margin: 0; color: #D1D5DB; font-size: 14px; }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 16px;
+    margin: 0 0 14px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--dark);
+  }
+  label {
+    display: block;
+    font-weight: bold;
+    font-size: 13px;
+    margin: 14px 0 4px 0;
+  }
+  .hint {
+    font-weight: normal;
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 2px;
+  }
+  input[type=text] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  button.primary {
+    margin-top: 18px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+  }
+  button.primary:disabled { background: #93C5FD; cursor: not-allowed; }
+  .msg { font-size: 13px; margin-top: 12px; white-space: pre-wrap; }
+  .msg.error { color: var(--red); }
+  .candidate {
+    margin-top: 10px;
+    background: #F3F4F6;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  .candidate.top { border: 2px solid var(--accent); }
+  .candidate .name { font-weight: bold; }
+  .candidate .meta { color: #6B7280; font-size: 12px; margin-top: 2px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Zielgruppen-Segment-Mapper</h1>
+  <p>Skill 10: Liest Listen/Segmente aus Klaviyo, schaetzt Reichweite und schlaegt passende Zielgruppe zum Thema vor.</p>
+</header>
+<div class="container">
+  <div class="card">
+    <h2>Kunde</h2>
+    <input type="hidden" id="kundenname">
+    <label>Thema (optional)
+      <span class="hint">Leer lassen, um automatisch das juengste Thema aus dem Redaktionsplan zu verwenden.</span>
+    </label>
+    <input type="text" id="thema" placeholder="z.B. Herbst-Vorschau: Neue Taschenkollektion">
+    <button class="primary" id="btn" onclick="generate()">Zielgruppe vorschlagen</button>
+    <div class="msg" id="msg"></div>
+    <div id="resultBox"></div>
+  </div>
+</div>
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var pre = params.get('kundenname');
+  if (pre) {
+    var el = document.getElementById('kundenname');
+    if (el) { el.value = pre; }
+  }
+})();
+async function generate() {
+  var btn = document.getElementById('btn');
+  var msg = document.getElementById('msg');
+  var resultBox = document.getElementById('resultBox');
+  var kundenname = document.getElementById('kundenname').value.trim();
+  var thema = document.getElementById('thema').value.trim();
+  resultBox.innerHTML = '';
+  if (!kundenname) {
+    msg.className = 'msg error';
+    msg.textContent = 'Bitte Kundenname eingeben.';
+    return;
+  }
+  btn.disabled = true;
+  msg.className = 'msg';
+  msg.textContent = 'Zielgruppen werden analysiert ...';
+  try {
+    var res = await fetch('/.netlify/functions/segment-mapper', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kundenname: kundenname, thema: thema })
+    });
+    var data = await res.json();
+    if (!res.ok) {
+      msg.className = 'msg error';
+      msg.textContent = data.error || 'Unbekannter Fehler.';
+      return;
+    }
+    msg.className = 'msg';
+    msg.textContent = 'Vorschlag fuer Thema: ' + (data.thema || '(kein Thema)') + ' — ' + data.totalListsAndSegments + ' Listen/Segmente insgesamt gefunden.';
+    var html = '';
+    data.candidates.forEach(function (c, i) {
+      html +=
+        '<div class="candidate' + (i === 0 ? ' top' : '') + '">' +
+        '<div class="name">' + (i === 0 ? '★ ' : '') + c.name + ' (' + c.kind + ')</div>' +
+        '<div class="meta">Reichweite: ' + (c.reachIsApproximate ? 'mindestens ' : '') + c.estimatedReach + ' Profile' +
+        (c.reachIsApproximate ? ' (Naeherung, evtl. mehr)' : '') + ' — Match-Score: ' + c.matchScore + '</div>' +
+        '</div>';
+    });
+    resultBox.innerHTML = html;
+  } catch (err) {
+    msg.className = 'msg error';
+    msg.textContent = 'Netzwerkfehler: ' + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

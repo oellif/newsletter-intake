@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newsletter-Autopilot (Master-Skill)</title>
+<style>
+  :root {
+    --dark: #1F2937;
+    --accent: #2563EB;
+    --bg: #F9FAFB;
+    --border: #D1D5DB;
+    --green: #059669;
+    --red: #DC2626;
+    --amber: #D97706;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    margin: 0;
+    padding: 0 0 80px 0;
+  }
+  header {
+    background: var(--dark);
+    color: #fff;
+    padding: 24px 20px;
+  }
+  header h1 { margin: 0 0 6px 0; font-size: 22px; }
+  header p { margin: 0; color: #D1D5DB; font-size: 14px; }
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 16px;
+    margin: 0 0 14px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--dark);
+  }
+  label {
+    display: block;
+    font-weight: bold;
+    font-size: 13px;
+    margin: 14px 0 4px 0;
+  }
+  .hint {
+    font-weight: normal;
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 2px;
+  }
+  input[type=text], select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 14px;
+    background: #fff;
+  }
+  .thema-row { display: flex; gap: 8px; align-items: flex-start; }
+  .thema-row select { flex: 1; }
+  button.secondary {
+    padding: 8px 14px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--dark);
+    white-space: nowrap;
+  }
+  .theme-hint { font-size: 12px; color: #6B7280; margin-top: 4px; }
+  .theme-hint.error { color: var(--red); }
+  button.primary {
+    margin-top: 18px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+  }
+  button.primary:disabled { background: #93C5FD; cursor: not-allowed; }
+  .msg { font-size: 13px; margin-top: 12px; white-space: pre-wrap; }
+  .msg.error { color: var(--red); }
+  .step {
+    margin-top: 10px;
+    background: #F3F4F6;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 11px;
+    color: #fff;
+  }
+  .tag.ok { background: var(--green); }
+  .tag.fail { background: var(--red); }
+  .next {
+    margin-top: 8px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--amber);
+    background: #FFFBEB;
+    font-size: 13px;
+  }
+  .next a { color: var(--accent); font-weight: bold; }
+  .result-card {
+    margin-top: 18px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+  }
+  .result-card h3 {
+    font-size: 15px;
+    margin: 0 0 12px 0;
+  }
+  .result-block { margin-bottom: 16px; }
+  .result-label { font-size: 12px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 4px; }
+  .copy-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 14px;
+    white-space: pre-wrap;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .cta-pill {
+    display: inline-block;
+    background: var(--dark);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .betreff-row {
+    padding: 8px 0;
+    border-bottom: 1px solid #F3F4F6;
+    font-size: 13.5px;
+  }
+  .betreff-row:last-child { border-bottom: none; }
+  .betreff-row .ansatz { display: block; font-size: 11px; color: var(--accent); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
+  .edit-field {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 14px;
+    background: #fff;
+    margin-bottom: 6px;
+  }
+  .edit-field:last-child { margin-bottom: 0; }
+  .edit-field.small { font-size: 12.5px; color: #6B7280; }
+  textarea.edit-field { resize: vertical; }
+  .save-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; margin-bottom: 16px; }
+  .save-row .msg { margin: 0; }
+  .save-row .msg.error { color: var(--red); }
+  .template-note {
+    font-size: 12px;
+    color: #92400E;
+    background: #FFFBEB;
+    border-left: 3px solid var(--amber);
+    padding: 8px 12px;
+    margin-bottom: 14px;
+  }
+  .result-links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  .result-links a { font-size: 13px; color: var(--accent); font-weight: bold; text-decoration: none; }
+  .build-template-box {
+    margin-top: 18px;
+    padding: 16px 20px;
+    border: 1px dashed var(--accent);
+    border-radius: 8px;
+    background: #EFF6FF;
+  }
+  .build-template-box .msg { margin-top: 6px; }
+  .primary-next {
+    margin-top: 18px;
+    display: block;
+    text-align: center;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+  }
+  .primary-next .sub { display: block; font-weight: normal; font-size: 12px; opacity: 0.85; margin-top: 3px; }
+  details.optional-steps { margin-top: 14px; }
+  details.optional-steps summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: #6B7280;
+    font-weight: bold;
+  }
+  details.optional-steps .opt-item { padding: 8px 0; font-size: 13px; border-bottom: 1px solid #F3F4F6; }
+  details.optional-steps .opt-item:last-child { border-bottom: none; }
+  details.optional-steps a { color: var(--accent); font-weight: bold; }
+  .betreff-modus {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+  .betreff-modus label { display: flex; align-items: center; gap: 6px; font-weight: normal; margin: 0; }
+  .betreff-row label.betreff-select-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+  }
+  .betreff-row .betreff-ansatz { display: block; font-size: 11px; color: var(--accent); font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+  .betreff-row .betreff-text { font-size: 14px; }
+  .betreff-row .betreff-preview { display: block; font-size: 12px; color: #6B7280; margin-top: 2px; }
+  .custom-betreff-row .edit-field { margin-top: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Newsletter-Autopilot (Master-Skill)</h1>
+  <p>Verkettet automatisch Copy-Draft, Betreff-Generator und Klaviyo-Template-Builder fuer ein Thema und zeigt die naechsten manuellen Schritte.</p>
+</header>
+<div class="container">
+  <div class="card" id="themaHeaderCard" style="display:none;">
+    <h2 id="themaHeaderText">Thema</h2>
+  </div>
+  <div class="card" id="kundeCard">
+    <h2>Kunde</h2>
+    <input type="hidden" id="kundenname">
+    <label>Thema
+      <span class="hint">Zeigt automatisch die offenen Themen dieses Kunden aus dem Redaktionsplan (aus Schritt 3: Thema eintragen oder KI-Vorschlaege). Kein erneutes Abtippen noetig.</span>
+    </label>
+    <select id="thema">
+      <option value="">Wird geladen ...</option>
+    </select>
+    <div class="theme-hint" id="themaHint"></div>
+    <button class="primary" id="btn" onclick="run()">Autopilot starten (Copy -> Betreff -> Template)</button>
+  </div>
+  <div class="msg" id="msg"></div>
+  <div id="resultBox"></div>
+</div>
+<script>
+var PRESELECT_THEMA = '';
+var LAST_RESULT = null;
+var LAST_VARIANTS = [];
+var BETREFF_MODUS = 'ab';
+var SELECTED = [];
+var CUSTOM_BETREFF_TEXT = '';
+var CUSTOM_SELECTED = false;
+var CTA_LIST = [];
+var CTA_SELECTED = [];
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var pre = params.get('kundenname');
+  PRESELECT_THEMA = params.get('thema') || '';
+  var autostart = params.get('autostart') === '1';
+  if (pre) {
+    var el = document.getElementById('kundenname');
+    if (el) { el.value = pre; }
+    if (PRESELECT_THEMA) {
+      // Thema kommt bereits aus dem Redaktionsplan (angeklickt) oder aus
+      // "Eigenes Thema eintragen" - die Kunde/Thema-Auswahlkarte mit dem
+      // Dropdown ist hier ueberfluessig, da das Thema schon feststeht.
+      // Stattdessen nur noch eine kurze Ueberschrift mit dem Thema zeigen.
+      document.getElementById('kundeCard').style.display = 'none';
+      var headerCard = document.getElementById('themaHeaderCard');
+      headerCard.style.display = '';
+      document.getElementById('themaHeaderText').textContent = PRESELECT_THEMA;
+    }
+    if (autostart && PRESELECT_THEMA) {
+      // Kommt direkt aus "Eigenes Thema eintragen" (Skill 1/Schritt 3):
+      // Copy-Draft soll sofort erzeugt werden, kein Zwischenschritt/Klick
+      // noetig. Kein Existenz-Check vorher - das Thema ist gerade erst neu
+      // angelegt worden und kann noch keinen Draft haben.
+      var msg = document.getElementById('msg');
+      msg.className = 'msg';
+      msg.textContent = 'Thema uebernommen - Copy-Draft wird automatisch erstellt ...';
+      run(pre, PRESELECT_THEMA);
+    } else if (PRESELECT_THEMA) {
+      // Erst pruefen, ob fuer dieses Thema schon ein Copy-Draft existiert
+      // (z.B. Klick aus dem Redaktionsplan auf eine bereits erstellte
+      // Zeile) - dann direkt anzeigen/editierbar machen, OHNE die KI
+      // erneut aufzurufen. Nur wenn noch nichts existiert, ganz normal
+      // die offenen Themen laden und das Auswahlfeld anzeigen.
+      tryLoadExisting(pre, PRESELECT_THEMA);
+    } else {
+      loadThemen();
+    }
+  }
+})();
+async function tryLoadExisting(kundenname, thema) {
+  var msg = document.getElementById('msg');
+  msg.className = 'msg';
+  msg.textContent = 'Pruefe, ob fuer dieses Thema schon ein Copy-Draft existiert ...';
+  try {
+    var res = await fetch('/.netlify/functions/copy-draft-get?kundenname=' + encodeURIComponent(kundenname) + '&thema=' + encodeURIComponent(thema));
+    var data = await res.json();
+    if (res.ok && data.exists) {
+      msg.className = 'msg';
+      msg.textContent = '';
+      renderResult(kundenname, thema, data.copyText, data.ctas || [], data.variants || [], data.klaviyoTemplateUrl, data.spreadsheetUrl, true, data.betreffModus || 'ab');
+      return;
+    }
+  } catch (err) {
+    // Bei Verbindungsfehler einfach normal weitermachen (Draft erstellen).
+  }
+  // Noch kein Copy-Draft vorhanden - das Thema kommt aus einem Klick im
+  // Redaktionsplan (steht also schon fest, kein Auswahlfeld mehr vorhanden)
+  // - direkt automatisch erstellen, keine weitere Nutzeraktion noetig.
+  msg.className = 'msg';
+  msg.textContent = 'Noch kein Copy-Draft vorhanden - wird jetzt automatisch erstellt ...';
+  run(kundenname, thema);
+}
+function splitVariants(rawVariants) {
+  var custom = null;
+  var normal = [];
+  (rawVariants || []).forEach(function (v) {
+    if (v && v.ansatz === 'Eigener Betreff') { custom = v; } else { normal.push(v); }
+  });
+  return { normal: normal, custom: custom };
+}
+function renderBetreffBlockInner() {
+  var html = '<div class="betreff-modus">' +
+    '<label><input type="radio" name="betreffModus" value="ab" ' + (BETREFF_MODUS === 'ab' ? 'checked' : '') + ' onchange="setBetreffModus(\'ab\')"> A/B-Test (mehrere Varianten)</label>' +
+    '<label><input type="radio" name="betreffModus" value="einzel" ' + (BETREFF_MODUS === 'einzel' ? 'checked' : '') + ' onchange="setBetreffModus(\'einzel\')"> Einzelbetreff (nur eine Variante)</label>' +
+    '</div>';
+  LAST_VARIANTS.forEach(function (v, idx) {
+    html += '<div class="betreff-row"><label class="betreff-select-row">' +
+      '<input type="checkbox" ' + (SELECTED[idx] ? 'checked' : '') + ' onchange="toggleVariantSelect(' + idx + ')">' +
+      '<span><span class="betreff-ansatz">' + escapeHtml(v.ansatz || '') + '</span>' +
+      '<span class="betreff-text">' + escapeHtml(v.betreff || '') + '</span>' +
+      '<span class="betreff-preview">' + escapeHtml(v.preview || '') + '</span></span>' +
+      '</label></div>';
+  });
+  html += '<div class="betreff-row custom-betreff-row"><label class="betreff-select-row">' +
+    '<input type="checkbox" ' + (CUSTOM_SELECTED ? 'checked' : '') + ' onchange="toggleCustomSelect()">' +
+    '<span style="flex:1;"><span class="betreff-ansatz">Eigener Betreff</span>' +
+    '<input type="text" class="edit-field" id="customBetreffInput" placeholder="Eigenen Betreff eingeben ..." value="' + escapeHtml(CUSTOM_BETREFF_TEXT) + '" oninput="CUSTOM_BETREFF_TEXT = this.value;">' +
+    '</span></label></div>';
+  return html;
+}
+function rerenderBetreffBlock() {
+  var el = document.getElementById('betreffBlockInner');
+  if (el) { el.innerHTML = renderBetreffBlockInner(); }
+}
+function setBetreffModus(mode) {
+  BETREFF_MODUS = mode;
+  if (mode === 'einzel') {
+    var firstIdx = SELECTED.indexOf(true);
+    SELECTED = SELECTED.map(function () { return false; });
+    if (firstIdx !== -1) {
+      SELECTED[firstIdx] = true;
+      CUSTOM_SELECTED = false;
+    } else if (!CUSTOM_SELECTED && LAST_VARIANTS.length) {
+      SELECTED[0] = true;
+    }
+  }
+  rerenderBetreffBlock();
+}
+function toggleVariantSelect(idx) {
+  if (BETREFF_MODUS === 'einzel') {
+    SELECTED = LAST_VARIANTS.map(function () { return false; });
+    SELECTED[idx] = true;
+    CUSTOM_SELECTED = false;
+  } else {
+    SELECTED[idx] = !SELECTED[idx];
+  }
+  rerenderBetreffBlock();
+}
+function toggleCustomSelect() {
+  if (BETREFF_MODUS === 'einzel') {
+    SELECTED = LAST_VARIANTS.map(function () { return false; });
+    CUSTOM_SELECTED = true;
+  } else {
+    CUSTOM_SELECTED = !CUSTOM_SELECTED;
+  }
+  rerenderBetreffBlock();
+}
+function renderCtaBlockInner() {
+  var html = '';
+  CTA_LIST.forEach(function (c, idx) {
+    html += '<div class="betreff-row"><label class="betreff-select-row">' +
+      '<input type="checkbox" ' + (CTA_SELECTED[idx] ? 'checked' : '') + ' onchange="toggleCtaSelect(' + idx + ')">' +
+      '<span class="betreff-text">' + escapeHtml(c.text || '') + '</span>' +
+      '</label></div>';
+  });
+  return html;
+}
+function rerenderCtaBlock() {
+  var el = document.getElementById('ctaBlockInner');
+  if (el) { el.innerHTML = renderCtaBlockInner(); }
+}
+function toggleCtaSelect(idx) {
+  CTA_SELECTED[idx] = !CTA_SELECTED[idx];
+  rerenderCtaBlock();
+}
+function renderResult(kundenname, thema, copyText, ctas, variants, klaviyoTemplateUrl, spreadsheetUrl, wasExisting, betreffModus) {
+  var resultBox = document.getElementById('resultBox');
+  LAST_RESULT = { kundenname: kundenname, thema: thema, spreadsheetUrl: spreadsheetUrl };
+
+  var split = splitVariants(variants);
+  LAST_VARIANTS = split.normal;
+  BETREFF_MODUS = betreffModus || 'ab';
+  CUSTOM_BETREFF_TEXT = (split.custom && split.custom.betreff) || '';
+  SELECTED = LAST_VARIANTS.map(function (v) { return !!v.ausgewaehlt; });
+  CUSTOM_SELECTED = !!(split.custom && split.custom.ausgewaehlt);
+  if (!SELECTED.some(Boolean) && !CUSTOM_SELECTED && LAST_VARIANTS.length) { SELECTED[0] = true; }
+
+  CTA_LIST = ctas || [];
+  CTA_SELECTED = CTA_LIST.map(function (c) { return !!c.ausgewaehlt; });
+  if (!CTA_SELECTED.some(Boolean) && CTA_LIST.length) { CTA_SELECTED[0] = true; }
+
+  var html = resultBox.innerHTML;
+  html += '<div class="result-card">';
+  html += '<h3>' + (wasExisting ? 'Bestehender Copy-Draft' : 'Ergebnis') + '</h3>';
+  html += '<div class="result-block"><div class="result-label">Copy-Text</div>' +
+    '<textarea class="edit-field copy-box" id="editCopyText" rows="8">' + escapeHtml(copyText || '') + '</textarea></div>';
+  html += '<div class="result-block"><div class="result-label">Call-to-Action-Varianten</div>' +
+    '<div id="ctaBlockInner">' + renderCtaBlockInner() + '</div></div>';
+  html += '<div class="result-block"><div class="result-label">Betreff-Varianten</div>' +
+    '<div id="betreffBlockInner">' + renderBetreffBlockInner() + '</div></div>';
+  html += '<div class="save-row">' +
+    '<button type="button" class="primary" id="saveBtn" onclick="saveEdits()">Speichern</button>' +
+    '<span class="msg" id="saveMsg"></span>' +
+    '</div>';
+  html += '<div class="template-note">Hinweis: Es gibt pro Kunde nur EIN gemeinsames Klaviyo-Template - beim Bauen wird der ' +
+    'Inhalt des zuletzt bearbeiteten Themas darin ueberschrieben. Baue das Template deshalb erst, wenn Copy-Text/CTA/Betreff ' +
+    'hier final sind, und lege danach direkt die Kampagne an (Skill 12), damit der Inhalt gesichert ist, bevor ein anderes ' +
+    'Thema das Template erneut ueberschreibt.</div>';
+  html += '<div class="result-links">';
+  html += '<span id="templateLinkArea">';
+  if (klaviyoTemplateUrl) { html += '<a href="' + klaviyoTemplateUrl + '" target="_blank">Klaviyo-Template oeffnen &rarr;</a>'; }
+  html += '</span>';
+  if (spreadsheetUrl) { html += '<a href="' + spreadsheetUrl + '" target="_blank">Redaktionsplan oeffnen &rarr;</a>'; }
+  html += '</div>';
+  html += '</div>';
+
+  if (klaviyoTemplateUrl) {
+    html += '<a class="primary-next" href="test-mail-send.html?kundenname=' + encodeURIComponent(kundenname) + '">' +
+      'Weiter: Testmail senden' +
+      '<span class="sub">Echte Testmail pruefen, bevor es weitergeht - empfohlener naechster Schritt</span>' +
+      '</a>';
+  } else {
+    html += '<div class="build-template-box" id="buildTemplateBox">' +
+      '<button type="button" class="primary" id="buildTemplateBtn" onclick="buildTemplate()">Klaviyo-Template erstellen (Skill 8)</button>' +
+      '<div class="hint" style="margin-top:6px;">Bewusster, separater Schritt - schreibt den Copy-Text oben in das gemeinsame Kunden-Template.</div>' +
+      '<span class="msg" id="buildTemplateMsg"></span>' +
+      '</div>';
+  }
+
+  html += '<details class="optional-steps"><summary>Weitere Schritte (optional, spaeter)</summary>';
+  OPTIONAL_STEPS.forEach(function (n) {
+    html += '<div class="opt-item"><a href="' + n.seite + '?kundenname=' + encodeURIComponent(kundenname) + '">' + n.skill + '</a> &ndash; ' + n.grund + '</div>';
+  });
+  html += '</details>';
+
+  resultBox.innerHTML = html;
+}
+function tag(ok) {
+  return '<span class="tag ' + (ok ? 'ok' : 'fail') + '">' + (ok ? 'OK' : 'Fehler') + '</span>';
+}
+async function loadThemen() {
+  var kundenname = document.getElementById('kundenname').value.trim();
+  var select = document.getElementById('thema');
+  var hint = document.getElementById('themaHint');
+  hint.className = 'theme-hint';
+  hint.textContent = '';
+  if (!kundenname) {
+    hint.className = 'theme-hint error';
+    hint.textContent = 'Bitte zuerst Kundenname eingeben.';
+    return;
+  }
+  select.innerHTML = '<option value="">Laedt ...</option>';
+  try {
+    var res = await fetch('/.netlify/functions/themen-liste?kundenname=' + encodeURIComponent(kundenname));
+    var data = await res.json();
+    if (!res.ok) {
+      select.innerHTML = '<option value="">(Fehler beim Laden)</option>';
+      hint.className = 'theme-hint error';
+      hint.textContent = data.error || 'Unbekannter Fehler beim Laden der Themen.';
+      return;
+    }
+    var themen = data.themen || [];
+    if (!themen.length) {
+      select.innerHTML = '<option value="">(keine offenen Themen)</option>';
+      hint.className = 'theme-hint error';
+      hint.textContent = data.hinweis || 'Fuer diesen Kunden ist noch kein offenes Thema im Redaktionsplan. Zuerst Schritt 3 (Thema eintragen oder KI-Vorschlaege) durchfuehren.';
+      return;
+    }
+    select.innerHTML = (themen.length > 1 ? '<option value="">Automatisch: naechstes offene Thema</option>' : '') +
+      themen.map(function (t) {
+        return '<option value="' + t.thema.replace(/"/g, '&quot;') + '">' + t.thema + (t.datum ? ' (' + t.datum + ')' : '') + '</option>';
+      }).join('');
+    hint.textContent = themen.length + ' offene' + (themen.length === 1 ? 's Thema' : ' Themen') + ' gefunden.';
+    if (PRESELECT_THEMA) {
+      var matched = false;
+      for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === PRESELECT_THEMA) { select.value = PRESELECT_THEMA; matched = true; break; }
+      }
+      if (!matched) {
+        hint.className = 'theme-hint error';
+        hint.textContent = 'Thema "' + PRESELECT_THEMA + '" ist hier nicht (mehr) offen waehlbar - evtl. schon bearbeitet.';
+      }
+      PRESELECT_THEMA = '';
+    }
+  } catch (err) {
+    select.innerHTML = '<option value="">(Fehler beim Laden)</option>';
+    hint.className = 'theme-hint error';
+    hint.textContent = 'Verbindungsfehler: ' + err.message;
+  }
+}
+var OPTIONAL_STEPS = [
+  { skill: 'Skill 10: Zielgruppen-Segment-Mapper', seite: 'segment-mapper.html', grund: 'Passende Zielgruppe vorschlagen lassen (optional, Skill 12 macht das sonst automatisch).' },
+  { skill: 'Skill 11: Newsletter-QA-Check', seite: 'qa-check.html', grund: 'Links, Pflichtangaben und Darstellung pruefen lassen - vor dem Kampagnen-Entwurf empfohlen.' },
+  { skill: 'Skill 12: Campaign-Versand-Setup', seite: 'campaign-setup.html', grund: 'Legt die Kampagne als Entwurf an (kein Versand). Erst nach QA-Freigabe empfohlen.' },
+  { skill: 'Skill 13: Vorschau an Kunden senden', seite: 'kunden-vorschau.html', grund: 'Braucht eine bestaetigte Kunden-E-Mail - bewusst manuell.' },
+  { skill: 'Skill 14: Newsletter-Performance-Reporter', seite: 'performance-reporter.html', grund: 'Erst sinnvoll, nachdem die Kampagne in Klaviyo tatsaechlich versendet wurde.' },
+];
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+async function callSkill(name, fn, kundenname, thema) {
+  var res = await fetch('/.netlify/functions/' + fn, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ kundenname: kundenname, thema: thema })
+  });
+  var text = await res.text();
+  var data;
+  try {
+    data = JSON.parse(text);
+  } catch (err) {
+    data = { error: 'Antwort von "' + name + '" war kein gueltiges JSON (evtl. Server-Timeout). Rohtext: ' + text.slice(0, 200) };
+  }
+  return { name: name, ok: res.ok && data.success, data: data };
+}
+async function run(overrideKundenname, overrideThema) {
+  var btn = document.getElementById('btn');
+  var msg = document.getElementById('msg');
+  var resultBox = document.getElementById('resultBox');
+  var kundenname = (overrideKundenname || document.getElementById('kundenname').value).trim();
+  var thema = (overrideThema || document.getElementById('thema').value).trim();
+  resultBox.innerHTML = '';
+  if (!kundenname) {
+    msg.className = 'msg error';
+    msg.textContent = 'Bitte Kundenname eingeben.';
+    return;
+  }
+  btn.disabled = true;
+  var steps = [];
+
+  function renderSteps() {
+    var html = '';
+    steps.forEach(function (s) {
+      html += '<div class="step">' + tag(s.ok) + ' ' + s.name + (s.data && s.data.error ? '<br><span style="color:#DC2626;">' + s.data.error + '</span>' : '') + '</div>';
+    });
+    resultBox.innerHTML = html;
+  }
+
+  try {
+    msg.className = 'msg';
+    msg.textContent = 'Schritt 1/2: Copy-Draft laeuft ...';
+    var step1 = await callSkill('Copy-Draft (Skill 6)', 'copy-draft', kundenname, thema);
+    steps.push(step1);
+    renderSteps();
+    if (!step1.ok) {
+      msg.className = 'msg error';
+      msg.textContent = 'Gestoppt bei: ' + step1.name;
+      return;
+    }
+    var exactThema = step1.data.thema || thema;
+
+    msg.textContent = 'Schritt 2/2: Betreff-Generator laeuft ...';
+    var step2 = await callSkill('Betreff-A/B-Test (Skill 7)', 'betreff-generator', kundenname, exactThema);
+    steps.push(step2);
+    renderSteps();
+    if (!step2.ok) {
+      msg.className = 'msg error';
+      msg.textContent = 'Gestoppt bei: ' + step2.name;
+      return;
+    }
+
+    // Skill 8 (Klaviyo-Template-Builder) laeuft hier bewusst NICHT mehr
+    // automatisch mit - das Template ist eine gemeinsame, ueberschreibbare
+    // Ressource pro Kunde (siehe Hinweis auf der Ergebniskarte) und wird
+    // deshalb erst auf bewussten Klick hin gebaut (siehe buildTemplate()).
+    msg.className = 'msg';
+    msg.textContent = 'Fertig fuer: ' + exactThema;
+
+    var copyText = step1.data.copyText || '';
+    var ctas = step1.data.ctas || [];
+    var variants = step2.data.variants || [];
+    var spreadsheetUrl = step2.data.spreadsheetUrl || step1.data.spreadsheetUrl || '';
+
+    renderResult(kundenname, exactThema, copyText, ctas, variants, '', spreadsheetUrl, false);
+  } catch (err) {
+    msg.className = 'msg error';
+    msg.textContent = 'Netzwerkfehler: ' + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+async function buildTemplate() {
+  if (!LAST_RESULT) { return; }
+  var btn = document.getElementById('buildTemplateBtn');
+  var msg = document.getElementById('buildTemplateMsg');
+  btn.disabled = true;
+  btn.textContent = 'Wird erstellt ...';
+  msg.className = 'msg';
+  msg.textContent = '';
+  var result = await callSkill('Klaviyo-Template-Builder (Skill 8)', 'template-builder', LAST_RESULT.kundenname, LAST_RESULT.thema);
+  if (result.ok) {
+    msg.className = 'msg';
+    msg.textContent = '✓ Template erstellt/aktualisiert.';
+    var linkArea = document.getElementById('templateLinkArea');
+    if (linkArea && result.data.klaviyoTemplateUrl) {
+      linkArea.innerHTML = '<a href="' + result.data.klaviyoTemplateUrl + '" target="_blank">Klaviyo-Template oeffnen &rarr;</a>';
+    }
+    var box = document.getElementById('buildTemplateBox');
+    if (box) {
+      var nextHtml = '<a class="primary-next" href="test-mail-send.html?kundenname=' + encodeURIComponent(LAST_RESULT.kundenname) + '">' +
+        'Weiter: Testmail senden' +
+        '<span class="sub">Echte Testmail pruefen, bevor es weitergeht - empfohlener naechster Schritt</span>' +
+        '</a>';
+      box.outerHTML = nextHtml;
+    }
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Klaviyo-Template erstellen (Skill 8)';
+    msg.className = 'msg error';
+    msg.textContent = 'Fehler: ' + (result.data.error || 'Unbekannter Fehler');
+  }
+}
+async function saveEdits() {
+  if (!LAST_RESULT) { return; }
+  var saveBtn = document.getElementById('saveBtn');
+  var saveMsg = document.getElementById('saveMsg');
+  var copyText = document.getElementById('editCopyText').value;
+  var ctas = CTA_LIST.map(function (c, idx) {
+    return { text: c.text || '', ausgewaehlt: !!CTA_SELECTED[idx] };
+  });
+  var variants = LAST_VARIANTS.map(function (v, idx) {
+    return {
+      ansatz: v.ansatz || '',
+      betreff: v.betreff || '',
+      preview: v.preview || '',
+      ausgewaehlt: !!SELECTED[idx],
+    };
+  });
+  if (CUSTOM_BETREFF_TEXT && CUSTOM_BETREFF_TEXT.trim()) {
+    variants.push({
+      ansatz: 'Eigener Betreff',
+      betreff: CUSTOM_BETREFF_TEXT.trim(),
+      preview: '',
+      ausgewaehlt: !!CUSTOM_SELECTED,
+    });
+  }
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Speichert ...';
+  saveMsg.className = 'msg';
+  saveMsg.textContent = '';
+  try {
+    var res = await fetch('/.netlify/functions/copy-draft-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kundenname: LAST_RESULT.kundenname,
+        thema: LAST_RESULT.thema,
+        copyText: copyText,
+        ctas: ctas,
+        variants: variants,
+        betreffModus: BETREFF_MODUS,
+      }),
+    });
+    var data = await res.json();
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Speichern';
+    if (res.ok && data.success) {
+      saveMsg.textContent = '✓ Gespeichert.';
+    } else {
+      saveMsg.className = 'msg error';
+      saveMsg.textContent = 'Fehler: ' + (data.error || 'Unbekannter Fehler');
+    }
+  } catch (err) {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Speichern';
+    saveMsg.className = 'msg error';
+    saveMsg.textContent = 'Verbindungsfehler: ' + err.message;
+  }
+}
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

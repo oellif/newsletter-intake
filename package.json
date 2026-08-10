@@ -1,0 +1,6 @@
+{
+  "name": "ki-os-newsletter-intake",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kundenprofil-Intake: Custom-HTML-Formular + Netlify Function (ohne externe Abhaengigkeiten), legt automatisch Google-Drive-Ordner und Kundenprofil-Sheet an."
+}

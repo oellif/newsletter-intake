@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redaktionsplan</title>
+<style>
+  :root {
+    --dark: #1F2937;
+    --accent: #2563EB;
+    --bg: #F9FAFB;
+    --border: #D1D5DB;
+    --green: #059669;
+    --red: #DC2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    margin: 0;
+    padding: 0 0 80px 0;
+  }
+  header {
+    background: var(--dark);
+    color: #fff;
+    padding: 24px 20px;
+  }
+  header h1 { margin: 0 0 6px 0; font-size: 22px; }
+  header p { margin: 0; color: #D1D5DB; font-size: 14px; }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--dark);
+  }
+  .card-head h2 { font-size: 16px; margin: 0; border: none; padding: 0; }
+  .card-head a { font-size: 12px; color: #6B7280; text-decoration: none; }
+  .card-head a:hover { text-decoration: underline; }
+  .empty-hint { font-size: 13px; color: #6B7280; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #6B7280;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #F3F4F6;
+    font-size: 14px;
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  .thema-cell a { color: var(--dark); font-weight: bold; text-decoration: none; }
+  .thema-cell a:hover { color: var(--accent); text-decoration: underline; }
+  .quelle { font-size: 11.5px; color: #9CA3AF; margin-top: 2px; }
+  .datum-cell { color: #6B7280; font-size: 13px; white-space: nowrap; }
+  .status-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .status-pill.open { background: #FEF3C7; color: #92400E; }
+  .status-pill.done { background: #ECFDF5; color: #065F46; }
+  .status-note { font-size: 11.5px; color: #9CA3AF; margin-top: 4px; }
+  .msg { font-size: 13px; margin: 10px 0; }
+  .msg.error { color: var(--red); }
+  .versand-cell { display: flex; align-items: center; gap: 6px; }
+  .versand-input {
+    padding: 5px 7px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .versand-save-hint { font-size: 11px; color: #9CA3AF; white-space: nowrap; }
+  .versand-save-hint.ok { color: var(--green); }
+  .versand-save-hint.error { color: var(--red); }
+  .row-check { width: 16px; height: 16px; cursor: pointer; }
+  .delete-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .delete-bar-left { display: flex; align-items: center; gap: 12px; }
+  .new-thema-group { display: flex; align-items: center; gap: 8px; }
+  .new-thema-group .lbl { font-size: 12px; color: #6B7280; white-space: nowrap; }
+  .new-thema-group a.compact-btn {
+    padding: 7px 12px;
+    border-radius: 5px;
+    font-size: 12.5px;
+    font-weight: bold;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    color: var(--dark);
+    white-space: nowrap;
+  }
+  .new-thema-group a.compact-btn:hover { background: var(--bg); }
+  button.danger {
+    background: #fff;
+    color: var(--red);
+    border: 1px solid var(--red);
+    border-radius: 6px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button.danger:disabled { color: #FCA5A5; border-color: #FCA5A5; cursor: not-allowed; }
+  .delete-msg { font-size: 13px; }
+  .delete-msg.ok { color: var(--green); }
+  .delete-msg.error { color: var(--red); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Redaktionsplan</h1>
+  <p>Alle Themen dieses Kunden auf einen Blick. Auf ein Thema klicken - offene Themen erzeugen den Copy-Draft, bereits erstellte Themen oeffnen ihn zum Bearbeiten.</p>
+</header>
+
+<div class="container">
+  <input type="hidden" id="kundenname">
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Themen</h2>
+      <a id="sheet-link" href="#" target="_blank" style="display:none;">Original-Sheet oeffnen &rarr;</a>
+    </div>
+    <div id="msg" class="msg"></div>
+    <div id="table-area"><p class="empty-hint">Laedt ...</p></div>
+    <div class="delete-bar" id="delete-bar" style="display:none;">
+      <div class="delete-bar-left">
+        <button type="button" class="danger" id="delete-btn" onclick="deleteSelected()" disabled>Ausgewaehlte loeschen</button>
+        <span class="delete-msg" id="delete-msg"></span>
+      </div>
+      <div class="new-thema-group">
+        <span class="lbl">Neues Thema:</span>
+        <a class="compact-btn" id="new-thema-manual" href="idee.html">manuell anlegen</a>
+        <a class="compact-btn" id="new-thema-auto" href="ideen-freigabe.html">automatisch vorschlagen</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function formatDatum(iso) {
+  if (!iso) { return ''; }
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) { return iso; }
+  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function renderTable(items) {
+  var area = document.getElementById('table-area');
+  var deleteBar = document.getElementById('delete-bar');
+  var deleteBarLeft = document.querySelector('.delete-bar-left');
+  deleteBar.style.display = 'flex';
+  if (!items || !items.length) {
+    area.innerHTML = '<p class="empty-hint">Noch keine Themen im Redaktionsplan. Ueber "manuell anlegen" oder "automatisch vorschlagen" unten ein erstes Thema anlegen.</p>';
+    deleteBarLeft.style.display = 'none';
+    return;
+  }
+  deleteBarLeft.style.display = 'flex';
+  var kundenname = document.getElementById('kundenname').value;
+  var html = '<table><thead><tr>' +
+    '<th style="width:32px;"></th><th>Thema</th><th>Copy-Draft</th><th>Versand am (geplant)</th>' +
+    '</tr></thead><tbody>';
+  items.forEach(function (item, idx) {
+    var thema = escapeHtml(item.thema);
+    var quelle = item.quelle ? '<div class="quelle">' + escapeHtml(item.quelle) + '</div>' : '';
+    var themaCell;
+    var statusCell;
+    if (item.copyErstellt) {
+      // Copy-Draft existiert bereits - Klick auf das Thema oeffnet ihn zum
+      // Bearbeiten. Der Status-Pill ist nur noch eine reine Anzeige, kein
+      // eigener Link mehr (das Thema selbst reicht als Klickziel).
+      var editUrl = 'orchestrator.html?kundenname=' + encodeURIComponent(kundenname) + '&thema=' + encodeURIComponent(item.thema);
+      themaCell = '<div><a href="' + editUrl + '">' + thema + '</a></div>' + quelle;
+      statusCell = '<span class="status-pill done">Erstellt</span>' +
+        (item.copyErstelltAm ? '<div class="status-note">am ' + formatDatum(item.copyErstelltAm) + '</div>' : '');
+    } else {
+      var url = 'orchestrator.html?kundenname=' + encodeURIComponent(kundenname) + '&thema=' + encodeURIComponent(item.thema);
+      themaCell = '<div><a href="' + url + '">' + thema + '</a></div>' + quelle;
+      statusCell = '<span class="status-pill open">Noch offen</span>';
+    }
+    // versandDatum kann "JJJJ-MM-TT" (alt, ohne Uhrzeit) oder
+    // "JJJJ-MM-TTTHH:MM" (neu, mit Uhrzeit) sein - fuer die zwei getrennten
+    // Eingabefelder (Datum + Uhrzeit) hier aufsplitten.
+    var versandRaw = item.versandDatum || '';
+    var versandDatumTeil = versandRaw.split('T')[0] || '';
+    var versandZeitTeil = versandRaw.indexOf('T') !== -1 ? versandRaw.split('T')[1] : '';
+    var versandCell = '<div class="versand-cell">' +
+      '<input type="date" class="versand-input" id="versand-' + idx + '" value="' + escapeHtml(versandDatumTeil) + '" ' +
+      'data-thema="' + escapeHtml(item.thema) + '" onchange="saveVersandDatum(' + idx + ')">' +
+      '<input type="time" class="versand-input versand-zeit-input" id="versand-zeit-' + idx + '" value="' + escapeHtml(versandZeitTeil) + '" ' +
+      'data-thema="' + escapeHtml(item.thema) + '" onchange="saveVersandDatum(' + idx + ')" title="Uhrzeit (optional, sonst 09:00 UTC)">' +
+      '<span class="versand-save-hint" id="versand-hint-' + idx + '"></span>' +
+      '</div>';
+    html += '<tr>' +
+      '<td><input type="checkbox" class="row-check" data-thema="' + escapeHtml(item.thema) + '" onchange="updateDeleteButton()"></td>' +
+      '<td class="thema-cell">' + themaCell + '</td>' +
+      '<td>' + statusCell + '</td>' +
+      '<td>' + versandCell + '</td>' +
+      '</tr>';
+  });
+  html += '</tbody></table>';
+  area.innerHTML = html;
+  updateDeleteButton();
+}
+function updateDeleteButton() {
+  var anyChecked = document.querySelectorAll('.row-check:checked').length > 0;
+  document.getElementById('delete-btn').disabled = !anyChecked;
+}
+async function deleteSelected() {
+  var checked = document.querySelectorAll('.row-check:checked');
+  if (!checked.length) { return; }
+  var themen = [];
+  checked.forEach(function (cb) { themen.push(cb.getAttribute('data-thema')); });
+  var confirmText = themen.length === 1
+    ? 'Thema "' + themen[0] + '" endgueltig aus dem Redaktionsplan loeschen?'
+    : themen.length + ' Themen endgueltig aus dem Redaktionsplan loeschen?';
+  if (!confirm(confirmText)) { return; }
+  var kundenname = document.getElementById('kundenname').value;
+  var btn = document.getElementById('delete-btn');
+  var msg = document.getElementById('delete-msg');
+  btn.disabled = true;
+  btn.textContent = 'Wird geloescht...';
+  msg.className = 'delete-msg';
+  msg.textContent = '';
+  try {
+    var res = await fetch('/.netlify/functions/redaktionsplan-loeschen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kundenname: kundenname, themen: themen }),
+    });
+    var data = await res.json();
+    btn.textContent = 'Ausgewaehlte loeschen';
+    if (res.ok && data.success) {
+      msg.className = 'delete-msg ok';
+      msg.textContent = '✓ ' + data.count + ' Thema(en) geloescht.';
+      loadRedaktionsplan();
+    } else {
+      btn.disabled = false;
+      msg.className = 'delete-msg error';
+      msg.textContent = 'Fehler: ' + (data.error || 'Unbekannter Fehler');
+    }
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Ausgewaehlte loeschen';
+    msg.className = 'delete-msg error';
+    msg.textContent = 'Verbindungsfehler: ' + err.message;
+  }
+}
+async function saveVersandDatum(idx) {
+  var input = document.getElementById('versand-' + idx);
+  var zeitInput = document.getElementById('versand-zeit-' + idx);
+  var hint = document.getElementById('versand-hint-' + idx);
+  var kundenname = document.getElementById('kundenname').value;
+  var thema = input.getAttribute('data-thema');
+  // Uhrzeit nur anhaengen, wenn auch ein Datum gesetzt ist - eine Uhrzeit
+  // ohne Datum ergibt keinen gueltigen Versandzeitpunkt.
+  var combined = input.value ? (input.value + (zeitInput.value ? 'T' + zeitInput.value : '')) : '';
+  hint.className = 'versand-save-hint';
+  hint.textContent = 'Speichert ...';
+  try {
+    var res = await fetch('/.netlify/functions/redaktionsplan-versand-datum-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kundenname: kundenname, thema: thema, versandDatum: combined }),
+    });
+    var data = await res.json();
+    if (res.ok && data.success) {
+      hint.className = 'versand-save-hint ok';
+      hint.textContent = '✓ gespeichert';
+      setTimeout(function () { if (hint) { hint.textContent = ''; } }, 2500);
+    } else {
+      hint.className = 'versand-save-hint error';
+      hint.textContent = 'Fehler: ' + (data.error || 'unbekannt');
+    }
+  } catch (err) {
+    hint.className = 'versand-save-hint error';
+    hint.textContent = 'Verbindungsfehler';
+  }
+}
+async function loadRedaktionsplan() {
+  var kundenname = document.getElementById('kundenname').value.trim();
+  var msg = document.getElementById('msg');
+  var area = document.getElementById('table-area');
+  msg.className = 'msg';
+  msg.textContent = '';
+  if (!kundenname) { return; }
+  var kQuery = '?kundenname=' + encodeURIComponent(kundenname);
+  document.getElementById('new-thema-manual').href = 'idee.html' + kQuery;
+  document.getElementById('new-thema-auto').href = 'ideen-freigabe.html' + kQuery;
+  area.innerHTML = '<p class="empty-hint">Laedt ...</p>';
+  try {
+    var res = await fetch('/.netlify/functions/redaktionsplan-liste?kundenname=' + encodeURIComponent(kundenname));
+    var data = await res.json();
+    if (!res.ok) {
+      msg.className = 'msg error';
+      msg.textContent = 'Fehler: ' + (data.error || 'Unbekannter Fehler');
+      area.innerHTML = '';
+      return;
+    }
+    if (data.hinweis) {
+      msg.textContent = data.hinweis;
+    }
+    if (data.spreadsheetUrl) {
+      var link = document.getElementById('sheet-link');
+      link.href = data.spreadsheetUrl;
+      link.style.display = '';
+    }
+    renderTable(data.items || []);
+  } catch (err) {
+    msg.className = 'msg error';
+    msg.textContent = 'Verbindungsfehler: ' + err.message;
+    area.innerHTML = '';
+  }
+}
+// nav.js ruft nach dem Befuellen des versteckten Kundenname-Feldes
+// window.loadThemen() auf (gleiche Konvention wie auf den anderen
+// Skill-Seiten) - hier gibt es kein Thema-Auswahlfeld, aber die
+// Redaktionsplan-Tabelle soll genauso automatisch nachgeladen werden.
+window.loadThemen = function () { loadRedaktionsplan(); };
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var pre = params.get('kundenname');
+  if (pre) {
+    document.getElementById('kundenname').value = pre;
+  }
+})();
+if (document.getElementById('kundenname').value) { loadRedaktionsplan(); }
+</script>
+
+<script src="nav.js"></script>
+</body>
+</html>
