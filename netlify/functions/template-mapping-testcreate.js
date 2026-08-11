@@ -13,14 +13,18 @@ const PARENT_FOLDER_ID = process.env.DRIVE_PARENT_FOLDER_ID;
 const TEST_REVISION = '2026-07-15';
 
 function minimalDefinition() {
-  const styleTypes = [
-    'base-styles', 'text-style-v1',
-    'heading-1-style', 'heading-2-style', 'heading-3-style', 'heading-4-style',
-    'link-style', 'mobile-style',
+  // base-styles akzeptiert { style_type, properties, styles }
+  // alle anderen Typen akzeptieren nur { style_type, properties } – kein styles-Feld
+  const styles = [
+    { style_type: 'base-styles', properties: {}, styles: {} },
+    { style_type: 'text-style-v1', properties: {} },
+    { style_type: 'heading-1-style', properties: {} },
+    { style_type: 'heading-2-style', properties: {} },
+    { style_type: 'heading-3-style', properties: {} },
+    { style_type: 'heading-4-style', properties: {} },
+    { style_type: 'link-style', properties: {} },
+    { style_type: 'mobile-style', properties: {} },
   ];
-  const styles = styleTypes.map(function (t) {
-    return { style_type: t, properties: {}, styles: {} };
-  });
   return {
     styles: styles,
     body: {
