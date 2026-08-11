@@ -26,6 +26,7 @@
     { group: 'Teil 1 - einmalig' },
     { label: 'Neukundenanlage', seite: 'index.html', withKunde: false },
     { label: 'Klaviyo verbinden', seite: 'klaviyo-verbinden.html', withKunde: true },
+    { label: 'Template-Mapping', seite: 'template-mapping.html', withKunde: true },
     { group: 'Teil 2 - pro Ausgabe' },
     { label: 'Redaktionsplan', seite: 'redaktionsplan.html', withKunde: true },
     // Diese beiden sind bewusst als Unterpunkte von Redaktionsplan
