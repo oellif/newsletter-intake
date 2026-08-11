@@ -13,9 +13,16 @@ const PARENT_FOLDER_ID = process.env.DRIVE_PARENT_FOLDER_ID;
 const TEST_REVISION = '2026-07-15';
 
 function minimalDefinition() {
-  // Minimal: nur base-styles – testen ob andere Typen ueberhaupt erlaubt sind
+  // Korrekte Style-Typ-Namen laut Klaviyo-Fehlermeldung (alle Plural mit 's')
   const styles = [
     { style_type: 'base-styles', properties: {}, styles: {} },
+    { style_type: 'text-styles', properties: {} },
+    { style_type: 'heading-1-styles', properties: {} },
+    { style_type: 'heading-2-styles', properties: {} },
+    { style_type: 'heading-3-styles', properties: {} },
+    { style_type: 'heading-4-styles', properties: {} },
+    { style_type: 'link-styles', properties: {} },
+    { style_type: 'mobile-styles', properties: {} },
   ];
   return {
     styles: styles,
