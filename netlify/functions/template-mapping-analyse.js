@@ -1,48 +1,69 @@
-// Ablage- & Versionsregel v1 aktiv - neu 20260807
+// Ablage- & Versionsregel v1 aktiv - umgestellt auf definition-API am 20260811
 //
-// Netlify Function (Skill A: Template-Mapping-Analyse): laedt ein
-// bestehendes, von Hand in Klaviyo gebautes Template und listet alle
-// text-tragenden HTML-Bloecke mit Position/Laenge auf, damit ein Mensch
-// (nicht automatisch!) entscheiden kann, welcher Block Ueberschrift,
-// Fliesstext usw. ist. Reine Lesefunktion, veraendert das Template NICHT.
+// Netlify Function (Skill A: Template-Mapping-Analyse): laedt ein bestehendes
+// Klaviyo-Template und listet alle definition-Bloecke mit Pfad, Typ und
+// Inhalts-Vorschau auf. Reine Lesefunktion, veraendert das Template NICHT.
 //
-// Ergebnis dieser Funktion ist ein Vorschlag zur Pruefung - erst danach
-// wird per template-mapping-speichern.js ein geprueftes Mapping abgelegt.
+// Ergebnis dient der menschlichen Sichtung: Welcher Block ist Ueberschrift,
+// Fliesstext, Bild, CTA? Das geprueft Mapping wird dann per
+// template-mapping-speichern.js im Kundenprofil abgelegt.
+//
+// Input: kundenname + templateName ODER templateId
+// Output: blocks[] mit { path, type, contentPreview, imageUrl }
 
 const { getAccessToken, sanitizeFolderName, findKundenordner, findKundenprofil } = require('./lib/google');
 const klaviyo = require('./lib/klaviyo');
 
 const PARENT_FOLDER_ID = process.env.DRIVE_PARENT_FOLDER_ID;
+const DEFINITION_REVISION = '2026-07-15';
 
-// Extrahiert grobe Text-Bloecke (Inhalt von p/h1-h6/td/div/span mit
-// nennenswertem Text) per Regex - bewusst simpel gehalten, da dies nur zur
-// menschlichen Sichtung dient, nicht zur automatischen Entscheidung.
-function extractTextBlocks(html) {
-  const blocks = [];
-  const tagRegex = /<(p|h1|h2|h3|h4|td|div|span)([^>]*)>([\s\S]*?)<\/\1>/gi;
-  let match;
-  let idx = 0;
-  while ((match = tagRegex.exec(html)) !== null) {
-    const tag = match[1];
-    const attrs = match[2] || '';
-    const innerRaw = match[3] || '';
-    // Nur den unmittelbaren Text dieses Blocks pruefen (keine verschachtelten
-    // Tags mitzaehlen), damit Container-Elemente nicht faelschlich als
-    // Textblock erscheinen.
-    const text = innerRaw.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-    if (text.length >= 8 && text.length <= 600) {
-      blocks.push({
-        index: idx,
-        tag: tag,
-        hasStyle: /style=/i.test(attrs),
-        containsMergeTag: /\{\{|\{%/.test(innerRaw),
-        textLength: text.length,
-        textPreview: text.length > 140 ? text.slice(0, 140) + '...' : text,
+// Extrahiert lesbaren Text aus HTML-Content eines Textblocks
+function stripHtml(html) {
+  return String(html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Geht rekursiv durch definition.body.sections → rows → columns → blocks
+// und liefert eine flache Liste mit Pfad und Block-Metadaten
+function extractDefinitionBlocks(body) {
+  const result = [];
+  const sections = (body && body.sections) || [];
+  sections.forEach(function (section, s) {
+    const rows = (section && section.rows) || [];
+    rows.forEach(function (row, r) {
+      const columns = (row && row.columns) || [];
+      columns.forEach(function (col, c) {
+        const blocks = (col && col.blocks) || [];
+        blocks.forEach(function (block, b) {
+          const type = (block && block.type) || 'unknown';
+          const blockData = (block && block.data) || {};
+          const entry = {
+            path: [s, r, c, b],
+            pathLabel: 'S' + s + ':R' + r + ':C' + c + ':B' + b,
+            type: type,
+          };
+
+          if (type === 'text') {
+            const raw = stripHtml(blockData.content || '');
+            entry.contentPreview = raw.length > 120 ? raw.slice(0, 120) + '...' : raw;
+            entry.contentLength = raw.length;
+          } else if (type === 'image') {
+            entry.imageUrl = blockData.image_url || blockData.url || null;
+            entry.altText = blockData.alt_text || null;
+            entry.linkUrl = (blockData.link && blockData.link.url) || null;
+          } else if (type === 'button') {
+            entry.buttonText = blockData.text || null;
+            entry.buttonUrl = (blockData.link && blockData.link.url) || null;
+          } else {
+            // Unbekannter Typ: rohe data-Keys zeigen
+            entry.dataKeys = Object.keys(blockData);
+          }
+
+          result.push(entry);
+        });
       });
-      idx++;
-    }
-  }
-  return blocks;
+    });
+  });
+  return result;
 }
 
 exports.handler = async (event) => {
@@ -63,8 +84,14 @@ exports.handler = async (event) => {
 
   const kundenname = String(data.kundenname || '').trim();
   const templateName = String(data.templateName || '').trim();
-  if (!kundenname || !templateName) {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'kundenname und templateName sind Pflichtfelder.' }) };
+  const templateId = String(data.templateId || '').trim();
+
+  if (!kundenname || (!templateName && !templateId)) {
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({ error: 'kundenname + templateName ODER templateId sind Pflichtfelder.' }),
+    };
   }
   if (!PARENT_FOLDER_ID) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'DRIVE_PARENT_FOLDER_ID fehlt.' }) };
@@ -80,30 +107,77 @@ exports.handler = async (event) => {
 
     const klaviyoAccessToken = await klaviyo.getValidAccessToken(accessToken, kundenprofilSheet.id);
 
-    const listResult = await klaviyo.klaviyoRequest(
-      klaviyoAccessToken,
-      'GET',
-      '/api/templates/?filter=' + encodeURIComponent("equals(name,'" + templateName + "')")
-    );
-    const templates = listResult.data || [];
-    if (!templates.length) {
-      return { statusCode: 404, headers, body: JSON.stringify({ error: 'Kein Template mit Name "' + templateName + '" gefunden.' }) };
+    // Template-ID ermitteln (direkt oder per Name suchen)
+    let resolvedId = templateId;
+    let resolvedName = '';
+    let editorType = '';
+
+    if (!resolvedId) {
+      const listRes = await fetch(
+        'https://a.klaviyo.com/api/templates/?filter=' + encodeURIComponent("equals(name,'" + templateName + "')"),
+        {
+          headers: { Authorization: 'Bearer ' + klaviyoAccessToken, revision: DEFINITION_REVISION },
+        }
+      );
+      const listData = await listRes.json().catch(function () { return {}; });
+      const templates = (listData.data) || [];
+      if (!templates.length) {
+        return { statusCode: 404, headers, body: JSON.stringify({ error: 'Kein Template mit Name "' + templateName + '" gefunden.' }) };
+      }
+      resolvedId = templates[0].id;
+      resolvedName = templates[0].attributes.name;
+      editorType = templates[0].attributes.editor_type;
     }
-    const tpl = templates[0];
-    const html = tpl.attributes.html || '';
-    const blocks = extractTextBlocks(html);
+
+    // Template mit definition-Feld laden
+    const getRes = await fetch(
+      'https://a.klaviyo.com/api/templates/' + resolvedId + '/?additional-fields[template]=definition',
+      {
+        headers: { Authorization: 'Bearer ' + klaviyoAccessToken, revision: DEFINITION_REVISION },
+      }
+    );
+    const tplData = await getRes.json().catch(function () { return null; });
+
+    if (!getRes.ok) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: false, templateId: resolvedId, klaviyoError: tplData }),
+      };
+    }
+
+    const attrs = tplData.data.attributes;
+    resolvedName = resolvedName || attrs.name;
+    editorType = editorType || attrs.editor_type;
+    const definition = attrs.definition;
+
+    if (!definition) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          templateId: resolvedId,
+          name: resolvedName,
+          editor_type: editorType,
+          error: 'Template hat kein definition-Feld. Vermutlich CODE-Typ oder aeltere API-Revision.',
+        }),
+      };
+    }
+
+    const blocks = extractDefinitionBlocks(definition.body);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        id: tpl.id,
-        name: tpl.attributes.name,
-        editor_type: tpl.attributes.editor_type,
-        htmlLength: html.length,
-        textBlocks: blocks,
-        hinweis: 'Dies ist nur ein Vorschlag zur Pruefung durch einen Menschen. Es wurde noch nichts am Template veraendert.',
+        templateId: resolvedId,
+        name: resolvedName,
+        editor_type: editorType,
+        totalBlocks: blocks.length,
+        blocks: blocks,
+        hinweis: 'Reine Lesefunktion – Template wurde NICHT veraendert. Pfad-Format: S=Section, R=Row, C=Column, B=Block.',
       }),
     };
   } catch (err) {
