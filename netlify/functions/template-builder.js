@@ -1,16 +1,19 @@
-// Ablage- & Versionsregel v1 aktiv - umgestellt am 20260730
+// Ablage- & Versionsregel v1 aktiv - umgestellt auf definition-API am 20260811
 //
-// Netlify Function (Skill 8: Klaviyo-Template-Builder): baut bzw.
-// aktualisiert EIN dauerhaftes E-Mail-Template pro Kunde direkt in
-// Klaviyo. Kategorie A (lebendes Einzelobjekt): die Template-ID wird
-// im Kundenprofil-Register gespeichert (KLAVIYO_TEMPLATE_ID) und bei
-// jedem Lauf wiederverwendet/aktualisiert statt neu angelegt.
+// Netlify Function (Skill 8: Klaviyo-Template-Builder): erstellt pro Kampagne
+// ein frisches SYSTEM_DRAGGABLE-Template über die Klaviyo definition-API
+// (Revision 2026-07-15). Der Kunde kann das Ergebnis danach im visuellen
+// Klaviyo-Drag&Drop-Editor final anpassen – die Drag&Drop-Faehigkeit bleibt
+// erhalten (im Gegensatz zum alten CODE-Typ-Ansatz mit HTML-Markern).
 //
-// Damit manuelle Design-Aenderungen in der Klaviyo-UI (Layout, Farben,
-// Bilder) NICHT ueberschrieben werden, liest die Funktion vor jeder
-// Aenderung den aktuellen HTML-Stand des Templates und ersetzt nur den
-// Inhalt zwischen festen Marker-Kommentaren (<!--AUTO:...--/-->). Alles
-// ausserhalb der Marker bleibt unangetastet.
+// Felder aus dem Redaktionsplan:
+//   B  (1)  Thema
+//   E  (4)  Fliesstext/Copy
+//   F  (5)  CTA-Varianten (JSON: [{text, url?, ausgewaehlt}])
+//   H  (7)  Betreff-Varianten (JSON – fuer spaetere Nutzung)
+//   J  (9)  Klaviyo-Template-ID (wird hier gesetzt)
+//   K  (10) Template-Erstellungsdatum
+//   AA (26) Ueberschrift (von copy-draft.js in Spalte AA geschrieben)
 
 const {
   getAccessToken,
@@ -19,7 +22,6 @@ const {
   findKundenprofil,
   findSheet,
   getRegisterValue,
-  setRegisterValue,
   sheetsReadValues,
   sheetsWriteValues,
 } = require('./lib/google');
@@ -27,66 +29,81 @@ const {
 const klaviyo = require('./lib/klaviyo');
 
 const PARENT_FOLDER_ID = process.env.DRIVE_PARENT_FOLDER_ID;
-const EXTRA_HEADER = ['Klaviyo-Template-ID', 'Template aktualisiert am'];
+const DEFINITION_REVISION = '2026-07-15';
 
-const MARKERS = {
-  copy: 'COPY',
-  cta: 'CTA',
-  preheader: 'PREHEADER',
-};
+const COL_THEMA = 1;
+const COL_COPY = 4;
+const COL_CTA = 5;
+const COL_TEMPLATE_ID = 9;
+const COL_TEMPLATE_DATE = 10;
+const COL_UEBERSCHRIFT = 26;
 
-function baseTemplateHtml() {
-  return (
-    '<!DOCTYPE html>\n' +
-    '<html>\n<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>\n' +
-    '<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">\n' +
-    '  <div style="display:none;max-height:0;overflow:hidden;">\n' +
-    '    <!--AUTO:PREHEADER_START--><!--AUTO:PREHEADER_END-->\n' +
-    '  </div>\n' +
-    '  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:24px 0;">\n' +
-    '    <tr><td align="center">\n' +
-    '      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">\n' +
-    '        <tr><td style="padding:24px;font-size:15px;line-height:1.6;color:#1F2937;">\n' +
-    '          <!--AUTO:COPY_START--><!--AUTO:COPY_END-->\n' +
-    '        </td></tr>\n' +
-    '        <tr><td style="padding:0 24px 32px 24px;">\n' +
-    '          <!--AUTO:CTA_START--><!--AUTO:CTA_END-->\n' +
-    '        </td></tr>\n' +
-    '      </table>\n' +
-    '    </td></tr>\n' +
-    '  </table>\n' +
-    '</body>\n</html>'
-  );
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
-// Ersetzt den Inhalt zwischen <!--AUTO:NAME_START--> und <!--AUTO:NAME_END-->
-// in html durch neuen Inhalt. Wirft einen Fehler, falls die Marker fehlen
-// (z.B. weil sie manuell aus dem Template entfernt wurden) statt das
-// Template blind zu ueberschreiben.
-function replaceMarker(html, name, newContent) {
-  const startTag = '<!--AUTO:' + name + '_START-->';
-  const endTag = '<!--AUTO:' + name + '_END-->';
-  const startIdx = html.indexOf(startTag);
-  const endIdx = html.indexOf(endTag);
-  if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) {
-    throw new Error(
-      'Marker "' + startTag + '" / "' + endTag + '" wurden im bestehenden Klaviyo-Template nicht gefunden. ' +
-      'Vermutlich wurden sie in der Klaviyo-UI manuell entfernt. Bitte Marker wiederherstellen oder Template neu anlegen lassen.'
-    );
+function makeTextSection(htmlContent) {
+  return {
+    content_type: 'section',
+    type: 'section',
+    data: { properties: {}, display_options: {}, styles: {} },
+    rows: [{
+      data: { styles: {} },
+      columns: [{
+        blocks: [{
+          content_type: 'block',
+          type: 'text',
+          data: { content: htmlContent, display_options: {}, styles: {} },
+        }],
+      }],
+    }],
+  };
+}
+
+function buildDefinition(ueberschrift, copyText, ctaText, ctaUrl) {
+  const styles = [
+    { style_type: 'base-styles', properties: {}, styles: {} },
+    { style_type: 'text-styles', styles: {} },
+    { style_type: 'heading-1-styles', styles: {} },
+    { style_type: 'heading-2-styles', styles: {} },
+    { style_type: 'heading-3-styles', styles: {} },
+    { style_type: 'heading-4-styles', styles: {} },
+    { style_type: 'link-styles', styles: {} },
+    { style_type: 'mobile-styles', properties: {}, styles: {} },
+  ];
+
+  const sections = [];
+
+  if (ueberschrift) {
+    sections.push(makeTextSection(
+      '<h2 style="margin:0 0 8px 0;font-size:24px;font-weight:bold;line-height:1.3;color:#1F2937;">' +
+      escHtml(ueberschrift) + '</h2>'
+    ));
   }
-  return (
-    html.slice(0, startIdx + startTag.length) +
-    newContent +
-    html.slice(endIdx)
-  );
-}
 
-function ctaButtonHtml(ctaText) {
-  return (
-    '<a href="#" style="display:inline-block;padding:12px 24px;background:#2563EB;color:#ffffff;' +
-    'text-decoration:none;border-radius:6px;font-weight:bold;">' +
-    String(ctaText).replace(/</g, '&lt;') + '</a>'
-  );
+  if (copyText) {
+    sections.push(makeTextSection(
+      '<p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">' +
+      escHtml(copyText).replace(/\n/g, '<br>') + '</p>'
+    ));
+  }
+
+  if (ctaText) {
+    sections.push(makeTextSection(
+      '<a href="' + escHtml(ctaUrl || '#') + '" style="display:inline-block;padding:12px 28px;' +
+      'background:#2563EB;color:#ffffff;text-decoration:none;border-radius:6px;' +
+      'font-weight:bold;font-size:15px;">' + escHtml(ctaText) + '</a>'
+    ));
+  }
+
+  if (!sections.length) {
+    sections.push(makeTextSection('<p>Newsletter-Inhalt</p>'));
+  }
+
+  return { styles, body: { properties: {}, styles: {}, sections } };
 }
 
 exports.handler = async (event) => {
@@ -96,9 +113,7 @@ exports.handler = async (event) => {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
 
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers, body: '' };
-  }
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -107,16 +122,16 @@ exports.handler = async (event) => {
   try {
     data = JSON.parse(event.body || '{}');
   } catch (err) {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Ungueltiges JSON im Request-Body.' }) };
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Ungueltiges JSON.' }) };
   }
 
   const kundenname = String(data.kundenname || '').trim();
   const themaFilter = String(data.thema || '').trim();
   if (!kundenname) {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Kundenname ist Pflichtfeld.' }) };
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'kundenname ist Pflichtfeld.' }) };
   }
   if (!PARENT_FOLDER_ID) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: 'DRIVE_PARENT_FOLDER_ID ist nicht als Umgebungsvariable gesetzt.' }) };
+    return { statusCode: 500, headers, body: JSON.stringify({ error: 'DRIVE_PARENT_FOLDER_ID fehlt.' }) };
   }
 
   try {
@@ -125,50 +140,50 @@ exports.handler = async (event) => {
 
     const folder = await findKundenordner(accessToken, PARENT_FOLDER_ID, folderName);
     if (!folder) {
-      return { statusCode: 404, headers, body: JSON.stringify({ error: 'Kein Kundenordner fuer "' + kundenname + '" gefunden.' }) };
+      return { statusCode: 404, headers, body: JSON.stringify({ error: 'Kein Kundenordner gefunden.' }) };
     }
 
     const kundenprofilSheet = await findKundenprofil(accessToken, folder.id, folderName);
-    const kundenprofilId = kundenprofilSheet ? kundenprofilSheet.id : null;
-    if (!kundenprofilId) {
-      return { statusCode: 404, headers, body: JSON.stringify({ error: 'Kein Kundenprofil fuer "' + kundenname + '" gefunden.' }) };
+    if (!kundenprofilSheet) {
+      return { statusCode: 404, headers, body: JSON.stringify({ error: 'Kein Kundenprofil gefunden.' }) };
     }
 
-    let redaktionsplanId = await getRegisterValue(accessToken, kundenprofilId, 'AKTUELL_Redaktionsplan_ID');
+    let redaktionsplanId = await getRegisterValue(accessToken, kundenprofilSheet.id, 'AKTUELL_Redaktionsplan_ID');
     if (!redaktionsplanId) {
       const redaktionsplanSheet = await findSheet(accessToken, folder.id, 'Redaktionsplan_' + folderName);
       if (redaktionsplanSheet) redaktionsplanId = redaktionsplanSheet.id;
     }
     if (!redaktionsplanId) {
-      return { statusCode: 404, headers, body: JSON.stringify({ error: 'Kein Redaktionsplan fuer "' + kundenname + '" gefunden.' }) };
+      return { statusCode: 404, headers, body: JSON.stringify({ error: 'Kein Redaktionsplan gefunden.' }) };
     }
 
-    const rows = await sheetsReadValues(accessToken, redaktionsplanId, 'A1:K500');
+    // AA = Spalte 27 (Index 26), daher Range bis AA
+    const rows = await sheetsReadValues(accessToken, redaktionsplanId, 'A1:AA500');
     if (rows.length <= 1) {
       return { statusCode: 404, headers, body: JSON.stringify({ error: 'Redaktionsplan ist leer.' }) };
     }
 
-    // Kopfzeile ggf. um Template-Spalten (J-K) ergaenzen, ohne A-I anzufassen.
+    // Sicherstellen dass Spaltenheader J+K vorhanden sind
     const header = rows[0];
-    if (header.length < 11 || !header[9]) {
-      const newHeader = header.slice(0, 9).concat(EXTRA_HEADER);
-      await sheetsWriteValues(accessToken, redaktionsplanId, [newHeader], 'A1:K1');
+    if (!header[COL_TEMPLATE_ID]) {
+      const newHeader = header.slice();
+      while (newHeader.length <= COL_TEMPLATE_DATE) newHeader.push('');
+      newHeader[COL_TEMPLATE_ID] = 'Klaviyo-Template-ID';
+      newHeader[COL_TEMPLATE_DATE] = 'Template erstellt am';
+      await sheetsWriteValues(accessToken, redaktionsplanId, [newHeader.slice(0, 11)], 'A1:K1');
     }
 
-    // Zielzeile: hat Copy-Text (E) und Betreff-Varianten (H), aber noch
-    // keine Template-ID (J) - oder exakter Thema-Treffer.
+    // Zielzeile suchen: hat Copy (E), kein Template-ID (J) – oder exakter Thema-Treffer
     let targetIndex = -1;
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
-      if (!row || !row[1]) continue;
-      const hasCopy = row[4] && String(row[4]).trim();
-      const hasBetreff = row[7] && String(row[7]).trim();
-      const hasTemplate = row[9] && String(row[9]).trim();
+      if (!row || !row[COL_THEMA]) continue;
       if (themaFilter) {
-        if (row[1] === themaFilter) { targetIndex = i; break; }
-      } else if (hasCopy && hasBetreff && !hasTemplate) {
-        targetIndex = i;
-        break;
+        if (String(row[COL_THEMA]).trim() === themaFilter) { targetIndex = i; break; }
+      } else {
+        const hasCopy = row[COL_COPY] && String(row[COL_COPY]).trim();
+        const hasTemplate = row[COL_TEMPLATE_ID] && String(row[COL_TEMPLATE_ID]).trim();
+        if (hasCopy && !hasTemplate) { targetIndex = i; break; }
       }
     }
     if (targetIndex === -1) {
@@ -177,79 +192,68 @@ exports.handler = async (event) => {
         headers,
         body: JSON.stringify({
           error: themaFilter
-            ? 'Thema "' + themaFilter + '" wurde im Redaktionsplan nicht gefunden.'
-            : 'Kein Thema mit Copy-Text + Betreff-Varianten ohne Template gefunden. Bitte zuerst Skill 6 (Copy-Draft) und Skill 7 (Betreff-Generator) laufen lassen.',
+            ? 'Thema "' + themaFilter + '" im Redaktionsplan nicht gefunden.'
+            : 'Kein Thema mit Copy-Text ohne Template gefunden. Bitte zuerst Skill 6 (Copy-Draft) ausfuehren.',
         }),
       };
     }
 
     const targetRow = rows[targetIndex];
-    const thema = targetRow[1];
-    const copyText = targetRow[4] || '';
-    // Spalte F: JSON-Array von CTA-Varianten (neu, Mehrfachauswahl moeglich)
-    // - oder, bei aelteren Zeilen, noch der reine alte Text (Legacy). Fuers
-    // Template wird die erste ausgewaehlte Variante genommen (oder, falls
-    // keine markiert ist, einfach die erste vorhandene).
-    let ctaList = [];
+    const thema = String(targetRow[COL_THEMA] || '').trim();
+    const ueberschrift = String(targetRow[COL_UEBERSCHRIFT] || '').trim();
+    const copyText = String(targetRow[COL_COPY] || '').trim();
+
+    let ctaText = '';
+    let ctaUrl = '';
     try {
-      const parsedCta = JSON.parse(targetRow[5] || '[]');
-      ctaList = Array.isArray(parsedCta) ? parsedCta : [{ text: String(targetRow[5] || ''), ausgewaehlt: true }];
-    } catch (err) {
-      ctaList = targetRow[5] ? [{ text: targetRow[5], ausgewaehlt: true }] : [];
-    }
-    const chosenCta = ctaList.find(function (c) { return c && c.ausgewaehlt; }) || ctaList[0];
-    const cta = (chosenCta && chosenCta.text) || '';
-    let variants = [];
-    try {
-      variants = JSON.parse(targetRow[7] || '[]');
-    } catch (err) {
-      variants = [];
-    }
-    const preheader = (variants[0] && variants[0].preview) || '';
-
-    const klaviyoAccessToken = await klaviyo.getValidAccessToken(accessToken, kundenprofilId);
-
-    let templateId = await getRegisterValue(accessToken, kundenprofilId, 'KLAVIYO_TEMPLATE_ID');
-    const templateName = 'Newsletter-Template - ' + folderName;
-    let currentHtml;
-    let isNewTemplate = false;
-
-    if (templateId) {
-      // Bestehendes Template: aktuellen Stand lesen, um manuelle
-      // Design-Aenderungen nicht zu ueberschreiben.
-      const existing = await klaviyo.klaviyoRequest(klaviyoAccessToken, 'GET', '/api/templates/' + templateId + '/');
-      currentHtml = existing && existing.data && existing.data.attributes && existing.data.attributes.html;
-      if (!currentHtml) {
-        throw new Error('Bestehendes Klaviyo-Template (ID ' + templateId + ') konnte nicht gelesen werden.');
+      const ctaList = JSON.parse(targetRow[COL_CTA] || '[]');
+      if (Array.isArray(ctaList)) {
+        const chosen = ctaList.find(function (c) { return c && c.ausgewaehlt; }) || ctaList[0];
+        if (chosen) { ctaText = String(chosen.text || ''); ctaUrl = String(chosen.url || chosen.link || ''); }
       }
-    } else {
-      currentHtml = baseTemplateHtml();
-      isNewTemplate = true;
+    } catch (err) {
+      if (targetRow[COL_CTA]) ctaText = String(targetRow[COL_CTA]);
     }
 
-    let newHtml = currentHtml;
-    newHtml = replaceMarker(newHtml, MARKERS.copy, String(copyText).replace(/</g, '&lt;').replace(/\n/g, '<br>'));
-    newHtml = replaceMarker(newHtml, MARKERS.cta, ctaButtonHtml(cta));
-    newHtml = replaceMarker(newHtml, MARKERS.preheader, String(preheader).replace(/</g, '&lt;'));
+    const klaviyoAccessToken = await klaviyo.getValidAccessToken(accessToken, kundenprofilSheet.id);
 
-    let templateResult;
-    if (isNewTemplate) {
-      templateResult = await klaviyo.klaviyoRequest(klaviyoAccessToken, 'POST', '/api/templates/', {
-        data: { type: 'template', attributes: { name: templateName, editor_type: 'CODE', html: newHtml } },
-      });
-      templateId = templateResult.data.id;
-      await setRegisterValue(accessToken, kundenprofilId, 'KLAVIYO_TEMPLATE_ID', templateId);
-    } else {
-      templateResult = await klaviyo.klaviyoRequest(klaviyoAccessToken, 'PATCH', '/api/templates/' + templateId + '/', {
-        data: { type: 'template', id: templateId, attributes: { html: newHtml } },
-      });
+    const templateName = 'KI-OS ' + folderName + ' – ' + String(thema).substring(0, 50);
+    const definition = buildDefinition(ueberschrift, copyText, ctaText, ctaUrl);
+
+    const createRes = await fetch('https://a.klaviyo.com/api/templates/', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + klaviyoAccessToken,
+        'Content-Type': 'application/json',
+        revision: DEFINITION_REVISION,
+      },
+      body: JSON.stringify({
+        data: {
+          type: 'template',
+          attributes: {
+            name: templateName,
+            editor_type: 'SYSTEM_DRAGGABLE',
+            definition: definition,
+          },
+        },
+      }),
+    });
+
+    const created = await createRes.json().catch(function () { return null; });
+    if (!createRes.ok) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ step: 'create', success: false, klaviyoError: created }),
+      };
     }
 
+    const newTemplateId = created.data.id;
     const sheetRowNumber = targetIndex + 1;
     await sheetsWriteValues(
       accessToken,
       redaktionsplanId,
-      [[templateId, new Date().toISOString()]],
+      [[newTemplateId, new Date().toISOString()]],
       'J' + sheetRowNumber + ':K' + sheetRowNumber
     );
 
@@ -259,9 +263,8 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: true,
         thema: thema,
-        templateId: templateId,
-        wasNewTemplate: isNewTemplate,
-        klaviyoTemplateUrl: 'https://www.klaviyo.com/email-templates/' + templateId + '/edit',
+        templateId: newTemplateId,
+        klaviyoTemplateUrl: 'https://www.klaviyo.com/email-template-editor/' + newTemplateId,
         spreadsheetUrl: 'https://docs.google.com/spreadsheets/d/' + redaktionsplanId,
       }),
     };
