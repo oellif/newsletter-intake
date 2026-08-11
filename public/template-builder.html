@@ -138,7 +138,7 @@ async function generate() {
       return;
     }
     msg.className = 'msg';
-    msg.textContent = (data.wasNewTemplate ? 'Neues Template erstellt' : 'Template aktualisiert') + ' fuer: ' + data.thema;
+    msg.textContent = 'Neues SYSTEM_DRAGGABLE-Template erstellt fuer: ' + data.thema;
     resultBox.innerHTML =
       '<div class="result">Template-ID: ' + data.templateId + '<br>' +
       '<a href="' + data.klaviyoTemplateUrl + '" target="_blank">In Klaviyo oeffnen</a></div>';
