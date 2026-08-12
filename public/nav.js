@@ -36,7 +36,6 @@
     // sein. Einheitliche Namenskonvention: "Thema " + Herkunft.
     { label: 'Thema manuell anlegen', seite: 'idee.html', withKunde: true, sub: true },
     { label: 'Thema automatisch vorschlagen', seite: 'ideen-freigabe.html', withKunde: true, sub: true },
-    { label: 'Autopilot starten', seite: 'orchestrator.html', withKunde: true },
     { label: 'Testmail senden', seite: 'test-mail-send.html', withKunde: true },
     { label: 'QA-Check', seite: 'qa-check.html', withKunde: true },
     { label: 'Kampagne anlegen', seite: 'campaign-setup.html', withKunde: true },
