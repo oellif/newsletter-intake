@@ -1,13 +1,11 @@
-// Temporaere Testfunktion - prueft ob aeltere Klaviyo-API-Revisionen
-// die Definition des kaputten Templates VBrCtm zurueckgeben koennen.
-// Nach dem Test loeschen.
+// Temporaer: versucht das kaputte Template VBrCtm via render-Endpunkt als HTML zu laden
 
 const { getAccessToken, sanitizeFolderName, findKundenordner, findKundenprofil } = require('./lib/google');
 const klaviyo = require('./lib/klaviyo');
 
 const PARENT_FOLDER_ID = process.env.DRIVE_PARENT_FOLDER_ID;
 const TEMPLATE_ID = 'VBrCtm';
-const REVISIONS = ['2024-10-15', '2024-07-15', '2024-02-15', '2023-10-15'];
+const REVISION = '2026-07-15';
 
 exports.handler = async (event) => {
   const headers = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
@@ -20,37 +18,51 @@ exports.handler = async (event) => {
     const kundenprofilSheet = await findKundenprofil(accessToken, folder.id, folderName);
     const klaviyoToken = await klaviyo.getValidAccessToken(accessToken, kundenprofilSheet.id);
 
-    const results = [];
+    // Render-Endpunkt aufrufen
+    const res = await fetch('https://a.klaviyo.com/api/templates/' + TEMPLATE_ID + '/render/', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + klaviyoToken,
+        'Content-Type': 'application/json',
+        revision: REVISION,
+      },
+      body: JSON.stringify({
+        data: {
+          type: 'template',
+          attributes: {
+            context: { person: { first_name: 'Test' } },
+          },
+        },
+      }),
+    });
 
-    for (const revision of REVISIONS) {
-      const res = await fetch(
-        'https://a.klaviyo.com/api/templates/' + TEMPLATE_ID + '/?additional-fields[template]=definition',
-        { headers: { Authorization: 'Bearer ' + klaviyoToken, revision } }
-      );
-      const body = await res.json().catch(() => null);
-      const hasDefinition = !!(body && body.data && body.data.attributes && body.data.attributes.definition);
-      const error = body && body.errors && body.errors[0] && body.errors[0].detail;
+    const body = await res.json().catch(() => null);
+    const html = body && body.data && body.data.attributes && body.data.attributes.html;
 
-      results.push({
-        revision,
-        status: res.status,
-        hasDefinition,
-        error: error || null,
-        blockCount: hasDefinition ? countBlocks(body.data.attributes.definition) : null,
-      });
-
-      if (hasDefinition) break;
+    if (!html) {
+      return { statusCode: 200, headers, body: JSON.stringify({ success: false, status: res.status, klaviyoError: body }) };
     }
 
-    return { statusCode: 200, headers, body: JSON.stringify({ templateId: TEMPLATE_ID, results }, null, 2) };
+    // Bild-URLs aus dem HTML extrahieren
+    const imgMatches = [...html.matchAll(/src="(https?:\/\/[^"]+)"/g)].map(m => m[1]);
+    const uniqueImgs = [...new Set(imgMatches)];
+
+    // Links extrahieren
+    const linkMatches = [...html.matchAll(/href="(https?:\/\/[^"]+)"/g)].map(m => m[1]);
+    const uniqueLinks = [...new Set(linkMatches)];
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        htmlLength: html.length,
+        imageUrls: uniqueImgs,
+        links: uniqueLinks,
+        htmlPreview: html.substring(0, 500),
+      }, null, 2),
+    };
   } catch (err) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
 };
-
-function countBlocks(definition) {
-  let count = 0;
-  const sections = (definition.body && definition.body.sections) || [];
-  sections.forEach(s => (s.rows || []).forEach(r => (r.columns || []).forEach(c => { count += (c.blocks || []).length; })));
-  return count;
-}
