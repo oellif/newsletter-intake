@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KI-OS Hub</title>
+<link rel="stylesheet" href="/mh-ci.css">
+<style>
+  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 28px; }
+  .hub-wrap { max-width: 600px; width: 100%; }
+  .hub-title { font-family: 'Varela Round', 'Manrope', sans-serif; font-size: 32px; font-weight: 400; color: #191919; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .hub-sub { font-size: 15px; color: #6B7280; margin-bottom: 36px; line-height: 1.5; }
+  .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .tool-card { background: #fff; border-radius: 16px; padding: 28px 24px; box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 20px rgba(25,25,25,0.06); cursor: pointer; text-decoration: none; color: inherit; transition: transform 0.12s, box-shadow 0.12s; display: flex; flex-direction: column; gap: 12px; border: 2px solid transparent; }
+  .tool-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(25,25,25,0.08), 0 12px 32px rgba(25,25,25,0.08); }
+  .tool-card.newsletter:hover { border-color: #FA8700; }
+  .tool-card.shopify:hover { border-color: #96BF48; }
+  .tool-icon { font-size: 32px; }
+  .tool-name { font-size: 18px; font-weight: 800; color: #191919; }
+  .tool-desc { font-size: 13px; color: #6B7280; line-height: 1.5; }
+  .tool-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .tool-pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .pill-nl { background: rgba(250,135,0,0.1); color: #FA8700; }
+  .pill-sh { background: rgba(150,191,72,0.12); color: #5a9020; }
+  .tool-arrow { margin-top: auto; font-size: 18px; color: #D1D5DB; align-self: flex-end; }
+  .tool-card.newsletter:hover .tool-arrow { color: #FA8700; }
+  .tool-card.shopify:hover .tool-arrow { color: #96BF48; }
+  @media (max-width: 500px) { .tool-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="hub-wrap">
+  <div class="hub-title">KI-OS Hub</div>
+  <p class="hub-sub">Wähle dein Tool. Der Modus bleibt gespeichert — du kannst jederzeit über das Logo oben links wechseln.</p>
+
+  <div class="tool-grid">
+    <a class="tool-card newsletter" href="/index.html" id="btn-newsletter">
+      <div class="tool-icon">📧</div>
+      <div class="tool-name">Newsletter-Tool</div>
+      <div class="tool-desc">Newsletter-Kampagnen erstellen, in Klaviyo übertragen und versenden.</div>
+      <div class="tool-pills">
+        <span class="tool-pill pill-nl">Klaviyo</span>
+        <span class="tool-pill pill-nl">Redaktion</span>
+        <span class="tool-pill pill-nl">Versand</span>
+      </div>
+      <div class="tool-arrow">→</div>
+    </a>
+
+    <a class="tool-card shopify" href="/shopify-dashboard.html" id="btn-shopify">
+      <div class="tool-icon">🛍</div>
+      <div class="tool-name">Shopify-Tool</div>
+      <div class="tool-desc">Produkte hochladen, synchronisieren und im Shopify-Shop verwalten.</div>
+      <div class="tool-pills">
+        <span class="tool-pill pill-sh">Produkte</span>
+        <span class="tool-pill pill-sh">Upload</span>
+        <span class="tool-pill pill-sh">Sync</span>
+      </div>
+      <div class="tool-arrow">→</div>
+    </a>
+  </div>
+</div>
+
+<script>
+document.getElementById('btn-newsletter').addEventListener('click', function () {
+  localStorage.setItem('kios_modus', 'newsletter');
+});
+document.getElementById('btn-shopify').addEventListener('click', function () {
+  localStorage.setItem('kios_modus', 'shopify');
+});
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

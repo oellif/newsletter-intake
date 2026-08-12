@@ -1,66 +1,60 @@
-// Ablage- & Versionsregel v1 aktiv - umgestellt am 20260804
-//
-// Gemeinsames globales Navigationsmenue (linke Sidebar) fuer alle Seiten
-// der Newsletter-Skill-Pipeline. Wird per <script src="nav.js"></script>
-// auf jeder Seite eingebunden.
-//
-// Konzept "eingeloggter Kunde" (nur agenturintern, kein echter Zugriffs-
-// schutz - das kommt spaeter fuer die Kunden-Selbstbedienung):
-// - Der zuletzt gewaehlte Kundenname wird in localStorage gespeichert und
-//   bleibt ueber Neuladen/Schliessen hinweg erhalten.
-// - Klick auf einen Menuepunkt haengt automatisch ?kundenname=... an, wenn
-//   ein Kunde "eingeloggt" ist.
-// - Ist noch kein Kunde gewaehlt, oeffnet ein Klick auf einen Menuepunkt
-//   zuerst ein Auswahl-Dropdown mit ALLEN existierenden Kunden (kein
-//   Freitext - man soll sehen, welche es schon gibt).
-// - "Kunde wechseln" oeffnet dasselbe Dropdown bewusst erneut.
-// - "Kunde loeschen" ist bewusst ausgenommen: dieser Link bekommt NIE den
-//   eingeloggten Kundennamen automatisch mit, damit man nicht aus
-//   Versehen den falschen (naemlich den gerade aktiven) Kunden loescht -
-//   die Seite hat ihre eigene Suche.
+// KI-OS Hub — Gemeinsame Sidebar-Navigation
+// Unterstuetzt zwei Tools: Newsletter + Shopify.
+// Modus wird in localStorage (kios_modus) gespeichert.
+// Logo-Link fuehrt immer zu /home.html.
 
 (function () {
   var STORAGE_KEY = 'kios_kundenname';
+  var MODUS_KEY   = 'kios_modus'; // 'newsletter' | 'shopify' | ''
 
-  var NAV_ITEMS = [
+  var NEWSLETTER_NAV_ITEMS = [
     { group: 'Teil 1 - einmalig' },
-    { label: 'Neukundenanlage', seite: 'index.html', withKunde: false },
-    { label: 'Klaviyo verbinden', seite: 'klaviyo-verbinden.html', withKunde: true },
-    { label: 'Template-Mapping', seite: 'template-mapping.html', withKunde: true },
+    { label: 'Neukundenanlage',               seite: 'index.html',                withKunde: false },
+    { label: 'Klaviyo verbinden',             seite: 'klaviyo-verbinden.html',    withKunde: true  },
+    { label: 'Template-Mapping',              seite: 'template-mapping.html',     withKunde: true  },
     { group: 'Teil 2 - pro Ausgabe' },
-    { label: 'Redaktionsplan', seite: 'redaktionsplan.html', withKunde: true },
-    // Diese beiden sind bewusst als Unterpunkte von Redaktionsplan
-    // eingerueckt (sub: true) - beide bestimmen ein neues Thema fuer den
-    // Redaktionsplan, nur auf unterschiedlichem Weg (manuell vs. KI), und
-    // sollen deshalb auf einen Blick als zusammengehoerendes Paar erkennbar
-    // sein. Einheitliche Namenskonvention: "Thema " + Herkunft.
-    { label: 'Thema manuell anlegen', seite: 'idee.html', withKunde: true, sub: true },
-    { label: 'Thema automatisch vorschlagen', seite: 'ideen-freigabe.html', withKunde: true, sub: true },
-    { label: 'Testmail senden', seite: 'test-mail-send.html', withKunde: true },
-    { label: 'QA-Check', seite: 'qa-check.html', withKunde: true },
-    { label: 'Kampagne anlegen', seite: 'campaign-setup.html', withKunde: true },
-    { label: 'Kundenvorschau senden', seite: 'kunden-vorschau.html', withKunde: true },
-    { label: 'Performance-Report', seite: 'performance-reporter.html', withKunde: true },
+    { label: 'Redaktionsplan',                seite: 'redaktionsplan.html',       withKunde: true  },
+    { label: 'Thema manuell anlegen',         seite: 'idee.html',                 withKunde: true,  sub: true },
+    { label: 'Thema automatisch vorschlagen', seite: 'ideen-freigabe.html',       withKunde: true,  sub: true },
+    { label: 'Testmail senden',               seite: 'test-mail-send.html',       withKunde: true  },
+    { label: 'QA-Check',                      seite: 'qa-check.html',             withKunde: true  },
+    { label: 'Kampagne anlegen',              seite: 'campaign-setup.html',       withKunde: true  },
+    { label: 'Kundenvorschau senden',         seite: 'kunden-vorschau.html',      withKunde: true  },
+    { label: 'Performance-Report',            seite: 'performance-reporter.html', withKunde: true  },
     { group: 'Optional' },
-    { label: 'Segment-Mapper', seite: 'segment-mapper.html', withKunde: true },
+    { label: 'Segment-Mapper',                seite: 'segment-mapper.html',       withKunde: true  },
   ];
 
-  function getCurrentPage() {
-    return (window.location.pathname.split('/').pop() || 'anleitung.html');
-  }
+  var SHOPIFY_NAV_ITEMS = [
+    { group: 'Shopify-Tool' },
+    { label: 'Dashboard',                seite: 'shopify-dashboard.html', withKunde: false },
+    { label: 'Produkt hochladen',        seite: 'shopify-upload.html',    withKunde: false },
+    { label: 'Produkte synchronisieren', seite: 'shopify-sync.html',      withKunde: false },
+  ];
 
+  var SHOPIFY_PAGES = {
+    'shopify-dashboard.html': true,
+    'shopify-upload.html':    true,
+    'shopify-sync.html':      true,
+  };
+
+  function getCurrentPage() {
+    return (window.location.pathname.split('/').pop() || 'home.html');
+  }
   function getLoggedInKunde() {
     try { return localStorage.getItem(STORAGE_KEY) || ''; } catch (e) { return ''; }
   }
   function setLoggedInKunde(name) {
     try { localStorage.setItem(STORAGE_KEY, name); } catch (e) {}
   }
-  function clearLoggedInKunde() {
-    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  function getModus() {
+    try { return localStorage.getItem(MODUS_KEY) || ''; } catch (e) { return ''; }
+  }
+  function setModus(m) {
+    try { localStorage.setItem(MODUS_KEY, m); } catch (e) {}
   }
 
   function injectStyles() {
-    // Google Fonts
     var font = document.createElement('link');
     font.rel = 'stylesheet';
     font.href = 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap';
@@ -74,6 +68,16 @@
       + '.kios-nav-logo-img { height: 40px; width: auto; display: block; }'
       + '.kios-nav-logo-text { font-size: 13px; font-weight: 800; color: #fff; line-height: 1.3; }'
       + '.kios-nav-logo-text span { color: #FA8700; }'
+      + '.kios-modus-bar { display: flex; align-items: center; justify-content: space-between; padding: 7px 18px; background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.06); }'
+      + '.kios-modus-badge { font-size: 11px; font-weight: 700; }'
+      + '.kios-modus-badge.newsletter { color: #FA8700; }'
+      + '.kios-modus-badge.shopify { color: #96BF48; }'
+      + '.kios-modus-switch { font-size: 11px; color: rgba(255,255,255,0.4); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; padding: 0; background: none; border: none; font-family: inherit; }'
+      + '.kios-nav-tool-btn { display: flex; align-items: center; gap: 12px; padding: 16px 18px; text-decoration: none; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.06); transition: background 0.12s; }'
+      + '.kios-nav-tool-btn:hover { background: rgba(255,255,255,0.06); }'
+      + '.kios-tool-icon { font-size: 22px; flex-shrink: 0; }'
+      + '.kios-tool-name { font-size: 14px; font-weight: 700; color: #fff; }'
+      + '.kios-tool-desc { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }'
       + '.kios-nav-kunde { padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 12px; background: #252527; }'
       + '.kios-nav-kunde .lbl { color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: .08em; font-size: 10px; margin-bottom: 3px; font-weight: 700; }'
       + '.kios-nav-kunde .name { font-weight: bold; color: #fff; font-size: 13.5px; word-break: break-word; }'
@@ -103,6 +107,7 @@
       + '.kios-modal-actions .ok:disabled { background: rgba(250,135,0,0.4); box-shadow: none; cursor: not-allowed; }'
       + 'body.kios-has-nav { margin-left: 240px; }'
       + '@media (max-width: 780px) { .kios-nav { display: none; } body.kios-has-nav { margin-left: 0; } }';
+
     var style = document.createElement('style');
     style.textContent = css;
     document.head.appendChild(style);
@@ -110,11 +115,10 @@
 
   function buildUrl(seite, withKunde) {
     var kunde = getLoggedInKunde();
-    var url = '/' + seite;
     if (withKunde && kunde) {
-      return url + '?kundenname=' + encodeURIComponent(kunde);
+      return '/' + seite + '?kundenname=' + encodeURIComponent(kunde);
     }
-    return url;
+    return '/' + seite;
   }
 
   function openLoginModal(onChosen) {
@@ -133,7 +137,7 @@
     document.body.appendChild(overlay);
 
     var select = overlay.querySelector('#kios-login-select');
-    var okBtn = overlay.querySelector('#kios-login-ok');
+    var okBtn  = overlay.querySelector('#kios-login-ok');
     var cancelBtn = overlay.querySelector('#kios-login-cancel');
 
     fetch('/.netlify/functions/kunden-alle')
@@ -153,12 +157,8 @@
         select.innerHTML = '<option value="">(Fehler beim Laden)</option>';
       });
 
-    select.addEventListener('change', function () {
-      okBtn.disabled = !select.value;
-    });
-    cancelBtn.addEventListener('click', function () {
-      document.body.removeChild(overlay);
-    });
+    select.addEventListener('change', function () { okBtn.disabled = !select.value; });
+    cancelBtn.addEventListener('click', function () { document.body.removeChild(overlay); });
     okBtn.addEventListener('click', function () {
       var chosen = select.value;
       if (!chosen) return;
@@ -168,10 +168,6 @@
     });
   }
 
-  // Fragt den Klaviyo-Verbindungsstatus des eingeloggten Kunden ab und
-  // zeigt einen Haken/X direkt neben dem Namen in der Sidebar - so sieht
-  // man auf einen Blick, ob "Klaviyo verbinden" fuer diesen Kunden noch
-  // aussteht, ohne extra auf die Seite zu wechseln.
   function loadKlaviyoStatus(kunde) {
     var badge = document.getElementById('kios-klaviyo-status');
     if (!badge) { return; }
@@ -185,7 +181,7 @@
           current.textContent = '✓ ' + (data.klaviyoAccountName || 'verbunden');
           current.title = data.klaviyoAccountName
             ? 'Verbunden mit Klaviyo-Account: ' + data.klaviyoAccountName
-            : 'Klaviyo verbunden (Accountname konnte nicht ermittelt werden)';
+            : 'Klaviyo verbunden';
         } else {
           current.className = 'kios-klaviyo-status missing';
           current.textContent = '✗ Nein';
@@ -197,7 +193,6 @@
         if (current) {
           current.className = 'kios-klaviyo-status missing';
           current.textContent = '? unbekannt';
-          current.title = 'Klaviyo-Status konnte nicht geprueft werden';
         }
       });
   }
@@ -208,40 +203,97 @@
     nav.className = 'kios-nav';
 
     var currentPage = getCurrentPage();
+    var modus = getModus();
     var kunde = getLoggedInKunde();
 
-    var html = '<a class="kios-nav-home" href="/anleitung.html">'
+    // Shopify-Seiten erzwingen Shopify-Modus
+    if (SHOPIFY_PAGES[currentPage]) { modus = 'shopify'; setModus('shopify'); }
+
+    // Logo → immer home.html
+    var html = '<a class="kios-nav-home" href="/home.html">'
       + '<div class="kios-nav-logo-crop"><img class="kios-nav-logo-img" src="https://onecdn.io/media/9c5aadc5-b587-40cb-bc68-474e3b944ab9/md2x" alt="MH"></div>'
       + '<div class="kios-nav-logo-text">KI<span>-</span>OS<br>Newsletter Suite</div>'
       + '</a>';
 
-    html += '<div class="kios-nav-kunde">';
-    if (kunde) {
-      html += '<div class="lbl">Eingeloggt als</div>'
-        + '<div class="name">' + kunde.replace(/</g, '&lt;') + '</div>'
-        + '<div class="kios-klaviyo-line">Klaviyo-Account: <span id="kios-klaviyo-status" class="kios-klaviyo-status" title="Klaviyo-Status wird geprueft ...">&hellip;</span></div>';
-      html += '<button type="button" class="switch" id="kios-switch-kunde">Kunde wechseln</button>';
+    if (currentPage === 'home.html') {
+      // ── HOME: Tool-Auswahl ──────────────────────────
+      html += '<div class="kios-nav-group">Tool wählen</div>';
+      html += '<a class="kios-nav-tool-btn" href="#" id="kios-tool-newsletter">'
+        + '<div class="kios-tool-icon">📧</div>'
+        + '<div><div class="kios-tool-name">Newsletter-Tool</div><div class="kios-tool-desc">Klaviyo · Redaktion · Versand</div></div>'
+        + '</a>';
+      html += '<a class="kios-nav-tool-btn" href="#" id="kios-tool-shopify">'
+        + '<div class="kios-tool-icon">🛍</div>'
+        + '<div><div class="kios-tool-name">Shopify-Tool</div><div class="kios-tool-desc">Produkte · Upload · Sync</div></div>'
+        + '</a>';
+
+    } else if (modus === 'shopify') {
+      // ── SHOPIFY MODE ────────────────────────────────
+      html += '<div class="kios-modus-bar">'
+        + '<span class="kios-modus-badge shopify">🛍 Shopify</span>'
+        + '<a class="kios-modus-switch" href="/home.html">wechseln</a>'
+        + '</div>';
+      SHOPIFY_NAV_ITEMS.forEach(function (item) {
+        if (item.group) {
+          html += '<div class="kios-nav-group">' + item.group + '</div>';
+        } else {
+          var isActive = item.seite === currentPage;
+          html += '<a class="kios-nav-item' + (isActive ? ' active' : '') + '" href="/' + item.seite + '">' + item.label + '</a>';
+        }
+      });
+
     } else {
-      html += '<div class="lbl">Kein Kunde gewaehlt</div>';
-      html += '<button type="button" class="switch" id="kios-switch-kunde">Kunde waehlen</button>';
-    }
-    html += '</div>';
+      // ── NEWSLETTER MODE (Standard) ──────────────────
+      html += '<div class="kios-modus-bar">'
+        + '<span class="kios-modus-badge newsletter">📧 Newsletter</span>'
+        + '<a class="kios-modus-switch" href="/home.html">wechseln</a>'
+        + '</div>';
 
-    NAV_ITEMS.forEach(function (item) {
-      if (item.group) {
-        html += '<div class="kios-nav-group">' + item.group + '</div>';
+      html += '<div class="kios-nav-kunde">';
+      if (kunde) {
+        html += '<div class="lbl">Eingeloggt als</div>'
+          + '<div class="name">' + kunde.replace(/</g, '&lt;') + '</div>'
+          + '<div class="kios-klaviyo-line">Klaviyo-Account: <span id="kios-klaviyo-status" class="kios-klaviyo-status" title="Klaviyo-Status wird geprueft ...">&hellip;</span></div>'
+          + '<button type="button" class="switch" id="kios-switch-kunde">Kunde wechseln</button>';
       } else {
-        var isActive = item.seite === currentPage;
-        var cls = 'kios-nav-item' + (item.sub ? ' sub' : '') + (isActive ? ' active' : '');
-        html += '<a class="' + cls + '" href="#" data-seite="' + item.seite + '" data-with-kunde="' + (item.withKunde ? '1' : '0') + '">' + item.label + '</a>';
+        html += '<div class="lbl">Kein Kunde gewaehlt</div>'
+          + '<button type="button" class="switch" id="kios-switch-kunde">Kunde waehlen</button>';
       }
-    });
+      html += '</div>';
 
-    html += '<a class="kios-nav-danger" href="/kunde-loeschen.html">Kunde loeschen (intern)</a>';
+      NEWSLETTER_NAV_ITEMS.forEach(function (item) {
+        if (item.group) {
+          html += '<div class="kios-nav-group">' + item.group + '</div>';
+        } else {
+          var isActive = item.seite === currentPage;
+          var cls = 'kios-nav-item' + (item.sub ? ' sub' : '') + (isActive ? ' active' : '');
+          html += '<a class="' + cls + '" href="#" data-seite="' + item.seite + '" data-with-kunde="' + (item.withKunde ? '1' : '0') + '">' + item.label + '</a>';
+        }
+      });
+
+      html += '<a class="kios-nav-danger" href="/kunde-loeschen.html">Kunde loeschen (intern)</a>';
+    }
 
     nav.innerHTML = html;
     document.body.insertBefore(nav, document.body.firstChild);
 
+    // ── EVENT HANDLER ────────────────────────────────
+
+    if (currentPage === 'home.html') {
+      var nlBtn = nav.querySelector('#kios-tool-newsletter');
+      var shBtn = nav.querySelector('#kios-tool-shopify');
+      if (nlBtn) nlBtn.addEventListener('click', function (ev) {
+        ev.preventDefault(); setModus('newsletter'); window.location.href = '/index.html';
+      });
+      if (shBtn) shBtn.addEventListener('click', function (ev) {
+        ev.preventDefault(); setModus('shopify'); window.location.href = '/shopify-dashboard.html';
+      });
+      return;
+    }
+
+    if (modus === 'shopify') { return; }
+
+    // Newsletter: Klaviyo-Status + Nav-Klick + Kunde wechseln
     if (kunde) { loadKlaviyoStatus(kunde); }
 
     nav.querySelectorAll('.kios-nav-item').forEach(function (link) {
@@ -250,9 +302,7 @@
         var seite = link.getAttribute('data-seite');
         var withKunde = link.getAttribute('data-with-kunde') === '1';
         if (withKunde && !getLoggedInKunde()) {
-          openLoginModal(function () {
-            window.location.href = buildUrl(seite, withKunde);
-          });
+          openLoginModal(function () { window.location.href = buildUrl(seite, withKunde); });
         } else {
           window.location.href = buildUrl(seite, withKunde);
         }
@@ -263,14 +313,9 @@
     if (switchBtn) {
       switchBtn.addEventListener('click', function () {
         openLoginModal(function (chosen) {
-          // Aktuelle Seite mit dem neu gewaehlten Kunden neu aufrufen
-          // (statt nur reload), damit URL und Kundenname-Feld sofort
-          // konsistent sind - auf der Neukundenanlage bewusst ohne Param.
-          // Auf Seiten ausserhalb der normalen public/-Root (z.B. die
-          // Klaviyo-Erfolgsseite unter /.netlify/functions/...) gibt es
-          // keine sinnvolle "gleiche Seite" zum Neuladen - dort geht es
-          // stattdessen zur Anleitung mit dem neu gewaehlten Kunden.
-          var isKnownPage = NAV_ITEMS.some(function (item) { return !item.group && item.seite === currentPage; });
+          var isKnownPage = NEWSLETTER_NAV_ITEMS.some(function (item) {
+            return !item.group && item.seite === currentPage;
+          });
           if (currentPage === 'index.html') {
             window.location.reload();
           } else if (isKnownPage) {
@@ -283,21 +328,12 @@
     }
   }
 
-  // Falls die Seite ueber ?kundenname=... aufgerufen wird (z.B. Klick von
-  // einer anderen Seite mit bereits eingeloggtem Kunden, oder Redirect aus
-  // einem Skill-Erfolg), diesen Namen ebenfalls als "eingeloggt" merken,
-  // damit der Zustand konsistent bleibt.
   function syncFromUrl() {
     var params = new URLSearchParams(window.location.search);
     var fromUrl = params.get('kundenname');
     if (fromUrl) { setLoggedInKunde(fromUrl); }
   }
 
-  // Fuellt das Kundenname-Feld der aktuellen Seite aus dem eingeloggten
-  // Kunden, falls es noch leer ist (z.B. nach "Kunde wechseln" + Reload,
-  // wenn die URL selbst keinen ?kundenname=-Parameter hat). Auf der
-  // Neukundenanlage bewusst NICHT automatisch befuellen, damit dort nicht
-  // aus Versehen ein bestehender Kundenname in ein neues Formular rutscht.
   function populateKundenFeld() {
     if (getCurrentPage() === 'index.html') { return; }
     var el = document.getElementById('kundenname');
@@ -305,31 +341,26 @@
       var kunde = getLoggedInKunde();
       if (kunde) {
         el.value = kunde;
-        // Seiten mit Themen-Auswahlfeld (idee.html, qa-check.html usw.)
-        // laden die offenen Themen beim eigenen Seiten-Laden nur, wenn das
-        // Kundenname-Feld zu diesem Zeitpunkt schon gefuellt war. Da wir
-        // erst hier (nach nav.js) befuellen, holen wir das jetzt nach.
-        if (typeof window.loadThemen === 'function') {
-          window.loadThemen();
-        }
+        if (typeof window.loadThemen === 'function') { window.loadThemen(); }
       }
     }
   }
 
-  // Seiten, auf denen kein Kunde noetig/moeglich ist.
-  var NO_KUNDE_PAGES = { 'index.html': true, 'kunde-loeschen.html': true, 'anleitung.html': true };
+  var NO_KUNDE_PAGES = {
+    'home.html':              true,
+    'index.html':             true,
+    'kunde-loeschen.html':    true,
+    'anleitung.html':         true,
+    'shopify-dashboard.html': true,
+    'shopify-upload.html':    true,
+    'shopify-sync.html':      true,
+  };
 
-  // Seit das Kundenname-Feld auf den Seiten nicht mehr sichtbar/editierbar
-  // ist (nur noch via Sidebar "Kunde wechseln" bzw. Login), muss beim
-  // Laden einer kunde-pflichtigen Seite ohne aufloesbaren Kunden (kein
-  // ?kundenname=-Param, kein localStorage-Wert) automatisch das
-  // Login-Auswahlfeld erscheinen - sonst gibt es keine Moeglichkeit mehr,
-  // ueberhaupt einen Kunden zu waehlen.
   function autoPromptIfNeeded() {
     var page = getCurrentPage();
-    if (NO_KUNDE_PAGES[page]) { return; }
+    if (NO_KUNDE_PAGES[page] || SHOPIFY_PAGES[page]) { return; }
     if (getLoggedInKunde()) { return; }
-    var needsKunde = NAV_ITEMS.some(function (item) {
+    var needsKunde = NEWSLETTER_NAV_ITEMS.some(function (item) {
       return !item.group && item.seite === page && item.withKunde;
     });
     if (!needsKunde) { return; }
