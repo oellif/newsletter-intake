@@ -39,12 +39,18 @@
   .badge-nl-nok  { background: rgba(248,113,113,0.12); color: #DC2626; }
   .badge-nl-wait { background: rgba(156,163,175,0.13); color: #6B7280; }
 
-  .k-actions { display: flex; gap: 8px; }
-  .btn-tool { flex: 1; padding: 7px 0; border-radius: 40px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid; background: transparent; font-family: inherit; transition: background 0.12s; text-align: center; }
+  .k-contact { font-size: 12px; color: #6B7280; margin: -4px 0 10px; line-height: 1.6; }
+  .k-contact a { color: #6B7280; text-decoration: none; }
+  .k-contact a:hover { color: var(--accent); }
+
+  .k-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-tool { flex: 1; padding: 7px 0; border-radius: 40px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid; background: transparent; font-family: inherit; transition: background 0.12s; text-align: center; min-width: 70px; }
   .btn-nl { color: #FA8700; border-color: rgba(250,135,0,0.35); }
   .btn-nl:hover { background: rgba(250,135,0,0.07); }
   .btn-sh { color: #4d7a00; border-color: rgba(150,191,72,0.4); }
   .btn-sh:hover { background: rgba(150,191,72,0.07); }
+  .btn-edit { flex: 0 0 auto; padding: 7px 14px; border-radius: 40px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--border); background: transparent; font-family: inherit; color: #6B7280; text-decoration: none; display: inline-flex; align-items: center; transition: background 0.12s, color 0.12s; }
+  .btn-edit:hover { background: #F3F4F6; color: #374151; }
 
   .state-box { text-align: center; padding: 64px 20px; color: #9CA3AF; }
   .state-box .ico { font-size: 42px; margin-bottom: 12px; }
@@ -87,6 +93,7 @@
 (function () {
   var allKunden = [];
   var klaviyoCache = {};
+  var masterCache = {};   // name → { email, telefon, ... }
 
   function render() {
     var q = (document.getElementById('search-input').value || '').toLowerCase().trim();
@@ -104,17 +111,29 @@
       var safe = k.name.replace(/</g, '&lt;');
       var esc  = k.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
       var st   = klaviyoCache[k.name];
+      var md   = masterCache[k.name.toLowerCase()] || {};
+
       var nlBadge = st === 'ok'
         ? '<span class="badge badge-nl-ok">📧 Klaviyo ✓</span>'
         : st === 'nok'
           ? '<span class="badge badge-nl-nok">📧 Klaviyo ✗</span>'
           : '<span class="badge badge-nl-wait">📧 …</span>';
+
+      var contactLines = [];
+      if (md.email)   contactLines.push('<a href="mailto:' + md.email + '">' + md.email.replace(/</g,'&lt;') + '</a>');
+      if (md.telefon) contactLines.push('<a href="tel:' + md.telefon.replace(/\s/g,'') + '">' + md.telefon.replace(/</g,'&lt;') + '</a>');
+      var contactHtml = contactLines.length
+        ? '<div class="k-contact">' + contactLines.join(' · ') + '</div>'
+        : '';
+
       return '<div class="k-card">'
         + '<div class="k-name" title="' + safe + '">' + safe + '</div>'
+        + contactHtml
         + '<div class="k-badges">' + nlBadge + '</div>'
         + '<div class="k-actions">'
         + '<button class="btn-tool btn-nl" onclick="goNewsletter(\'' + esc + '\')">📧 Newsletter</button>'
         + '<button class="btn-tool btn-sh" onclick="goShopify(\'' + esc + '\')">🛍 Shopify</button>'
+        + '<a class="btn-edit" href="/kunden-bearbeiten.html?kundenname=' + encodeURIComponent(k.name) + '">✏️</a>'
         + '</div>'
         + '</div>';
     }).join('') + '</div>';
@@ -140,6 +159,18 @@
     });
   }
 
+  function loadMasterData() {
+    fetch('/.netlify/functions/kunden-master-lesen')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        (data.kunden || []).forEach(function (k) {
+          masterCache[k.name.toLowerCase()] = k;
+        });
+        render();
+      })
+      .catch(function () { /* Master-Sheet nicht konfiguriert – kein Fehler */ });
+  }
+
   window.goNewsletter = function (name) {
     localStorage.setItem('kios_kundenname', name);
     localStorage.setItem('kios_modus', 'newsletter');
@@ -163,6 +194,7 @@
       refreshStats();
       render();
       loadStatuses();
+      loadMasterData();
     })
     .catch(function () {
       document.getElementById('kunden-list').innerHTML =

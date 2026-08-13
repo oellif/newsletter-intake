@@ -41,6 +41,7 @@
     'shopify-upload.html':    true,
     'shopify-sync.html':      true,
     'kunden-datenbank.html':  true,
+    'kunden-bearbeiten.html': true,
   };
 
   function getCurrentPage() {
