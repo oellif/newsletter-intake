@@ -13,8 +13,9 @@
   h1{font-family:'Varela Round','Manrope',sans-serif;font-size:26px;font-weight:400;letter-spacing:-0.4px;margin:0 0 4px;}
   .sub{font-size:14px;color:#6B7280;margin:0 0 28px;}
   .card{background:#fff;border-radius:14px;padding:28px;box-shadow:0 1px 4px rgba(25,25,25,0.06),0 4px 16px rgba(25,25,25,0.04);margin-bottom:20px;}
-  .step-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green);margin-bottom:10px;}
-  .step-title{font-size:16px;font-weight:700;margin:0 0 14px;}
+  .step-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green);margin-bottom:6px;}
+  .step-title{font-size:16px;font-weight:700;margin:0 0 12px;}
+  .step-hint{font-size:13px;color:#6B7280;margin:0 0 14px;line-height:1.5;}
   select,input[type=text]{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Manrope',sans-serif;font-size:14px;background:#fff;color:#191919;outline:none;transition:border-color .15s;}
   select:focus,input[type=text]:focus{border-color:var(--green);}
   .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:9px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:opacity .15s;}
@@ -23,6 +24,7 @@
   .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
   .btn-ghost{background:none;border:1.5px solid var(--border);color:#374151;}
   .btn-ghost:hover{background:#f3f4f6;}
+  .btn-ghost:disabled{opacity:.4;cursor:not-allowed;}
   .btn-sm{padding:7px 14px;font-size:13px;border-radius:7px;}
   .artikel-list{display:flex;flex-direction:column;gap:0;margin-top:4px;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
   .artikel-row{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;background:#fff;transition:background .1s;user-select:none;}
@@ -35,31 +37,37 @@
   .artikel-row .ak-variants{font-size:12px;color:#6B7280;margin-top:2px;}
   .select-all-label{font-size:13px;font-weight:700;color:#374151;}
   .add-btn-row{margin-top:12px;}
-  .sheet-row{display:flex;gap:10px;align-items:center;}
-  .sheet-row input{flex:1;}
   .hidden{display:none !important;}
-  .result-box{border-radius:10px;padding:16px 18px;font-size:13px;line-height:1.6;}
+  .result-box{border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.7;}
   .result-ok{background:rgba(150,191,72,0.1);border:1px solid rgba(150,191,72,0.3);}
   .result-err{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;}
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+  .spinner-dark{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.15);border-top-color:#374151;border-radius:50%;animation:spin .7s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .tag{display:inline-block;background:rgba(150,191,72,0.12);color:#4a7c10;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;margin-left:8px;}
+  .tag{display:inline-block;background:rgba(150,191,72,0.12);color:#4a7c10;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;margin-left:8px;vertical-align:middle;}
+  .status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(150,191,72,0.08);border:1px solid rgba(150,191,72,0.3);border-radius:8px;padding:10px 14px;margin-bottom:10px;}
+  .status-row span{font-size:13px;font-weight:600;color:#3d6b0d;}
+  .sheet-link{font-size:13px;color:var(--green);text-decoration:none;font-weight:700;white-space:nowrap;}
+  .sheet-link:hover{text-decoration:underline;}
+  .folder-id-hint{font-size:12px;color:#6B7280;margin-top:6px;}
+  .folder-id-hint code{background:#f3f4f6;border-radius:4px;padding:1px 6px;font-family:monospace;font-size:11px;color:#374151;}
+  .upload-results a{color:var(--green);text-decoration:none;}
+  .upload-results a:hover{text-decoration:underline;}
+  /* Modal */
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
   .modal{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
   .modal h2{font-size:18px;font-weight:700;margin:0 0 6px;}
   .modal p{font-size:13px;color:#6B7280;margin:0 0 18px;}
   .modal-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
   .err-msg{color:#B91C1C;font-size:13px;margin-top:10px;}
-  .sheet-link{font-size:13px;color:var(--green);text-decoration:none;font-weight:600;}
-  .sheet-link:hover{text-decoration:underline;}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>Produkt hochladen</h1>
-  <p class="sub">Masterartikel auswählen und automatisch in Shopify anlegen.</p>
+  <p class="sub">Masterartikel auswählen, Mastertabelle generieren, befüllen und hochladen.</p>
 
-  <!-- Step 1: Shop -->
+  <!-- Schritt 1: Shop -->
   <div class="card" id="step1">
     <div class="step-label">Schritt 1</div>
     <div class="step-title">Shop auswählen</div>
@@ -68,7 +76,7 @@
     </select>
   </div>
 
-  <!-- Step 2: Masterartikel -->
+  <!-- Schritt 2: Masterartikel -->
   <div class="card hidden" id="step2">
     <div class="step-label">Schritt 2</div>
     <div class="step-title">Masterartikel auswählen <span class="tag" id="shopName"></span></div>
@@ -78,37 +86,59 @@
     </div>
   </div>
 
-  <!-- Step 3: Einmalig Sheet-ID hinterlegen (nur wenn noch nicht gespeichert) -->
+  <!-- Schritt 3: Bildordner (optional) -->
   <div class="card hidden" id="step3">
-    <div class="step-label">Einmalige Einrichtung</div>
-    <div class="step-title">Artikel-Template verknüpfen</div>
-    <p style="font-size:13px;color:#6B7280;margin:0 0 12px;">Einmalig: ID des Google Sheets mit Varianten und Preisen eingeben. Wird gespeichert und künftig automatisch verwendet.</p>
-    <div class="sheet-row">
-      <input type="text" id="sheetIdInput" placeholder="Google Sheet ID …" oninput="onSheetIdInput()">
-      <button class="btn btn-ghost btn-sm" id="saveSheetBtn" onclick="saveSheetId()" disabled>Speichern</button>
-    </div>
-    <div id="sheetSaveMsg" class="hidden" style="color:#4a7c10;font-size:13px;margin-top:8px;">✓ Gespeichert</div>
+    <div class="step-label">Schritt 3 · Optional</div>
+    <div class="step-title">Bildordner angeben</div>
+    <p class="step-hint">Google Drive Ordner mit Produktbildern. Bilder werden automatisch in die Mastertabelle eingetragen. Den Ordner einmalig auf „Jeder mit dem Link" freigeben.</p>
+    <input type="text" id="folderInput" placeholder="Google Drive Ordner-URL oder ID …" oninput="onFolderInput()">
+    <div id="folderHint" class="folder-id-hint hidden">Erkannte Ordner-ID: <code id="folderIdDisplay"></code></div>
   </div>
 
-  <!-- Step Upload -->
+  <!-- Schritt 4: Mastertabelle generieren -->
   <div class="card hidden" id="step4">
-    <div class="step-label" id="step4Label">Schritt 3</div>
-    <div class="step-title">Produkte hochladen</div>
-    <p style="font-size:13px;color:#6B7280;margin:0 0 4px;">Legt alle Varianten der ausgewählten Masterartikel als Entwurf in Shopify an.</p>
-    <p style="margin:0 0 16px;"><a id="sheetOpenLink" class="sheet-link hidden" href="#" target="_blank">Artikel-Template öffnen ↗</a></p>
+    <div class="step-label">Schritt 4</div>
+    <div class="step-title">Mastertabelle generieren</div>
+
+    <!-- Bestehende Mastertabelle -->
+    <div id="mastertabelleVorhanden" class="hidden">
+      <div class="status-row">
+        <span>✓ Mastertabelle vorhanden</span>
+        <a id="mastertabelleLink" href="#" target="_blank" class="sheet-link">Tabelle öffnen ↗</a>
+      </div>
+      <p class="step-hint">Öffne die Tabelle, passe die Felder an und starte dann den Upload.</p>
+      <button class="btn btn-ghost btn-sm" id="neuGenerierenBtn" onclick="generiereTabelle(true)" disabled>Neu generieren</button>
+    </div>
+
+    <!-- Noch keine Mastertabelle -->
+    <div id="mastertabelleNeu" class="hidden">
+      <p class="step-hint">Erstellt eine neue Google Tabelle mit den Daten der gewählten Masterartikel. Bilder aus dem Bildordner werden automatisch zugeordnet.</p>
+      <button class="btn btn-primary" id="generierenBtn" onclick="generiereTabelle(false)" disabled>
+        <span id="generierenBtnText">Mastertabelle generieren</span>
+      </button>
+    </div>
+
+    <!-- Status nach Generierung -->
+    <div id="generierenStatus" class="hidden" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- Schritt 5: Upload starten -->
+  <div class="card hidden" id="step5">
+    <div class="step-label">Schritt 5</div>
+    <div class="step-title">Upload starten</div>
+    <p class="step-hint">Liest die Mastertabelle und legt alle Produkte als Entwurf in Shopify an.</p>
     <button class="btn btn-primary" id="uploadBtn" onclick="doUpload()" disabled>
       <span id="uploadBtnText">Jetzt hochladen</span>
     </button>
+    <div id="uploadResult" class="hidden upload-results" style="margin-top:16px;"></div>
   </div>
-
-  <div id="resultBox" class="hidden"></div>
 </div>
 
 <!-- Modal: Masterartikel hinzufügen -->
 <div class="modal-bg hidden" id="addModal">
   <div class="modal">
     <h2>Masterartikel hinzufügen</h2>
-    <p>Alle Artikel im Entwurfsstatus des ausgewählten Shops.</p>
+    <p>Alle Artikel im Entwurfsstatus des Shops.</p>
     <select id="entwurfSelect" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Manrope',sans-serif;font-size:14px;outline:none;">
       <option value="">– Entwurf auswählen –</option>
     </select>
@@ -123,139 +153,121 @@
 <script src="/nav.js"></script>
 <script>
 const API = '/.netlify/functions/';
-let selectedKunde = null;
+let selectedKunde   = null;
+let alleProdukte    = [];
 let selectedArtikel = [];
-let artikelSheetId = '';
-let entwuerfeCache = null;
+let mastertabelleId = '';
+let entwuerfeCache  = null;
 let entwuerfePromise = null;
 
-async function init() {
-  const res = await fetch(API + 'shopify-kunden-alle');
-  const data = await res.json();
-  const sel = document.getElementById('shopSelect');
-  sel.innerHTML = '<option value="">– Shop wählen –</option>';
-  (data.kunden || []).forEach(k => {
-    const opt = document.createElement('option');
-    opt.value = k.id;
-    opt.textContent = k.name + ' (' + k.domain + ')';
-    opt.dataset.json = JSON.stringify(k);
-    sel.appendChild(opt);
-  });
+// ── Folder ID helpers ──────────────────────────────────────────────
+function extractFolderId(input) {
+  const s = (input || '').trim();
+  if (!s) return '';
+  const m = s.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  if (/^[a-zA-Z0-9_-]{10,}$/.test(s)) return s;
+  return '';
+}
 
-  // Auto-select shop from URL param ?kunde=ID
-  const urlKunde = new URLSearchParams(window.location.search).get('kunde');
-  if (urlKunde) {
-    sel.value = urlKunde;
-    if (sel.value) onShopChange();
+function onFolderInput() {
+  const val = document.getElementById('folderInput').value;
+  const fid = extractFolderId(val);
+  const hint = document.getElementById('folderHint');
+  document.getElementById('folderIdDisplay').textContent = fid;
+  if (fid && fid !== val.trim()) {
+    hint.classList.remove('hidden');
+  } else {
+    hint.classList.add('hidden');
   }
 }
 
+// ── Initialisation ─────────────────────────────────────────────────
+async function init() {
+  try {
+    const res  = await fetch(API + 'shopify-kunden-alle');
+    const data = await res.json();
+    const sel  = document.getElementById('shopSelect');
+    sel.innerHTML = '<option value="">– Shop wählen –</option>';
+    (data.kunden || []).forEach(k => {
+      const opt = document.createElement('option');
+      opt.value = k.id;
+      opt.textContent = k.name + ' (' + k.domain + ')';
+      opt.dataset.json = JSON.stringify(k);
+      sel.appendChild(opt);
+    });
+    const urlKunde = new URLSearchParams(window.location.search).get('kunde');
+    if (urlKunde) {
+      sel.value = urlKunde;
+      if (sel.value) onShopChange();
+    }
+  } catch(e) {
+    document.getElementById('shopSelect').innerHTML = '<option value="">Fehler beim Laden</option>';
+  }
+}
+
+// ── Shop selection ─────────────────────────────────────────────────
 function onShopChange() {
   const sel = document.getElementById('shopSelect');
   const opt = sel.options[sel.selectedIndex];
   if (!opt || !opt.dataset.json) {
-    hide('step2'); hide('step3'); hide('step4'); return;
+    ['step2','step3','step4','step5'].forEach(hide);
+    return;
   }
-  selectedKunde = JSON.parse(opt.dataset.json);
-  document.getElementById('shopName').textContent = selectedKunde.name;
+  selectedKunde   = JSON.parse(opt.dataset.json);
   selectedArtikel = [];
-  entwuerfeCache = null;
+  entwuerfeCache  = null;
   entwuerfePromise = null;
-  artikelSheetId = selectedKunde.artikel_sheet_id || '';
-  hide('step3'); hide('step4'); hide('resultBox');
+  mastertabelleId = selectedKunde.artikel_sheet_id || '';
+
+  document.getElementById('shopName').textContent = selectedKunde.name;
+  document.getElementById('folderInput').value = '';
+  document.getElementById('folderHint').classList.add('hidden');
+  hide('step5');
+  hide('uploadResult');
+  hide('generierenStatus');
+
   loadArtikel(selectedKunde.id);
   prefetchEntwuerfe();
+  show('step3');
+  setupMastertabelleCard();
 }
 
+// ── Masterartikel loading ──────────────────────────────────────────
 async function loadArtikel(kundenId) {
-  const grid = document.getElementById('artikelGrid');
+  const grid   = document.getElementById('artikelGrid');
   const addBtn = document.getElementById('addMasterartikelBtn');
-  grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Lade Masterartikel …</div>';
+  grid.innerHTML = '<div style="color:#6B7280;font-size:13px;padding:12px 16px;">Lade Masterartikel …</div>';
   if (addBtn) addBtn.disabled = true;
   show('step2');
   try {
-    const res = await fetch(API + 'shopify-masterartikel-scan?kunden_id=' + kundenId);
+    const res  = await fetch(API + 'shopify-masterartikel-scan?kunden_id=' + kundenId);
     const data = await res.json();
     if (!data.produkte || data.produkte.length === 0) {
-      grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Keine Masterartikel hinterlegt.</div>';
+      grid.innerHTML = '<div style="color:#6B7280;font-size:13px;padding:12px 16px;">Keine Masterartikel hinterlegt.</div>';
     } else {
       selectedArtikel = [];
       renderArtikelGrid(data.produkte);
-      showStepsNachArtikel();
     }
     await (entwuerfePromise || prefetchEntwuerfe());
     if (addBtn) addBtn.disabled = false;
   } catch(e) {
-    grid.innerHTML = '<div style="color:#B91C1C;font-size:13px;">Fehler: ' + esc(e.message) + '</div>';
+    grid.innerHTML = '<div style="color:#B91C1C;font-size:13px;padding:12px 16px;">Fehler: ' + esc(e.message) + '</div>';
     if (addBtn) addBtn.disabled = false;
   }
 }
-
-function showStepsNachArtikel() {
-  if (artikelSheetId) {
-    hide('step3');
-    const link = document.getElementById('sheetOpenLink');
-    link.href = 'https://docs.google.com/spreadsheets/d/' + artikelSheetId;
-    show('sheetOpenLink');
-    document.getElementById('step4Label').textContent = 'Schritt 3';
-  } else {
-    show('step3');
-    document.getElementById('step4Label').textContent = 'Schritt 4';
-  }
-  show('step4');
-  updateUploadBtn();
-}
-
-function onSheetIdInput() {
-  const val = document.getElementById('sheetIdInput').value.trim();
-  document.getElementById('saveSheetBtn').disabled = !val;
-  updateUploadBtn();
-}
-
-async function saveSheetId() {
-  const val = document.getElementById('sheetIdInput').value.trim();
-  if (!val || !selectedKunde) return;
-  const btn = document.getElementById('saveSheetBtn');
-  btn.disabled = true;
-  try {
-    const res = await fetch(API + 'shopify-artikel-sheet-speichern', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kunden_id: selectedKunde.id, artikel_sheet_id: val }),
-    });
-    if (res.ok) {
-      artikelSheetId = val;
-      const link = document.getElementById('sheetOpenLink');
-      link.href = 'https://docs.google.com/spreadsheets/d/' + artikelSheetId;
-      show('sheetOpenLink');
-      show('sheetSaveMsg');
-      updateUploadBtn();
-    }
-  } catch(e) { /* silent */ }
-  btn.disabled = false;
-}
-
-function updateUploadBtn() {
-  const inputVal = (document.getElementById('sheetIdInput') || {}).value ? document.getElementById('sheetIdInput').value.trim() : '';
-  const effectiveId = artikelSheetId || inputVal;
-  document.getElementById('uploadBtn').disabled = !effectiveId || !selectedKunde || selectedArtikel.length === 0;
-}
-
-let alleProdukte = [];
 
 function renderArtikelGrid(produkte) {
   alleProdukte = produkte;
   const grid = document.getElementById('artikelGrid');
   grid.innerHTML = '';
 
-  // "Alle auswählen" Zeile
   const allRow = document.createElement('label');
   allRow.className = 'artikel-row select-all-row';
   allRow.innerHTML = '<input type="checkbox" id="selectAll" onchange="toggleAll(this)">'
     + '<span class="select-all-label">Alle auswählen</span>';
   grid.appendChild(allRow);
 
-  // Einzelne Masterartikel
   produkte.forEach(p => {
     const row = document.createElement('label');
     row.className = 'artikel-row';
@@ -272,64 +284,166 @@ function onArtikelCheck() {
   const boxes = document.querySelectorAll('#artikelGrid input[type=checkbox]:not(#selectAll)');
   selectedArtikel = alleProdukte.filter((p, i) => boxes[i] && boxes[i].checked);
   updateSelectAll();
-  updateUploadBtn();
+  updateActionBtns();
 }
 
 function toggleAll(cb) {
   const boxes = document.querySelectorAll('#artikelGrid input[type=checkbox]:not(#selectAll)');
   boxes.forEach(b => { b.checked = cb.checked; });
   selectedArtikel = cb.checked ? [...alleProdukte] : [];
-  updateUploadBtn();
+  updateActionBtns();
 }
 
 function updateSelectAll() {
   const all = document.querySelector('#selectAll');
   if (!all) return;
-  const boxes = document.querySelectorAll('#artikelGrid input[type=checkbox]:not(#selectAll)');
+  const boxes   = document.querySelectorAll('#artikelGrid input[type=checkbox]:not(#selectAll)');
   const checked = [...boxes].filter(b => b.checked).length;
   all.checked = checked === boxes.length && boxes.length > 0;
   all.indeterminate = checked > 0 && checked < boxes.length;
 }
 
-async function doUpload() {
-  const inputVal = (document.getElementById('sheetIdInput') || {}).value ? document.getElementById('sheetIdInput').value.trim() : '';
-  const effectiveId = artikelSheetId || inputVal;
+// ── Mastertabelle card setup ───────────────────────────────────────
+function setupMastertabelleCard() {
+  if (mastertabelleId) {
+    document.getElementById('mastertabelleLink').href = `https://docs.google.com/spreadsheets/d/${mastertabelleId}/edit`;
+    show('mastertabelleVorhanden');
+    hide('mastertabelleNeu');
+  } else {
+    hide('mastertabelleVorhanden');
+    show('mastertabelleNeu');
+  }
+  hide('generierenStatus');
+  show('step4');
+  updateActionBtns();
+}
+
+function updateActionBtns() {
+  const hasArtikel = selectedArtikel.length > 0;
+  const genBtn     = document.getElementById('generierenBtn');
+  const neuBtn     = document.getElementById('neuGenerierenBtn');
+  if (genBtn) genBtn.disabled = !hasArtikel;
+  if (neuBtn) neuBtn.disabled = !hasArtikel;
+  updateUploadBtn();
+}
+
+function updateUploadBtn() {
   const btn = document.getElementById('uploadBtn');
-  const btnText = document.getElementById('uploadBtnText');
-  btn.disabled = true;
-  btnText.innerHTML = '<span class="spinner"></span> Wird hochgeladen …';
+  if (!btn) return;
+  btn.disabled = !mastertabelleId;
+  if (mastertabelleId) show('step5');
+}
+
+// ── Mastertabelle generieren ───────────────────────────────────────
+async function generiereTabelle(isRegenerate) {
+  const folderId = extractFolderId(document.getElementById('folderInput').value);
+
+  const genBtn = document.getElementById('generierenBtn');
+  const neuBtn = document.getElementById('neuGenerierenBtn');
+  const statusDiv = document.getElementById('generierenStatus');
+
+  if (isRegenerate) {
+    neuBtn.disabled = true;
+    neuBtn.innerHTML = '<span class="spinner-dark"></span> Läuft …';
+  } else {
+    genBtn.disabled = true;
+    document.getElementById('generierenBtnText').innerHTML = '<span class="spinner"></span> Generierung läuft …';
+  }
+  hide('generierenStatus');
 
   try {
-    const res = await fetch(API + 'shopify-produkte-hochladen', {
+    const res = await fetch(API + 'shopify-mastertabelle-generieren', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         kunden_id: selectedKunde.id,
-        artikel_sheet_id: effectiveId,
-        masterartikel: selectedArtikel.map(a => a.handle),
+        handles: selectedArtikel.map(a => a.handle),
+        folder_id: folderId || undefined,
       }),
     });
     const data = await res.json();
-    const box = document.getElementById('resultBox');
-    box.className = res.ok ? 'result-box result-ok' : 'result-box result-err';
-    if (res.ok && data.ergebnisse) {
-      box.innerHTML = '✓ ' + data.ergebnisse.length + ' Produkt(e) angelegt:<br>'
-        + data.ergebnisse.map(e => '&nbsp;&nbsp;· ' + esc(e.handle) + ' → Shopify ID ' + e.shopify_id).join('<br>');
-    } else {
-      box.innerHTML = '✗ Fehler: ' + esc(data.error || JSON.stringify(data));
-    }
-    show('resultBox');
+    if (!res.ok) throw new Error(data.error || 'Unbekannter Fehler');
+
+    mastertabelleId = data.sheet_id;
+
+    // Update "Vorhanden" sub-view
+    document.getElementById('mastertabelleLink').href = data.sheet_url;
+    show('mastertabelleVorhanden');
+    hide('mastertabelleNeu');
+
+    // Show success status
+    statusDiv.className = 'result-box result-ok';
+    statusDiv.innerHTML = `✓ ${data.rows} Zeilen generiert — `
+      + `<a href="${esc(data.sheet_url)}" target="_blank" class="sheet-link">Tabelle öffnen und befüllen ↗</a>`;
+    show('generierenStatus');
+
+    updateUploadBtn();
+
   } catch(e) {
-    const box = document.getElementById('resultBox');
-    box.className = 'result-box result-err';
-    box.innerHTML = '✗ ' + esc(e.message);
-    show('resultBox');
+    statusDiv.className = 'result-box result-err';
+    statusDiv.innerHTML = '✗ ' + esc(e.message);
+    show('generierenStatus');
+  } finally {
+    if (isRegenerate) {
+      neuBtn.disabled = selectedArtikel.length === 0;
+      neuBtn.textContent = 'Neu generieren';
+    } else {
+      genBtn.disabled = selectedArtikel.length === 0;
+      document.getElementById('generierenBtnText').textContent = 'Mastertabelle generieren';
+    }
+  }
+}
+
+// ── Upload starten ─────────────────────────────────────────────────
+async function doUpload() {
+  const btn     = document.getElementById('uploadBtn');
+  const btnText = document.getElementById('uploadBtnText');
+  const result  = document.getElementById('uploadResult');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> Wird hochgeladen …';
+  hide('uploadResult');
+
+  try {
+    const res  = await fetch(API + 'shopify-upload-starten', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kunden_id: selectedKunde.id }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      result.className = 'result-box result-err';
+      result.innerHTML = '✗ Fehler: ' + esc(data.error || JSON.stringify(data));
+    } else {
+      const ok  = data.results || [];
+      const err = data.errors  || [];
+      let html = '';
+      if (ok.length) {
+        html += `<strong>✓ ${ok.length} Produkt(e) in Shopify angelegt:</strong><br>`;
+        html += ok.map(r =>
+          `&nbsp;&nbsp;· <a href="${esc(r.url)}" target="_blank">${esc(r.title)}</a>`
+          + ` <span style="color:#6B7280;font-size:12px;">#${r.shopify_id}</span>`
+        ).join('<br>');
+      }
+      if (err.length) {
+        html += (ok.length ? '<br><br>' : '') + `<strong style="color:#B91C1C;">✗ ${err.length} Fehler:</strong><br>`;
+        html += err.map(e => `&nbsp;&nbsp;· ${esc(e.handle)}: <span style="color:#B91C1C;">${esc(e.error)}</span>`).join('<br>');
+      }
+      result.className = (err.length && !ok.length) ? 'result-box result-err' : 'result-box result-ok';
+      result.innerHTML = html || 'Keine Zeilen verarbeitet.';
+    }
+    show('uploadResult');
+  } catch(e) {
+    result.className = 'result-box result-err';
+    result.innerHTML = '✗ ' + esc(e.message);
+    show('uploadResult');
   }
 
   btnText.textContent = 'Jetzt hochladen';
   btn.disabled = false;
 }
 
+// ── Entwürfe für "Hinzufügen"-Modal ───────────────────────────────
 function prefetchEntwuerfe() {
   entwuerfePromise = fetch(API + 'shopify-entwuerfe-laden', {
     method: 'POST',
@@ -343,9 +457,9 @@ function prefetchEntwuerfe() {
 }
 
 function fillEntwurfDropdown(sel) {
-  const bereitsVorhanden = new Set(selectedArtikel.map(a => a.handle));
-  const verfuegbar = (entwuerfeCache || []).filter(p => !bereitsVorhanden.has(p.handle));
-  if (verfuegbar.length === 0) {
+  const vorhanden  = new Set(alleProdukte.map(a => a.handle));
+  const verfuegbar = (entwuerfeCache || []).filter(p => !vorhanden.has(p.handle));
+  if (!verfuegbar.length) {
     sel.innerHTML = '<option value="">Alle Entwürfe sind bereits Masterartikel</option>';
     return;
   }
@@ -406,6 +520,7 @@ function showAddErr(msg) {
   el.classList.remove('hidden');
 }
 
+// ── Utilities ──────────────────────────────────────────────────────
 function show(id) { const el = document.getElementById(id); if (el) el.classList.remove('hidden'); }
 function hide(id) { const el = document.getElementById(id); if (el) el.classList.add('hidden'); }
 function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
