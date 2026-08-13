@@ -62,7 +62,8 @@
 
     var css = ''
       + '.kios-nav { position: fixed; top: 0; left: 0; bottom: 0; width: 240px; background: #202228; color: #E5E7EB; overflow-y: auto; z-index: 500; font-family: "Manrope", Arial, sans-serif; display: flex; flex-direction: column; }'
-      + '.kios-nav a, .kios-nav button.kios-link { display: block; width: 100%; text-align: left; background: none; border: none; color: #E5E7EB; font-family: inherit; cursor: pointer; }'
+      + '.kios-nav a:not(.kios-nav-home), .kios-nav button.kios-link { display: block; width: 100%; text-align: left; background: none; border: none; color: #E5E7EB; font-family: inherit; cursor: pointer; }'
+      + '.kios-nav-home { display: flex !important; flex-direction: row !important; align-items: center !important; }'
       + '.kios-nav-home { display: flex; flex-direction: row; align-items: center; gap: 11px; padding: 9px 18px; background: #252527; border-bottom: 1px solid rgba(255,255,255,0.06); text-decoration: none; }'
       + '.kios-nav-logo-crop { width: 40px; height: 40px; overflow: hidden; flex-shrink: 0; }'
       + '.kios-nav-logo-img { height: 40px; width: auto; display: block; }'
