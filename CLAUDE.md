@@ -25,19 +25,37 @@ C:\Users\offic\AppData\Roaming\Claude\local-agent-mode-sessions\
 b1e18483-...\33da01d0-...\local_1934d231-...\outputs\newsletter-intake\
 ```
 
-**Git-Repo (deployen von hier):**
+**Git-Repo — zwei Pfad-Varianten (dasselbe Verzeichnis):**
 ```
-/tmp/ni
+Bash-Tool (Git Bash):   /tmp/ni
+Read/Edit/Write-Tools:  C:\Users\offic\AppData\Local\Temp\ni
 ```
 
+**WICHTIG — Werkzeug-Wahl:**
+- Dateien lesen/schreiben/bearbeiten → `Read`, `Edit`, `Write`-Tools mit Windows-Pfad `C:\Users\offic\AppData\Local\Temp\ni\...`
+- git add / commit / push → Bash-Tool mit `/tmp/ni`
+- **Niemals PowerShell** für Dateiinhalte in `/tmp/ni` verwenden — PowerShell überschreibt mit BOM/null-Content
+
 **Deploy-Workflow (immer so):**
-```bash
-# 1. Quelldatei bearbeiten (langer AppData-Pfad)
-# 2. In Git-Repo kopieren:
-cp <quelldatei> /tmp/ni/public/<dateiname>
-# 3. Commit + Push:
-cd /tmp/ni && git add <datei> && git commit -m "Beschreibung" && git push origin master:main
-# Netlify deployed automatisch.
+```
+1. Neue Datei schreiben:
+   Write-Tool → C:\Users\offic\AppData\Local\Temp\ni\public\dateiname.html
+
+2. Bestehende Datei bearbeiten:
+   Read-Tool  → C:\Users\offic\AppData\Local\Temp\ni\public\dateiname.html
+   Edit-Tool  → C:\Users\offic\AppData\Local\Temp\ni\public\dateiname.html
+
+3. Deployen (Bash-Tool):
+   cd /tmp/ni && git add public/dateiname.html && git commit -m "..." && git push origin master:main
+
+4. Netlify deployed automatisch (~20 Sekunden)
+```
+
+**nav.js bearbeiten (Sonderfall — große Datei):**
+```
+Read-Tool  → C:\Users\offic\AppData\Local\Temp\ni\public\nav.js   (erst lesen!)
+Edit-Tool  → C:\Users\offic\AppData\Local\Temp\ni\public\nav.js   (dann gezielt editieren)
+Bash-Tool  → cd /tmp/ni && git add public/nav.js && git commit -m "..." && git push origin master:main
 ```
 
 ---
