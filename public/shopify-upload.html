@@ -24,15 +24,16 @@
   .btn-ghost{background:none;border:1.5px solid var(--border);color:#374151;}
   .btn-ghost:hover{background:#f3f4f6;}
   .btn-sm{padding:7px 14px;font-size:13px;border-radius:7px;}
-  .artikel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:4px;}
-  .artikel-card{position:relative;border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .15s,background .15s;background:#fff;}
-  .artikel-card:hover{border-color:var(--green);}
-  .artikel-card.selected{border-color:var(--green);background:rgba(150,191,72,0.06);}
-  .artikel-card .ak-check{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;}
-  .artikel-card.selected .ak-check{opacity:1;}
-  .artikel-card .ak-title{font-size:14px;font-weight:700;margin-bottom:4px;padding-right:24px;}
-  .artikel-card .ak-handle{font-size:11px;color:#6B7280;font-family:monospace;}
-  .artikel-card .ak-variants{font-size:12px;color:#6B7280;margin-top:4px;}
+  .artikel-list{display:flex;flex-direction:column;gap:0;margin-top:4px;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
+  .artikel-row{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;background:#fff;transition:background .1s;user-select:none;}
+  .artikel-row:not(:last-child){border-bottom:1px solid var(--border);}
+  .artikel-row:hover{background:#f9fafb;}
+  .artikel-row.select-all-row{background:#f9fafb;border-bottom:2px solid var(--border) !important;}
+  .artikel-row input[type=checkbox]{width:17px;height:17px;border-radius:4px;accent-color:var(--green);cursor:pointer;flex-shrink:0;}
+  .artikel-row .ak-title{font-size:14px;font-weight:700;margin:0 0 2px;}
+  .artikel-row .ak-handle{font-size:11px;color:#6B7280;font-family:monospace;}
+  .artikel-row .ak-variants{font-size:12px;color:#6B7280;margin-top:2px;}
+  .select-all-label{font-size:13px;font-weight:700;color:#374151;}
   .add-btn-row{margin-top:12px;}
   .sheet-row{display:flex;gap:10px;align-items:center;}
   .sheet-row input{flex:1;}
@@ -71,7 +72,7 @@
   <div class="card hidden" id="step2">
     <div class="step-label">Schritt 2</div>
     <div class="step-title">Masterartikel auswählen <span class="tag" id="shopName"></span></div>
-    <div class="artikel-grid" id="artikelGrid"></div>
+    <div class="artikel-list" id="artikelGrid"></div>
     <div class="add-btn-row">
       <button class="btn btn-ghost btn-sm" id="addMasterartikelBtn" onclick="openAddModal()" disabled>+ Masterartikel hinzufügen</button>
     </div>
@@ -178,7 +179,7 @@ async function loadArtikel(kundenId) {
     if (!data.produkte || data.produkte.length === 0) {
       grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Keine Masterartikel hinterlegt.</div>';
     } else {
-      selectedArtikel = [...data.produkte];
+      selectedArtikel = [];
       renderArtikelGrid(data.produkte);
       showStepsNachArtikel();
     }
@@ -240,33 +241,54 @@ function updateUploadBtn() {
   document.getElementById('uploadBtn').disabled = !effectiveId || !selectedKunde || selectedArtikel.length === 0;
 }
 
+let alleProdukte = [];
+
 function renderArtikelGrid(produkte) {
+  alleProdukte = produkte;
   const grid = document.getElementById('artikelGrid');
   grid.innerHTML = '';
+
+  // "Alle auswählen" Zeile
+  const allRow = document.createElement('label');
+  allRow.className = 'artikel-row select-all-row';
+  allRow.innerHTML = '<input type="checkbox" id="selectAll" onchange="toggleAll(this)">'
+    + '<span class="select-all-label">Alle auswählen</span>';
+  grid.appendChild(allRow);
+
+  // Einzelne Masterartikel
   produkte.forEach(p => {
-    const card = document.createElement('div');
-    const isSelected = selectedArtikel.some(a => a.handle === p.handle);
-    card.className = 'artikel-card' + (isSelected ? ' selected' : '');
-    card.dataset.handle = p.handle;
-    card.innerHTML = '<div class="ak-check">✓</div>'
-      + '<div class="ak-title">' + esc(p.title) + '</div>'
+    const row = document.createElement('label');
+    row.className = 'artikel-row';
+    row.innerHTML = '<input type="checkbox" value="' + esc(p.handle) + '" onchange="onArtikelCheck()">'
+      + '<div><div class="ak-title">' + esc(p.title) + '</div>'
       + '<div class="ak-handle">' + esc(p.handle) + '</div>'
-      + '<div class="ak-variants">' + (p.variants ? p.variants.length : 0) + ' Varianten</div>';
-    card.onclick = () => toggleArtikel(p, card);
-    grid.appendChild(card);
+      + '<div class="ak-variants">' + (p.variants ? p.variants.length : 0) + ' Varianten</div></div>';
+    grid.appendChild(row);
   });
+  updateSelectAll();
 }
 
-function toggleArtikel(produkt, cardEl) {
-  const idx = selectedArtikel.findIndex(a => a.handle === produkt.handle);
-  if (idx >= 0) {
-    selectedArtikel.splice(idx, 1);
-    cardEl.classList.remove('selected');
-  } else {
-    selectedArtikel.push(produkt);
-    cardEl.classList.add('selected');
-  }
+function onArtikelCheck() {
+  const boxes = document.querySelectorAll('#artikelGrid input[type=checkbox]:not(#selectAll)');
+  selectedArtikel = alleProdukte.filter((p, i) => boxes[i] && boxes[i].checked);
+  updateSelectAll();
   updateUploadBtn();
+}
+
+function toggleAll(cb) {
+  const boxes = document.querySelectorAll('#artikelGrid input[type=checkbox]:not(#selectAll)');
+  boxes.forEach(b => { b.checked = cb.checked; });
+  selectedArtikel = cb.checked ? [...alleProdukte] : [];
+  updateUploadBtn();
+}
+
+function updateSelectAll() {
+  const all = document.querySelector('#selectAll');
+  if (!all) return;
+  const boxes = document.querySelectorAll('#artikelGrid input[type=checkbox]:not(#selectAll)');
+  const checked = [...boxes].filter(b => b.checked).length;
+  all.checked = checked === boxes.length && boxes.length > 0;
+  all.indeterminate = checked > 0 && checked < boxes.length;
 }
 
 async function doUpload() {
