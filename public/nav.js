@@ -23,6 +23,8 @@
     { label: 'Performance-Report',            seite: 'performance-reporter.html', withKunde: true  },
     { group: 'Optional' },
     { label: 'Segment-Mapper',                seite: 'segment-mapper.html',       withKunde: true  },
+    { group: 'Verwaltung' },
+    { label: 'Kundendatenbank',               seite: 'kunden-datenbank.html',     withKunde: false },
   ];
 
   var SHOPIFY_NAV_ITEMS = [
@@ -30,12 +32,15 @@
     { label: 'Dashboard',                seite: 'shopify-dashboard.html', withKunde: false },
     { label: 'Produkt hochladen',        seite: 'shopify-upload.html',    withKunde: false },
     { label: 'Produkte synchronisieren', seite: 'shopify-sync.html',      withKunde: false },
+    { group: 'Verwaltung' },
+    { label: 'Kundendatenbank',           seite: 'kunden-datenbank.html', withKunde: false },
   ];
 
   var SHOPIFY_PAGES = {
     'shopify-dashboard.html': true,
     'shopify-upload.html':    true,
     'shopify-sync.html':      true,
+    'kunden-datenbank.html':  true,
   };
 
   function getCurrentPage() {
