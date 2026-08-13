@@ -12,6 +12,7 @@ exports.handler = async (event) => {
       token: r[3] || '',
       masterartikel: r[4] ? r[4].split(',').map(s => s.trim()).filter(Boolean) : [],
       claid_key: r[5] || '',
+      artikel_sheet_id: r[6] || '',
     }));
     return { statusCode: 200, headers: h, body: JSON.stringify({ kunden }) };
   } catch (err) {

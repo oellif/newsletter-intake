@@ -108,7 +108,7 @@ async function loadShops() {
         + '<div>Masterartikel: <span>' + esc(artikel) + '</span></div>'
         + '</div>'
         + '<div class="shop-actions">'
-        + '<a class="btn btn-ghost" href="/shopify-upload.html">Produkt hochladen</a>'
+        + '<a class="btn btn-ghost" href="/shopify-upload.html?kunde=' + esc(k.id) + '">Produkt hochladen</a>'
         + '<a class="btn btn-ghost" href="https://' + esc(k.domain) + '/admin" target="_blank">Admin ↗</a>'
         + '</div>';
       grid.appendChild(card);
