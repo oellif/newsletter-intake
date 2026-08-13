@@ -66,8 +66,7 @@
       + '.kios-nav-home { display: flex; align-items: center; gap: 11px; padding: 9px 18px; background: #252527; border-bottom: 1px solid rgba(255,255,255,0.06); text-decoration: none; }'
       + '.kios-nav-logo-crop { width: 40px; height: 40px; overflow: hidden; flex-shrink: 0; }'
       + '.kios-nav-logo-img { height: 40px; width: auto; display: block; }'
-      + '.kios-nav-logo-text { font-size: 13px; font-weight: 800; color: #fff; line-height: 1.3; }'
-      + '.kios-nav-logo-text span { color: #FA8700; }'
+      + '.kios-nav-logo-text { font-size: 22px; font-weight: 700; color: #fff; line-height: 1; letter-spacing: -0.3px; }'
       + '.kios-modus-bar { display: flex; align-items: center; justify-content: space-between; padding: 7px 18px; background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.06); }'
       + '.kios-modus-badge { font-size: 11px; font-weight: 700; }'
       + '.kios-modus-badge.newsletter { color: #FA8700; }'
@@ -212,7 +211,7 @@
     // Logo → immer home.html
     var html = '<a class="kios-nav-home" href="/home.html">'
       + '<div class="kios-nav-logo-crop"><img class="kios-nav-logo-img" src="https://onecdn.io/media/9c5aadc5-b587-40cb-bc68-474e3b944ab9/md2x" alt="MH"></div>'
-      + '<div class="kios-nav-logo-text">KI<span>-</span>OS<br>Newsletter Suite</div>'
+      + '<div class="kios-nav-logo-text">Cockpit</div>'
       + '</a>';
 
     if (currentPage === 'home.html') {
