@@ -42,6 +42,10 @@ function driveUrl(fileId) {
   return `https://drive.google.com/uc?export=view&id=${fileId}`;
 }
 
+function normalizeFilename(s) {
+  return s.toLowerCase().replace(/[\s_]+/g, '-');
+}
+
 function buildProductRows(product, driveImages) {
   const variants     = product.variants || [];
   const shopifyImages = product.images  || [];
@@ -155,7 +159,7 @@ exports.handler = async (event) => {
 
       // Filter Drive images relevant to this product (filename starts with handle)
       const productImages = allDriveImages.filter(img =>
-        img.name.toLowerCase().startsWith(handle.toLowerCase())
+        normalizeFilename(img.name).startsWith(normalizeFilename(handle))
       );
       // Fallback: use all drive images if single product and no handle-specific images found
       const useImages = productImages.length > 0
