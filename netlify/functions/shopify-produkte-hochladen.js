@@ -35,7 +35,13 @@ exports.handler = async (event) => {
     if (rows.length < 2) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Sheet hat keine Daten' }) };
 
     const header = rows[0];
-    const col = (name) => header.findIndex(c => c === name);
+    // Flexible column lookup: supports both dash-separated (Option1-Name) and space-separated (Option1 Name)
+    const col = (name) => {
+      let idx = header.findIndex(c => c === name);
+      if (idx >= 0) return idx;
+      const alt = name.replace(/ /g, '-');
+      return header.findIndex(c => c === alt);
+    };
 
     // Nach Handle gruppieren
     const produktMap = {};
@@ -50,17 +56,24 @@ exports.handler = async (event) => {
     const ergebnisse = [];
     for (const [handle, pRows] of Object.entries(produktMap)) {
       const first = pRows[0];
+
+      // Preis-Spalte: "Variante Preis" oder "Preis"
+      const preisCol = col('Variante Preis') >= 0 ? col('Variante Preis') : col('Preis');
+      const skuCol = col('Variante SKU') >= 0 ? col('Variante SKU') : col('SKU');
+      const lagCol = col('Variante Lagerbestand') >= 0 ? col('Variante Lagerbestand') : col('Lagerbestand');
+      const gewCol = col('Variante Gewicht') >= 0 ? col('Variante Gewicht') : col('Gewicht-g');
+
       const variants = pRows.map(r => {
         const v = {
-          price: r[col('Variante Preis')] || '0.00',
-          sku: r[col('Variante SKU')] || '',
+          price: r[preisCol] || '0.00',
+          sku: r[skuCol] || '',
           inventory_management: 'shopify',
-          inventory_quantity: parseInt(r[col('Variante Lagerbestand')] || '0', 10),
+          inventory_quantity: parseInt(r[lagCol] || '0', 10),
         };
         const o1 = r[col('Option1 Wert')]; if (o1) v.option1 = o1;
         const o2 = r[col('Option2 Wert')]; if (o2) v.option2 = o2;
         const o3 = r[col('Option3 Wert')]; if (o3) v.option3 = o3;
-        const w = r[col('Variante Gewicht')]; if (w) { v.weight = parseFloat(w); v.weight_unit = 'g'; }
+        const w = r[gewCol]; if (w) { v.weight = parseFloat(w); v.weight_unit = 'g'; }
         return v;
       });
 
@@ -69,11 +82,14 @@ exports.handler = async (event) => {
       const o2n = first[col('Option2 Name')]; if (o2n) options.push({ name: o2n, values: [...new Set(pRows.map(r => r[col('Option2 Wert')]).filter(Boolean))] });
       const o3n = first[col('Option3 Name')]; if (o3n) options.push({ name: o3n, values: [...new Set(pRows.map(r => r[col('Option3 Wert')]).filter(Boolean))] });
 
+      const typCol = col('Typ') >= 0 ? col('Typ') : col('Produkttyp');
+      const descCol = col('Beschreibung HTML') >= 0 ? col('Beschreibung HTML') : col('Beschreibung-HTML');
+
       const product = {
         title: first[col('Titel')] || handle,
-        body_html: first[col('Beschreibung HTML')] || '',
+        body_html: first[descCol] || '',
         vendor: first[col('Anbieter')] || '',
-        product_type: first[col('Typ')] || '',
+        product_type: first[typCol] || '',
         handle, tags: first[col('Tags')] || '',
         status: 'draft',
         variants, options,
