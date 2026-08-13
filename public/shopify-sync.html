@@ -152,7 +152,7 @@ function onShopChange() {
   entwuerfePromise = null;
   hide('step3'); hide('step4'); hide('resultBox');
   loadArtikel(selectedKunde.id);
-  prefetchEntwuerfe(selectedKunde.id);
+  prefetchEntwuerfe();
 }
 
 async function loadArtikel(kundenId) {
@@ -249,8 +249,12 @@ async function doSync() {
   btn.disabled = false;
 }
 
-function prefetchEntwuerfe(kundenId) {
-  entwuerfePromise = fetch(API + 'shopify-entwuerfe-laden?kunden_id=' + kundenId)
+function prefetchEntwuerfe() {
+  entwuerfePromise = fetch(API + 'shopify-entwuerfe-laden', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ domain: selectedKunde.domain, token: selectedKunde.token }),
+  })
     .then(r => r.json())
     .then(data => { entwuerfeCache = data.produkte || []; })
     .catch(() => { entwuerfeCache = []; });
