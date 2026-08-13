@@ -121,6 +121,7 @@
 const API = '/.netlify/functions/';
 let selectedKunde = null;
 let selectedArtikel = [];
+let entwuerfeCache = null;
 
 async function init() {
   const res = await fetch(API + 'shopify-kunden-alle');
@@ -143,8 +144,11 @@ function onShopChange() {
   selectedKunde = JSON.parse(opt.dataset.json);
   document.getElementById('shopName').textContent = selectedKunde.name;
   selectedArtikel = [];
+  entwuerfeCache = null;
   hide('step3'); hide('step4'); hide('resultBox');
+  // Beide parallel laden
   loadArtikel(selectedKunde.id);
+  prefetchEntwuerfe(selectedKunde.id);
 }
 
 async function loadArtikel(kundenId) {
@@ -241,16 +245,25 @@ async function doUpload() {
   btn.disabled = false;
 }
 
+async function prefetchEntwuerfe(kundenId) {
+  try {
+    const res = await fetch(API + 'shopify-entwuerfe-laden?kunden_id=' + kundenId);
+    const data = await res.json();
+    entwuerfeCache = data.produkte || [];
+  } catch(e) {
+    entwuerfeCache = [];
+  }
+}
+
 async function openAddModal() {
+  if (!selectedKunde) return;
   const sel = document.getElementById('entwurfSelect');
-  sel.innerHTML = '<option value="">Lädt …</option>';
   hide('addErr');
   show('addModal');
-  try {
-    const res = await fetch(API + 'shopify-entwuerfe-laden?kunden_id=' + selectedKunde.id);
-    const data = await res.json();
+
+  const fillDropdown = (produkte) => {
     const bereitsVorhanden = new Set(selectedArtikel.map(a => a.handle));
-    const verfuegbar = (data.produkte || []).filter(p => !bereitsVorhanden.has(p.handle));
+    const verfuegbar = (produkte || []).filter(p => !bereitsVorhanden.has(p.handle));
     if (verfuegbar.length === 0) {
       sel.innerHTML = '<option value="">Alle Entwürfe sind bereits Masterartikel</option>';
       return;
@@ -262,8 +275,14 @@ async function openAddModal() {
       opt.textContent = p.title + ' (' + p.handle + ')';
       sel.appendChild(opt);
     });
-  } catch(e) {
-    sel.innerHTML = '<option value="">Fehler beim Laden</option>';
+  };
+
+  if (entwuerfeCache !== null) {
+    fillDropdown(entwuerfeCache);
+  } else {
+    sel.innerHTML = '<option value="">Lädt …</option>';
+    await prefetchEntwuerfe(selectedKunde.id);
+    fillDropdown(entwuerfeCache);
   }
 }
 
