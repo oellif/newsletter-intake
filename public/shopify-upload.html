@@ -6,32 +6,199 @@
 <title>Shopify-Tool – Produkt hochladen</title>
 <link rel="stylesheet" href="/mh-ci.css">
 <style>
-  :root { --dark:#202228; --accent:#96BF48; --bg:#F7F6F3; --border:#E5E7EB; }
-  * { box-sizing: border-box; }
-  body { font-family: 'Manrope', Arial, sans-serif; background: var(--bg); color: #191919; margin: 0; padding: 0 0 80px; }
-  .container { max-width: 720px; margin: 0 auto; padding: 36px 28px; }
-  .page-header h1 { font-family: 'Varela Round','Manrope',sans-serif; font-size: 28px; font-weight: 400; letter-spacing: -0.5px; margin: 0 0 6px; }
-  .page-header p { font-size: 14px; color: #6B7280; margin: 0 0 28px; line-height: 1.55; }
-  .coming-card { background: #fff; border-radius: 14px; padding: 40px 32px; text-align: center; box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 16px rgba(25,25,25,0.04); }
-  .coming-icon { font-size: 48px; margin-bottom: 16px; }
-  .coming-title { font-size: 20px; font-weight: 700; color: #191919; margin-bottom: 8px; }
-  .coming-text { font-size: 14px; color: #6B7280; line-height: 1.6; max-width: 400px; margin: 0 auto; }
-  .coming-badge { display: inline-block; margin-top: 20px; background: rgba(150,191,72,0.12); color: #5a9020; font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 20px; }
+  :root { --dark:#202228; --green:#96BF48; --orange:#FA8700; --bg:#F7F6F3; --border:#E5E7EB; }
+  *{box-sizing:border-box;}
+  body{font-family:'Manrope',Arial,sans-serif;background:var(--bg);color:#191919;margin:0;padding:0 0 80px;}
+  .container{max-width:720px;margin:0 auto;padding:36px 28px;}
+  h1{font-family:'Varela Round','Manrope',sans-serif;font-size:26px;font-weight:400;letter-spacing:-0.4px;margin:0 0 4px;}
+  .sub{font-size:14px;color:#6B7280;margin:0 0 28px;}
+  .card{background:#fff;border-radius:14px;padding:28px;box-shadow:0 1px 4px rgba(25,25,25,0.06),0 4px 16px rgba(25,25,25,0.04);margin-bottom:20px;}
+  .step-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green);margin-bottom:10px;}
+  .step-title{font-size:16px;font-weight:700;margin:0 0 14px;}
+  select,input[type=text]{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Manrope',sans-serif;font-size:14px;background:#fff;color:#191919;outline:none;transition:border-color .15s;}
+  select:focus,input[type=text]:focus{border-color:var(--green);}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:9px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:opacity .15s;}
+  .btn-primary{background:var(--green);color:#fff;}
+  .btn-primary:hover{opacity:.88;}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-ghost{background:none;border:1.5px solid var(--border);color:#374151;}
+  .btn-ghost:hover{background:#f3f4f6;}
+  .artikel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:4px;}
+  .artikel-card{border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .15s,background .15s;background:#fff;}
+  .artikel-card:hover{border-color:var(--green);}
+  .artikel-card.selected{border-color:var(--green);background:rgba(150,191,72,0.06);}
+  .artikel-card .ak-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+  .artikel-card .ak-handle{font-size:11px;color:#6B7280;font-family:monospace;}
+  .artikel-card .ak-variants{font-size:12px;color:#6B7280;margin-top:4px;}
+  .sheet-row{display:flex;gap:10px;align-items:center;}
+  .sheet-row input{flex:1;}
+  .sheet-link{font-size:12px;color:var(--green);text-decoration:none;}
+  .sheet-link:hover{text-decoration:underline;}
+  .hidden{display:none;}
+  .result-box{border-radius:10px;padding:16px 18px;font-size:13px;line-height:1.6;}
+  .result-ok{background:rgba(150,191,72,0.1);border:1px solid rgba(150,191,72,0.3);}
+  .result-err{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .tag{display:inline-block;background:rgba(150,191,72,0.12);color:#4a7c10;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;margin-left:8px;}
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="page-header">
-    <h1>Produkt hochladen</h1>
-    <p>Produkte automatisiert in den Shopify-Shop hochladen.</p>
+  <h1>Produkt hochladen</h1>
+  <p class="sub">Artikel-Template ausfüllen und automatisch in Shopify anlegen.</p>
+
+  <!-- Step 1: Shop -->
+  <div class="card" id="step1">
+    <div class="step-label">Schritt 1</div>
+    <div class="step-title">Shop auswählen</div>
+    <select id="shopSelect" onchange="onShopChange()">
+      <option value="">– Shop wird geladen …</option>
+    </select>
   </div>
-  <div class="coming-card">
-    <div class="coming-icon">📦</div>
-    <div class="coming-title">In Entwicklung</div>
-    <p class="coming-text">Das Frontend für den Produkt-Upload wird gerade gebaut.</p>
-    <span class="coming-badge">Coming soon</span>
+
+  <!-- Step 2: Masterartikel -->
+  <div class="card hidden" id="step2">
+    <div class="step-label">Schritt 2</div>
+    <div class="step-title">Masterartikel auswählen <span class="tag" id="shopName"></span></div>
+    <div class="artikel-grid" id="artikelGrid"></div>
   </div>
+
+  <!-- Step 3: Sheet -->
+  <div class="card hidden" id="step3">
+    <div class="step-label">Schritt 3</div>
+    <div class="step-title">Artikel-Template Sheet-ID eingeben</div>
+    <p style="font-size:13px;color:#6B7280;margin:0 0 12px;">Das ausgefüllte Google Sheet mit allen Varianten und Preisen.</p>
+    <div class="sheet-row">
+      <input type="text" id="sheetId" placeholder="Google Sheet ID …" oninput="updateUploadBtn()">
+      <a class="btn btn-ghost" id="sheetLink" href="#" target="_blank" style="white-space:nowrap;font-size:13px;">Öffnen ↗</a>
+    </div>
+  </div>
+
+  <!-- Step 4: Upload -->
+  <div class="card hidden" id="step4">
+    <div class="step-label">Schritt 4</div>
+    <div class="step-title">Produkte hochladen</div>
+    <p style="font-size:13px;color:#6B7280;margin:0 0 16px;">Die Funktion liest das Sheet und legt alle Varianten als neues Produkt in Shopify an (Status: Entwurf).</p>
+    <button class="btn btn-primary" id="uploadBtn" onclick="doUpload()" disabled>
+      <span id="uploadBtnText">Jetzt hochladen</span>
+    </button>
+  </div>
+
+  <div id="resultBox" class="hidden"></div>
 </div>
-<script src="nav.js"></script>
+
+<script src="/nav.js"></script>
+<script>
+const API = '/.netlify/functions/';
+let selectedKunde = null;
+let selectedArtikel = null;
+
+async function init() {
+  const res = await fetch(API + 'shopify-kunden-alle');
+  const data = await res.json();
+  const sel = document.getElementById('shopSelect');
+  sel.innerHTML = '<option value="">– Shop wählen –</option>';
+  (data.kunden || []).forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k.id;
+    opt.textContent = k.name + ' (' + k.domain + ')';
+    opt.dataset.json = JSON.stringify(k);
+    sel.appendChild(opt);
+  });
+}
+
+function onShopChange() {
+  const sel = document.getElementById('shopSelect');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.dataset.json) { hide('step2'); hide('step3'); hide('step4'); return; }
+  selectedKunde = JSON.parse(opt.dataset.json);
+  document.getElementById('shopName').textContent = selectedKunde.name;
+  hide('step3'); hide('step4'); hide('resultBox');
+  loadArtikel(selectedKunde.id);
+}
+
+async function loadArtikel(kundenId) {
+  const grid = document.getElementById('artikelGrid');
+  grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Lade Artikel …</div>';
+  show('step2');
+  try {
+    const res = await fetch(API + 'shopify-masterartikel-scan?kunden_id=' + kundenId);
+    const data = await res.json();
+    if (!data.produkte || data.produkte.length === 0) {
+      grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Keine Masterartikel hinterlegt.</div>';
+      return;
+    }
+    grid.innerHTML = '';
+    data.produkte.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'artikel-card';
+      card.innerHTML = '<div class="ak-title">' + esc(p.title) + '</div>'
+        + '<div class="ak-handle">' + esc(p.handle) + '</div>'
+        + '<div class="ak-variants">' + (p.variants ? p.variants.length : 0) + ' Varianten</div>';
+      card.onclick = () => selectArtikel(p, card);
+      grid.appendChild(card);
+    });
+  } catch(e) {
+    grid.innerHTML = '<div style="color:#B91C1C;font-size:13px;">Fehler: ' + esc(e.message) + '</div>';
+  }
+}
+
+function selectArtikel(produkt, cardEl) {
+  document.querySelectorAll('.artikel-card').forEach(c => c.classList.remove('selected'));
+  cardEl.classList.add('selected');
+  selectedArtikel = produkt;
+  show('step3');
+  show('step4');
+  updateUploadBtn();
+}
+
+function updateUploadBtn() {
+  const sheetId = document.getElementById('sheetId').value.trim();
+  const link = document.getElementById('sheetLink');
+  if (sheetId) link.href = 'https://docs.google.com/spreadsheets/d/' + sheetId;
+  document.getElementById('uploadBtn').disabled = !sheetId || !selectedKunde;
+}
+
+async function doUpload() {
+  const sheetId = document.getElementById('sheetId').value.trim();
+  const btn = document.getElementById('uploadBtn');
+  const btnText = document.getElementById('uploadBtnText');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> Wird hochgeladen …';
+
+  try {
+    const res = await fetch(API + 'shopify-produkte-hochladen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kunden_id: selectedKunde.id, artikel_sheet_id: sheetId }),
+    });
+    const data = await res.json();
+    const box = document.getElementById('resultBox');
+    box.className = res.ok ? 'result-box result-ok' : 'result-box result-err';
+    if (res.ok && data.ergebnisse) {
+      box.innerHTML = '✓ ' + data.ergebnisse.length + ' Produkt(e) angelegt:<br>'
+        + data.ergebnisse.map(e => '&nbsp;&nbsp;· ' + esc(e.handle) + ' → Shopify ID ' + e.shopify_id).join('<br>');
+    } else {
+      box.innerHTML = '✗ Fehler: ' + esc(data.error || JSON.stringify(data));
+    }
+    show('resultBox');
+  } catch(e) {
+    const box = document.getElementById('resultBox');
+    box.className = 'result-box result-err';
+    box.innerHTML = '✗ ' + esc(e.message);
+    show('resultBox');
+  }
+
+  btnText.textContent = 'Jetzt hochladen';
+  btn.disabled = false;
+}
+
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+init();
+</script>
 </body>
 </html>

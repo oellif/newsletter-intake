@@ -6,32 +6,195 @@
 <title>Shopify-Tool – Produkte synchronisieren</title>
 <link rel="stylesheet" href="/mh-ci.css">
 <style>
-  :root { --dark:#202228; --accent:#96BF48; --bg:#F7F6F3; --border:#E5E7EB; }
-  * { box-sizing: border-box; }
-  body { font-family: 'Manrope', Arial, sans-serif; background: var(--bg); color: #191919; margin: 0; padding: 0 0 80px; }
-  .container { max-width: 720px; margin: 0 auto; padding: 36px 28px; }
-  .page-header h1 { font-family: 'Varela Round','Manrope',sans-serif; font-size: 28px; font-weight: 400; letter-spacing: -0.5px; margin: 0 0 6px; }
-  .page-header p { font-size: 14px; color: #6B7280; margin: 0 0 28px; line-height: 1.55; }
-  .coming-card { background: #fff; border-radius: 14px; padding: 40px 32px; text-align: center; box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 16px rgba(25,25,25,0.04); }
-  .coming-icon { font-size: 48px; margin-bottom: 16px; }
-  .coming-title { font-size: 20px; font-weight: 700; color: #191919; margin-bottom: 8px; }
-  .coming-text { font-size: 14px; color: #6B7280; line-height: 1.6; max-width: 400px; margin: 0 auto; }
-  .coming-badge { display: inline-block; margin-top: 20px; background: rgba(150,191,72,0.12); color: #5a9020; font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 20px; }
+  :root { --dark:#202228; --green:#96BF48; --orange:#FA8700; --bg:#F7F6F3; --border:#E5E7EB; }
+  *{box-sizing:border-box;}
+  body{font-family:'Manrope',Arial,sans-serif;background:var(--bg);color:#191919;margin:0;padding:0 0 80px;}
+  .container{max-width:720px;margin:0 auto;padding:36px 28px;}
+  h1{font-family:'Varela Round','Manrope',sans-serif;font-size:26px;font-weight:400;letter-spacing:-0.4px;margin:0 0 4px;}
+  .sub{font-size:14px;color:#6B7280;margin:0 0 28px;}
+  .card{background:#fff;border-radius:14px;padding:28px;box-shadow:0 1px 4px rgba(25,25,25,0.06),0 4px 16px rgba(25,25,25,0.04);margin-bottom:20px;}
+  .step-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green);margin-bottom:10px;}
+  .step-title{font-size:16px;font-weight:700;margin:0 0 14px;}
+  select,input[type=text]{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Manrope',sans-serif;font-size:14px;background:#fff;color:#191919;outline:none;transition:border-color .15s;}
+  select:focus,input[type=text]:focus{border-color:var(--green);}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:9px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:opacity .15s;}
+  .btn-primary{background:var(--green);color:#fff;}
+  .btn-primary:hover{opacity:.88;}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-ghost{background:none;border:1.5px solid var(--border);color:#374151;}
+  .produkt-liste{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+  .produkt-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1.5px solid var(--border);border-radius:9px;background:#fff;cursor:pointer;transition:border-color .15s;}
+  .produkt-row:hover{border-color:var(--green);}
+  .produkt-row.selected{border-color:var(--green);background:rgba(150,191,72,0.05);}
+  .pr-title{font-size:14px;font-weight:700;}
+  .pr-meta{font-size:12px;color:#6B7280;margin-top:2px;}
+  .pr-check{font-size:18px;color:var(--green);opacity:0;}
+  .produkt-row.selected .pr-check{opacity:1;}
+  .hidden{display:none;}
+  .sheet-row{display:flex;gap:10px;align-items:center;}
+  .sheet-row input{flex:1;}
+  .result-box{border-radius:10px;padding:16px 18px;font-size:13px;line-height:1.7;}
+  .result-ok{background:rgba(150,191,72,0.1);border:1px solid rgba(150,191,72,0.3);}
+  .result-err{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .info-box{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:14px 16px;font-size:13px;color:#166534;line-height:1.6;}
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="page-header">
-    <h1>Produkte synchronisieren</h1>
-    <p>Bestehende Produkte zwischen Datenquelle und Shopify-Shop abgleichen.</p>
+  <h1>Produkte synchronisieren</h1>
+  <p class="sub">Bestehende Shopify-Produkte über ein aktualisiertes Sheet neu einlesen.</p>
+
+  <!-- Step 1: Shop -->
+  <div class="card">
+    <div class="step-label">Schritt 1</div>
+    <div class="step-title">Shop auswählen</div>
+    <select id="shopSelect" onchange="onShopChange()">
+      <option value="">– Shop wird geladen …</option>
+    </select>
   </div>
-  <div class="coming-card">
-    <div class="coming-icon">🔄</div>
-    <div class="coming-title">In Entwicklung</div>
-    <p class="coming-text">Das Frontend für die Produkt-Synchronisierung wird gerade gebaut.</p>
-    <span class="coming-badge">Coming soon</span>
+
+  <!-- Step 2: Produkt -->
+  <div class="card hidden" id="step2">
+    <div class="step-label">Schritt 2</div>
+    <div class="step-title">Produkt auswählen</div>
+    <div class="produkt-liste" id="produktListe"></div>
   </div>
+
+  <!-- Step 3: Sheet -->
+  <div class="card hidden" id="step3">
+    <div class="step-label">Schritt 3</div>
+    <div class="step-title">Aktualisiertes Sheet angeben</div>
+    <p style="font-size:13px;color:#6B7280;margin:0 0 12px;">Sheet-ID mit den neuen Daten (Preise, Varianten, Lagerbestand).</p>
+    <div class="info-box" style="margin-bottom:14px;">
+      ℹ Das Sync legt neue Produkt-Entwürfe an. Bestehende Produkte werden nicht gelöscht oder überschrieben.
+    </div>
+    <div class="sheet-row">
+      <input type="text" id="sheetId" placeholder="Google Sheet ID …" oninput="updateSyncBtn()">
+      <a class="btn btn-ghost" id="sheetLink" href="#" target="_blank" style="white-space:nowrap;font-size:13px;">Öffnen ↗</a>
+    </div>
+  </div>
+
+  <!-- Step 4: Sync -->
+  <div class="card hidden" id="step4">
+    <div class="step-label">Schritt 4</div>
+    <div class="step-title">Synchronisieren</div>
+    <button class="btn btn-primary" id="syncBtn" onclick="doSync()" disabled>
+      <span id="syncBtnText">Jetzt synchronisieren</span>
+    </button>
+  </div>
+
+  <div id="resultBox" class="hidden result-box"></div>
 </div>
-<script src="nav.js"></script>
+
+<script src="/nav.js"></script>
+<script>
+const API = '/.netlify/functions/';
+let selectedKunde = null;
+let selectedProdukt = null;
+
+async function init() {
+  const res = await fetch(API + 'shopify-kunden-alle');
+  const data = await res.json();
+  const sel = document.getElementById('shopSelect');
+  sel.innerHTML = '<option value="">– Shop wählen –</option>';
+  (data.kunden || []).forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k.id;
+    opt.textContent = k.name + ' (' + k.domain + ')';
+    opt.dataset.json = JSON.stringify(k);
+    sel.appendChild(opt);
+  });
+}
+
+function onShopChange() {
+  const sel = document.getElementById('shopSelect');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.dataset.json) { hide('step2'); hide('step3'); hide('step4'); return; }
+  selectedKunde = JSON.parse(opt.dataset.json);
+  hide('step3'); hide('step4'); hide('resultBox');
+  loadProdukte(selectedKunde.id);
+}
+
+async function loadProdukte(kundenId) {
+  const liste = document.getElementById('produktListe');
+  liste.innerHTML = '<div style="color:#6B7280;font-size:13px;">Lade Produkte …</div>';
+  show('step2');
+  try {
+    const res = await fetch(API + 'shopify-masterartikel-scan?kunden_id=' + kundenId);
+    const data = await res.json();
+    if (!data.produkte || data.produkte.length === 0) {
+      liste.innerHTML = '<div style="color:#6B7280;font-size:13px;">Keine Masterartikel hinterlegt.</div>';
+      return;
+    }
+    liste.innerHTML = '';
+    data.produkte.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'produkt-row';
+      row.innerHTML = '<div><div class="pr-title">' + esc(p.title) + '</div>'
+        + '<div class="pr-meta">' + esc(p.handle) + ' · ' + (p.variants ? p.variants.length : 0) + ' Varianten</div></div>'
+        + '<div class="pr-check">✓</div>';
+      row.onclick = () => {
+        document.querySelectorAll('.produkt-row').forEach(r => r.classList.remove('selected'));
+        row.classList.add('selected');
+        selectedProdukt = p;
+        show('step3'); show('step4');
+        updateSyncBtn();
+      };
+      liste.appendChild(row);
+    });
+  } catch(e) {
+    liste.innerHTML = '<div style="color:#B91C1C;font-size:13px;">Fehler: ' + esc(e.message) + '</div>';
+  }
+}
+
+function updateSyncBtn() {
+  const sheetId = document.getElementById('sheetId').value.trim();
+  const link = document.getElementById('sheetLink');
+  if (sheetId) link.href = 'https://docs.google.com/spreadsheets/d/' + sheetId;
+  document.getElementById('syncBtn').disabled = !sheetId || !selectedKunde;
+}
+
+async function doSync() {
+  const sheetId = document.getElementById('sheetId').value.trim();
+  const btn = document.getElementById('syncBtn');
+  const btnText = document.getElementById('syncBtnText');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> Synchronisiert …';
+
+  try {
+    const res = await fetch(API + 'shopify-produkte-hochladen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kunden_id: selectedKunde.id, artikel_sheet_id: sheetId }),
+    });
+    const data = await res.json();
+    const box = document.getElementById('resultBox');
+    box.className = res.ok ? 'result-box result-ok' : 'result-box result-err';
+    if (res.ok && data.ergebnisse) {
+      box.innerHTML = '✓ Sync abgeschlossen — ' + data.ergebnisse.length + ' Produkt(e) angelegt:<br>'
+        + data.ergebnisse.map(e => '&nbsp;&nbsp;· ' + esc(e.handle) + ' (ID: ' + e.shopify_id + ')').join('<br>');
+    } else {
+      box.innerHTML = '✗ Fehler: ' + esc(data.error || JSON.stringify(data));
+    }
+    show('resultBox');
+  } catch(e) {
+    const box = document.getElementById('resultBox');
+    box.className = 'result-box result-err';
+    box.innerHTML = '✗ ' + esc(e.message);
+    show('resultBox');
+  }
+
+  btnText.textContent = 'Jetzt synchronisieren';
+  btn.disabled = false;
+}
+
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+init();
+</script>
 </body>
 </html>

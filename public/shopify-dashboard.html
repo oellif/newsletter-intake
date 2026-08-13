@@ -6,33 +6,164 @@
 <title>Shopify-Tool – Dashboard</title>
 <link rel="stylesheet" href="/mh-ci.css">
 <style>
-  :root { --dark:#202228; --accent:#96BF48; --bg:#F7F6F3; --border:#E5E7EB; }
-  * { box-sizing: border-box; }
-  body { font-family: 'Manrope', Arial, sans-serif; background: var(--bg); color: #191919; margin: 0; padding: 0 0 80px; }
-  .container { max-width: 720px; margin: 0 auto; padding: 36px 28px; }
-  .page-header h1 { font-family: 'Varela Round','Manrope',sans-serif; font-size: 28px; font-weight: 400; letter-spacing: -0.5px; margin: 0 0 6px; }
-  .page-header p { font-size: 14px; color: #6B7280; margin: 0 0 28px; line-height: 1.55; }
-  .coming-card { background: #fff; border-radius: 14px; padding: 40px 32px; text-align: center; box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 16px rgba(25,25,25,0.04); }
-  .coming-icon { font-size: 48px; margin-bottom: 16px; }
-  .coming-title { font-size: 20px; font-weight: 700; color: #191919; margin-bottom: 8px; }
-  .coming-text { font-size: 14px; color: #6B7280; line-height: 1.6; max-width: 400px; margin: 0 auto; }
-  .coming-badge { display: inline-block; margin-top: 20px; background: rgba(150,191,72,0.12); color: #5a9020; font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 20px; }
+  :root { --dark:#202228; --green:#96BF48; --orange:#FA8700; --bg:#F7F6F3; --border:#E5E7EB; }
+  *{box-sizing:border-box;}
+  body{font-family:'Manrope',Arial,sans-serif;background:var(--bg);color:#191919;margin:0;padding:0 0 80px;}
+  .container{max-width:820px;margin:0 auto;padding:36px 28px;}
+  h1{font-family:'Varela Round','Manrope',sans-serif;font-size:26px;font-weight:400;letter-spacing:-0.4px;margin:0 0 4px;}
+  .sub{font-size:14px;color:#6B7280;margin:0 0 28px;}
+  .top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:9px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:opacity .15s;text-decoration:none;}
+  .btn-primary{background:var(--green);color:#fff;}
+  .btn-primary:hover{opacity:.88;}
+  .btn-ghost{background:#fff;border:1.5px solid var(--border);color:#374151;}
+  .btn-ghost:hover{background:#f3f4f6;}
+  .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+  .shop-card{background:#fff;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(25,25,25,0.06),0 4px 16px rgba(25,25,25,0.04);display:flex;flex-direction:column;gap:12px;}
+  .shop-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+  .shop-name{font-size:16px;font-weight:700;margin:0;}
+  .shop-domain{font-size:12px;color:#6B7280;font-family:monospace;margin-top:2px;}
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-green{background:rgba(150,191,72,0.12);color:#4a7c10;}
+  .shop-meta{font-size:12px;color:#6B7280;line-height:1.7;}
+  .shop-meta span{font-weight:600;color:#374151;}
+  .shop-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .shop-actions a{font-size:12px;font-weight:700;padding:7px 14px;border-radius:7px;}
+  .empty{text-align:center;padding:60px 20px;color:#6B7280;}
+  .empty-icon{font-size:48px;margin-bottom:12px;}
+
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .modal{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+  .modal h2{font-size:20px;font-weight:700;margin:0 0 20px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#6B7280;margin-bottom:6px;}
+  .field input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Manrope',sans-serif;font-size:14px;outline:none;transition:border-color .15s;}
+  .field input:focus{border-color:var(--green);}
+  .modal-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;}
+  .hidden{display:none;}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .err-msg{color:#B91C1C;font-size:13px;margin-top:12px;}
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="page-header">
-    <h1>Shopify-Tool</h1>
-    <p>Produkte hochladen, synchronisieren und im Shopify-Shop verwalten.</p>
+  <div class="top-row">
+    <div>
+      <h1>Dashboard</h1>
+      <p class="sub" style="margin:0;">Verbundene Shopify-Shops im Überblick.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal()">+ Shop anlegen</button>
   </div>
 
-  <div class="coming-card">
-    <div class="coming-icon">🛍</div>
-    <div class="coming-title">In Entwicklung</div>
-    <p class="coming-text">Das Shopify-Frontend wird gerade gebaut. Die Backend-Funktionen sind bereits vorhanden — die Oberfläche folgt in Kürze.</p>
-    <span class="coming-badge">Coming soon</span>
+  <div id="shopGrid" class="shop-grid">
+    <div style="color:#6B7280;font-size:14px;">Lädt …</div>
   </div>
 </div>
-<script src="nav.js"></script>
+
+<!-- Modal: Neuen Shop anlegen -->
+<div class="modal-bg hidden" id="modal">
+  <div class="modal">
+    <h2>Neuen Shop anlegen</h2>
+    <div class="field"><label>Shop-Name</label><input type="text" id="mName" placeholder="z.B. Marktplatz Helden"></div>
+    <div class="field"><label>Shopify-Domain</label><input type="text" id="mDomain" placeholder="mein-shop.myshopify.com"></div>
+    <div class="field"><label>Access Token</label><input type="text" id="mToken" placeholder="shpat_…"></div>
+    <div class="field"><label>Masterartikel-Handles (kommagetrennt)</label><input type="text" id="mArtikel" placeholder="malachit-armband, holz-ring"></div>
+    <div class="field"><label>Claid.ai API Key (optional)</label><input type="text" id="mClaid" placeholder=""></div>
+    <div id="modalErr" class="err-msg hidden"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveKunde()"><span id="saveBtnText">Speichern</span></button>
+    </div>
+  </div>
+</div>
+
+<script src="/nav.js"></script>
+<script>
+const API = '/.netlify/functions/';
+
+async function loadShops() {
+  const grid = document.getElementById('shopGrid');
+  try {
+    const res = await fetch(API + 'shopify-kunden-alle');
+    const data = await res.json();
+    const kunden = data.kunden || [];
+    if (kunden.length === 0) {
+      grid.innerHTML = '<div class="empty"><div class="empty-icon">🏪</div><div>Noch kein Shop hinterlegt.</div></div>';
+      return;
+    }
+    grid.innerHTML = '';
+    kunden.forEach(k => {
+      const card = document.createElement('div');
+      card.className = 'shop-card';
+      const artikel = k.masterartikel.length ? k.masterartikel.join(', ') : '–';
+      card.innerHTML =
+        '<div class="shop-card-top">'
+        + '<div><div class="shop-name">' + esc(k.name) + '</div><div class="shop-domain">' + esc(k.domain) + '</div></div>'
+        + '<span class="badge badge-green">Aktiv</span>'
+        + '</div>'
+        + '<div class="shop-meta">'
+        + '<div>ID: <span>' + esc(k.id) + '</span></div>'
+        + '<div>Masterartikel: <span>' + esc(artikel) + '</span></div>'
+        + '</div>'
+        + '<div class="shop-actions">'
+        + '<a class="btn btn-ghost" href="/shopify-upload.html">Produkt hochladen</a>'
+        + '<a class="btn btn-ghost" href="https://' + esc(k.domain) + '/admin" target="_blank">Admin ↗</a>'
+        + '</div>';
+      grid.appendChild(card);
+    });
+  } catch(e) {
+    grid.innerHTML = '<div style="color:#B91C1C;font-size:14px;">Fehler: ' + esc(e.message) + '</div>';
+  }
+}
+
+function openModal() { document.getElementById('modal').classList.remove('hidden'); }
+function closeModal() { document.getElementById('modal').classList.add('hidden'); clearErr(); }
+function clearErr() { const el = document.getElementById('modalErr'); el.classList.add('hidden'); el.textContent = ''; }
+
+async function saveKunde() {
+  const name = document.getElementById('mName').value.trim();
+  const domain = document.getElementById('mDomain').value.trim();
+  const token = document.getElementById('mToken').value.trim();
+  const artikel = document.getElementById('mArtikel').value.trim();
+  const claid = document.getElementById('mClaid').value.trim();
+
+  if (!name || !domain || !token) { showErr('Name, Domain und Token sind Pflichtfelder.'); return; }
+
+  const btn = document.getElementById('saveBtn');
+  const btnText = document.getElementById('saveBtnText');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span>';
+
+  try {
+    const res = await fetch(API + 'shopify-kunde-anlegen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, domain, access_token: token, masterartikel: artikel, claid_key: claid }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showErr(data.error || 'Unbekannter Fehler.'); return; }
+    closeModal();
+    ['mName','mDomain','mToken','mArtikel','mClaid'].forEach(id => document.getElementById(id).value = '');
+    loadShops();
+  } catch(e) {
+    showErr(e.message);
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = 'Speichern';
+  }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('modalErr');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+loadShops();
+</script>
 </body>
 </html>
