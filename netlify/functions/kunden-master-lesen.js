@@ -5,7 +5,7 @@
 
 const { getAccessToken, sheetsReadValues } = require('./lib/google');
 
-const SHEET_ID = process.env.MASTER_KUNDEN_SHEET_ID;
+const SHEET_ID = process.env.MASTER_KUNDEN_SHEET_ID || '1CveKc783N8K_LxKvM2weZA4-rXxMAs6inB4jUCwpXrg';
 
 exports.handler = async (event) => {
   const headers = {
@@ -15,10 +15,6 @@ exports.handler = async (event) => {
   };
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
-
-  if (!SHEET_ID) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: 'MASTER_KUNDEN_SHEET_ID nicht gesetzt.' }) };
-  }
 
   try {
     const accessToken = await getAccessToken();

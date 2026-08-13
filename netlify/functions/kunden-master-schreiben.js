@@ -10,7 +10,7 @@ const {
   sheetsAppendValues,
 } = require('./lib/google');
 
-const SHEET_ID = process.env.MASTER_KUNDEN_SHEET_ID;
+const SHEET_ID = process.env.MASTER_KUNDEN_SHEET_ID || '1CveKc783N8K_LxKvM2weZA4-rXxMAs6inB4jUCwpXrg';
 
 const HEADER = [
   'ID', 'Name', 'E-Mail', 'Telefon', 'Adresse', 'PLZ', 'Stadt',
@@ -31,10 +31,6 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
-
-  if (!SHEET_ID) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: 'MASTER_KUNDEN_SHEET_ID nicht gesetzt.' }) };
   }
 
   let data;
