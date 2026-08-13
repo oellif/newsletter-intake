@@ -23,17 +23,19 @@
   .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
   .btn-ghost{background:none;border:1.5px solid var(--border);color:#374151;}
   .btn-ghost:hover{background:#f3f4f6;}
+  .btn-sm{padding:7px 14px;font-size:13px;border-radius:7px;}
   .artikel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:4px;}
-  .artikel-card{border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .15s,background .15s;background:#fff;}
+  .artikel-card{position:relative;border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .15s,background .15s;background:#fff;}
   .artikel-card:hover{border-color:var(--green);}
   .artikel-card.selected{border-color:var(--green);background:rgba(150,191,72,0.06);}
-  .artikel-card .ak-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+  .artikel-card .ak-check{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;}
+  .artikel-card.selected .ak-check{opacity:1;}
+  .artikel-card .ak-title{font-size:14px;font-weight:700;margin-bottom:4px;padding-right:24px;}
   .artikel-card .ak-handle{font-size:11px;color:#6B7280;font-family:monospace;}
   .artikel-card .ak-variants{font-size:12px;color:#6B7280;margin-top:4px;}
+  .add-btn-row{margin-top:12px;}
   .sheet-row{display:flex;gap:10px;align-items:center;}
   .sheet-row input{flex:1;}
-  .sheet-link{font-size:12px;color:var(--green);text-decoration:none;}
-  .sheet-link:hover{text-decoration:underline;}
   .hidden{display:none;}
   .result-box{border-radius:10px;padding:16px 18px;font-size:13px;line-height:1.6;}
   .result-ok{background:rgba(150,191,72,0.1);border:1px solid rgba(150,191,72,0.3);}
@@ -41,12 +43,19 @@
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
   .tag{display:inline-block;background:rgba(150,191,72,0.12);color:#4a7c10;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;margin-left:8px;}
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .modal{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+  .modal h2{font-size:18px;font-weight:700;margin:0 0 6px;}
+  .modal p{font-size:13px;color:#6B7280;margin:0 0 18px;}
+  .modal-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+  .err-msg{color:#B91C1C;font-size:13px;margin-top:10px;}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>Produkt hochladen</h1>
-  <p class="sub">Artikel-Template ausfüllen und automatisch in Shopify anlegen.</p>
+  <p class="sub">Masterartikel auswählen und automatisch in Shopify anlegen.</p>
 
   <!-- Step 1: Shop -->
   <div class="card" id="step1">
@@ -62,6 +71,9 @@
     <div class="step-label">Schritt 2</div>
     <div class="step-title">Masterartikel auswählen <span class="tag" id="shopName"></span></div>
     <div class="artikel-grid" id="artikelGrid"></div>
+    <div class="add-btn-row">
+      <button class="btn btn-ghost btn-sm" onclick="openAddModal()">+ Masterartikel hinzufügen</button>
+    </div>
   </div>
 
   <!-- Step 3: Sheet -->
@@ -71,7 +83,7 @@
     <p style="font-size:13px;color:#6B7280;margin:0 0 12px;">Das ausgefüllte Google Sheet mit allen Varianten und Preisen.</p>
     <div class="sheet-row">
       <input type="text" id="sheetId" placeholder="Google Sheet ID …" oninput="updateUploadBtn()">
-      <a class="btn btn-ghost" id="sheetLink" href="#" target="_blank" style="white-space:nowrap;font-size:13px;">Öffnen ↗</a>
+      <a class="btn btn-ghost" id="sheetLink" href="#" target="_blank" style="white-space:nowrap;font-size:13px;" onclick="return !!document.getElementById('sheetId').value.trim()">Öffnen ↗</a>
     </div>
   </div>
 
@@ -79,7 +91,7 @@
   <div class="card hidden" id="step4">
     <div class="step-label">Schritt 4</div>
     <div class="step-title">Produkte hochladen</div>
-    <p style="font-size:13px;color:#6B7280;margin:0 0 16px;">Die Funktion liest das Sheet und legt alle Varianten als neues Produkt in Shopify an (Status: Entwurf).</p>
+    <p style="font-size:13px;color:#6B7280;margin:0 0 16px;">Die Funktion liest das Sheet und legt alle Varianten der ausgewählten Masterartikel als Entwurf in Shopify an.</p>
     <button class="btn btn-primary" id="uploadBtn" onclick="doUpload()" disabled>
       <span id="uploadBtnText">Jetzt hochladen</span>
     </button>
@@ -88,11 +100,27 @@
   <div id="resultBox" class="hidden"></div>
 </div>
 
+<!-- Modal: Masterartikel hinzufügen -->
+<div class="modal-bg hidden" id="addModal">
+  <div class="modal">
+    <h2>Masterartikel hinzufügen</h2>
+    <p>Alle Artikel im Entwurfsstatus des ausgewählten Shops.</p>
+    <select id="entwurfSelect" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Manrope',sans-serif;font-size:14px;outline:none;">
+      <option value="">Lädt …</option>
+    </select>
+    <div id="addErr" class="err-msg hidden"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost btn-sm" onclick="closeAddModal()">Abbrechen</button>
+      <button class="btn btn-primary btn-sm" id="addBtn" onclick="addMasterartikel()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
 <script src="/nav.js"></script>
 <script>
 const API = '/.netlify/functions/';
 let selectedKunde = null;
-let selectedArtikel = null;
+let selectedArtikel = [];
 
 async function init() {
   const res = await fetch(API + 'shopify-kunden-alle');
@@ -114,13 +142,14 @@ function onShopChange() {
   if (!opt || !opt.dataset.json) { hide('step2'); hide('step3'); hide('step4'); return; }
   selectedKunde = JSON.parse(opt.dataset.json);
   document.getElementById('shopName').textContent = selectedKunde.name;
+  selectedArtikel = [];
   hide('step3'); hide('step4'); hide('resultBox');
   loadArtikel(selectedKunde.id);
 }
 
 async function loadArtikel(kundenId) {
   const grid = document.getElementById('artikelGrid');
-  grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Lade Artikel …</div>';
+  grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Lade Masterartikel …</div>';
   show('step2');
   try {
     const res = await fetch(API + 'shopify-masterartikel-scan?kunden_id=' + kundenId);
@@ -129,27 +158,41 @@ async function loadArtikel(kundenId) {
       grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Keine Masterartikel hinterlegt.</div>';
       return;
     }
-    grid.innerHTML = '';
-    data.produkte.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'artikel-card';
-      card.innerHTML = '<div class="ak-title">' + esc(p.title) + '</div>'
-        + '<div class="ak-handle">' + esc(p.handle) + '</div>'
-        + '<div class="ak-variants">' + (p.variants ? p.variants.length : 0) + ' Varianten</div>';
-      card.onclick = () => selectArtikel(p, card);
-      grid.appendChild(card);
-    });
+    selectedArtikel = [...data.produkte]; // alle vorausgewählt
+    renderArtikelGrid(data.produkte);
+    show('step3'); show('step4');
+    updateUploadBtn();
   } catch(e) {
     grid.innerHTML = '<div style="color:#B91C1C;font-size:13px;">Fehler: ' + esc(e.message) + '</div>';
   }
 }
 
-function selectArtikel(produkt, cardEl) {
-  document.querySelectorAll('.artikel-card').forEach(c => c.classList.remove('selected'));
-  cardEl.classList.add('selected');
-  selectedArtikel = produkt;
-  show('step3');
-  show('step4');
+function renderArtikelGrid(produkte) {
+  const grid = document.getElementById('artikelGrid');
+  grid.innerHTML = '';
+  produkte.forEach(p => {
+    const card = document.createElement('div');
+    const isSelected = selectedArtikel.some(a => a.handle === p.handle);
+    card.className = 'artikel-card' + (isSelected ? ' selected' : '');
+    card.dataset.handle = p.handle;
+    card.innerHTML = '<div class="ak-check">✓</div>'
+      + '<div class="ak-title">' + esc(p.title) + '</div>'
+      + '<div class="ak-handle">' + esc(p.handle) + '</div>'
+      + '<div class="ak-variants">' + (p.variants ? p.variants.length : 0) + ' Varianten</div>';
+    card.onclick = () => toggleArtikel(p, card);
+    grid.appendChild(card);
+  });
+}
+
+function toggleArtikel(produkt, cardEl) {
+  const idx = selectedArtikel.findIndex(a => a.handle === produkt.handle);
+  if (idx >= 0) {
+    selectedArtikel.splice(idx, 1);
+    cardEl.classList.remove('selected');
+  } else {
+    selectedArtikel.push(produkt);
+    cardEl.classList.add('selected');
+  }
   updateUploadBtn();
 }
 
@@ -157,7 +200,7 @@ function updateUploadBtn() {
   const sheetId = document.getElementById('sheetId').value.trim();
   const link = document.getElementById('sheetLink');
   if (sheetId) link.href = 'https://docs.google.com/spreadsheets/d/' + sheetId;
-  document.getElementById('uploadBtn').disabled = !sheetId || !selectedKunde;
+  document.getElementById('uploadBtn').disabled = !sheetId || !selectedKunde || selectedArtikel.length === 0;
 }
 
 async function doUpload() {
@@ -171,7 +214,11 @@ async function doUpload() {
     const res = await fetch(API + 'shopify-produkte-hochladen', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kunden_id: selectedKunde.id, artikel_sheet_id: sheetId }),
+      body: JSON.stringify({
+        kunden_id: selectedKunde.id,
+        artikel_sheet_id: sheetId,
+        masterartikel: selectedArtikel.map(a => a.handle),
+      }),
     });
     const data = await res.json();
     const box = document.getElementById('resultBox');
@@ -192,6 +239,65 @@ async function doUpload() {
 
   btnText.textContent = 'Jetzt hochladen';
   btn.disabled = false;
+}
+
+async function openAddModal() {
+  const sel = document.getElementById('entwurfSelect');
+  sel.innerHTML = '<option value="">Lädt …</option>';
+  hide('addErr');
+  show('addModal');
+  try {
+    const res = await fetch(API + 'shopify-entwuerfe-laden?kunden_id=' + selectedKunde.id);
+    const data = await res.json();
+    const bereitsVorhanden = new Set(selectedArtikel.map(a => a.handle));
+    const verfuegbar = (data.produkte || []).filter(p => !bereitsVorhanden.has(p.handle));
+    if (verfuegbar.length === 0) {
+      sel.innerHTML = '<option value="">Alle Entwürfe sind bereits Masterartikel</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">– Entwurf auswählen –</option>';
+    verfuegbar.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.handle;
+      opt.textContent = p.title + ' (' + p.handle + ')';
+      sel.appendChild(opt);
+    });
+  } catch(e) {
+    sel.innerHTML = '<option value="">Fehler beim Laden</option>';
+  }
+}
+
+function closeAddModal() { hide('addModal'); }
+
+async function addMasterartikel() {
+  const handle = document.getElementById('entwurfSelect').value;
+  if (!handle) return;
+  const btn = document.getElementById('addBtn');
+  btn.disabled = true;
+  hide('addErr');
+  try {
+    const res = await fetch(API + 'shopify-masterartikel-hinzufuegen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kunden_id: selectedKunde.id, handle }),
+    });
+    if (res.ok) {
+      closeAddModal();
+      loadArtikel(selectedKunde.id);
+    } else {
+      const data = await res.json();
+      showAddErr(data.error || 'Unbekannter Fehler');
+    }
+  } catch(e) {
+    showAddErr(e.message);
+  }
+  btn.disabled = false;
+}
+
+function showAddErr(msg) {
+  const el = document.getElementById('addErr');
+  el.textContent = msg;
+  el.classList.remove('hidden');
 }
 
 function show(id) { document.getElementById(id).classList.remove('hidden'); }

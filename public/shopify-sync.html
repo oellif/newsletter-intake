@@ -22,23 +22,35 @@
   .btn-primary:hover{opacity:.88;}
   .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
   .btn-ghost{background:none;border:1.5px solid var(--border);color:#374151;}
-  .produkt-liste{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
-  .produkt-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1.5px solid var(--border);border-radius:9px;background:#fff;cursor:pointer;transition:border-color .15s;}
-  .produkt-row:hover{border-color:var(--green);}
-  .produkt-row.selected{border-color:var(--green);background:rgba(150,191,72,0.05);}
-  .pr-title{font-size:14px;font-weight:700;}
-  .pr-meta{font-size:12px;color:#6B7280;margin-top:2px;}
-  .pr-check{font-size:18px;color:var(--green);opacity:0;}
-  .produkt-row.selected .pr-check{opacity:1;}
-  .hidden{display:none;}
+  .btn-ghost:hover{background:#f3f4f6;}
+  .btn-sm{padding:7px 14px;font-size:13px;border-radius:7px;}
+  .artikel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:4px;}
+  .artikel-card{position:relative;border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .15s,background .15s;background:#fff;}
+  .artikel-card:hover{border-color:var(--green);}
+  .artikel-card.selected{border-color:var(--green);background:rgba(150,191,72,0.06);}
+  .artikel-card .ak-check{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;}
+  .artikel-card.selected .ak-check{opacity:1;}
+  .artikel-card .ak-title{font-size:14px;font-weight:700;margin-bottom:4px;padding-right:24px;}
+  .artikel-card .ak-handle{font-size:11px;color:#6B7280;font-family:monospace;}
+  .artikel-card .ak-variants{font-size:12px;color:#6B7280;margin-top:4px;}
+  .add-btn-row{margin-top:12px;}
   .sheet-row{display:flex;gap:10px;align-items:center;}
   .sheet-row input{flex:1;}
+  .hidden{display:none;}
   .result-box{border-radius:10px;padding:16px 18px;font-size:13px;line-height:1.7;}
   .result-ok{background:rgba(150,191,72,0.1);border:1px solid rgba(150,191,72,0.3);}
   .result-err{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;}
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .tag{display:inline-block;background:rgba(150,191,72,0.12);color:#4a7c10;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;margin-left:8px;}
   .info-box{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:14px 16px;font-size:13px;color:#166534;line-height:1.6;}
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .modal{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+  .modal h2{font-size:18px;font-weight:700;margin:0 0 6px;}
+  .modal p{font-size:13px;color:#6B7280;margin:0 0 18px;}
+  .modal-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+  .err-msg{color:#B91C1C;font-size:13px;margin-top:10px;}
 </style>
 </head>
 <body>
@@ -55,11 +67,14 @@
     </select>
   </div>
 
-  <!-- Step 2: Produkt -->
+  <!-- Step 2: Masterartikel -->
   <div class="card hidden" id="step2">
     <div class="step-label">Schritt 2</div>
-    <div class="step-title">Produkt auswählen</div>
-    <div class="produkt-liste" id="produktListe"></div>
+    <div class="step-title">Masterartikel auswählen <span class="tag" id="shopName"></span></div>
+    <div class="artikel-grid" id="artikelGrid"></div>
+    <div class="add-btn-row">
+      <button class="btn btn-ghost btn-sm" onclick="openAddModal()">+ Masterartikel hinzufügen</button>
+    </div>
   </div>
 
   <!-- Step 3: Sheet -->
@@ -72,7 +87,7 @@
     </div>
     <div class="sheet-row">
       <input type="text" id="sheetId" placeholder="Google Sheet ID …" oninput="updateSyncBtn()">
-      <a class="btn btn-ghost" id="sheetLink" href="#" target="_blank" style="white-space:nowrap;font-size:13px;">Öffnen ↗</a>
+      <a class="btn btn-ghost" id="sheetLink" href="#" target="_blank" style="white-space:nowrap;font-size:13px;" onclick="return !!document.getElementById('sheetId').value.trim()">Öffnen ↗</a>
     </div>
   </div>
 
@@ -88,11 +103,27 @@
   <div id="resultBox" class="hidden result-box"></div>
 </div>
 
+<!-- Modal: Masterartikel hinzufügen -->
+<div class="modal-bg hidden" id="addModal">
+  <div class="modal">
+    <h2>Masterartikel hinzufügen</h2>
+    <p>Alle Artikel im Entwurfsstatus des ausgewählten Shops.</p>
+    <select id="entwurfSelect" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Manrope',sans-serif;font-size:14px;outline:none;">
+      <option value="">Lädt …</option>
+    </select>
+    <div id="addErr" class="err-msg hidden"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost btn-sm" onclick="closeAddModal()">Abbrechen</button>
+      <button class="btn btn-primary btn-sm" id="addBtn" onclick="addMasterartikel()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
 <script src="/nav.js"></script>
 <script>
 const API = '/.netlify/functions/';
 let selectedKunde = null;
-let selectedProdukt = null;
+let selectedArtikel = [];
 
 async function init() {
   const res = await fetch(API + 'shopify-kunden-alle');
@@ -113,47 +144,66 @@ function onShopChange() {
   const opt = sel.options[sel.selectedIndex];
   if (!opt || !opt.dataset.json) { hide('step2'); hide('step3'); hide('step4'); return; }
   selectedKunde = JSON.parse(opt.dataset.json);
+  document.getElementById('shopName').textContent = selectedKunde.name;
+  selectedArtikel = [];
   hide('step3'); hide('step4'); hide('resultBox');
-  loadProdukte(selectedKunde.id);
+  loadArtikel(selectedKunde.id);
 }
 
-async function loadProdukte(kundenId) {
-  const liste = document.getElementById('produktListe');
-  liste.innerHTML = '<div style="color:#6B7280;font-size:13px;">Lade Produkte …</div>';
+async function loadArtikel(kundenId) {
+  const grid = document.getElementById('artikelGrid');
+  grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Lade Masterartikel …</div>';
   show('step2');
   try {
     const res = await fetch(API + 'shopify-masterartikel-scan?kunden_id=' + kundenId);
     const data = await res.json();
     if (!data.produkte || data.produkte.length === 0) {
-      liste.innerHTML = '<div style="color:#6B7280;font-size:13px;">Keine Masterartikel hinterlegt.</div>';
+      grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Keine Masterartikel hinterlegt.</div>';
       return;
     }
-    liste.innerHTML = '';
-    data.produkte.forEach(p => {
-      const row = document.createElement('div');
-      row.className = 'produkt-row';
-      row.innerHTML = '<div><div class="pr-title">' + esc(p.title) + '</div>'
-        + '<div class="pr-meta">' + esc(p.handle) + ' · ' + (p.variants ? p.variants.length : 0) + ' Varianten</div></div>'
-        + '<div class="pr-check">✓</div>';
-      row.onclick = () => {
-        document.querySelectorAll('.produkt-row').forEach(r => r.classList.remove('selected'));
-        row.classList.add('selected');
-        selectedProdukt = p;
-        show('step3'); show('step4');
-        updateSyncBtn();
-      };
-      liste.appendChild(row);
-    });
+    selectedArtikel = [...data.produkte];
+    renderArtikelGrid(data.produkte);
+    show('step3'); show('step4');
+    updateSyncBtn();
   } catch(e) {
-    liste.innerHTML = '<div style="color:#B91C1C;font-size:13px;">Fehler: ' + esc(e.message) + '</div>';
+    grid.innerHTML = '<div style="color:#B91C1C;font-size:13px;">Fehler: ' + esc(e.message) + '</div>';
   }
+}
+
+function renderArtikelGrid(produkte) {
+  const grid = document.getElementById('artikelGrid');
+  grid.innerHTML = '';
+  produkte.forEach(p => {
+    const card = document.createElement('div');
+    const isSelected = selectedArtikel.some(a => a.handle === p.handle);
+    card.className = 'artikel-card' + (isSelected ? ' selected' : '');
+    card.dataset.handle = p.handle;
+    card.innerHTML = '<div class="ak-check">✓</div>'
+      + '<div class="ak-title">' + esc(p.title) + '</div>'
+      + '<div class="ak-handle">' + esc(p.handle) + '</div>'
+      + '<div class="ak-variants">' + (p.variants ? p.variants.length : 0) + ' Varianten</div>';
+    card.onclick = () => toggleArtikel(p, card);
+    grid.appendChild(card);
+  });
+}
+
+function toggleArtikel(produkt, cardEl) {
+  const idx = selectedArtikel.findIndex(a => a.handle === produkt.handle);
+  if (idx >= 0) {
+    selectedArtikel.splice(idx, 1);
+    cardEl.classList.remove('selected');
+  } else {
+    selectedArtikel.push(produkt);
+    cardEl.classList.add('selected');
+  }
+  updateSyncBtn();
 }
 
 function updateSyncBtn() {
   const sheetId = document.getElementById('sheetId').value.trim();
   const link = document.getElementById('sheetLink');
   if (sheetId) link.href = 'https://docs.google.com/spreadsheets/d/' + sheetId;
-  document.getElementById('syncBtn').disabled = !sheetId || !selectedKunde;
+  document.getElementById('syncBtn').disabled = !sheetId || !selectedKunde || selectedArtikel.length === 0;
 }
 
 async function doSync() {
@@ -167,7 +217,11 @@ async function doSync() {
     const res = await fetch(API + 'shopify-produkte-hochladen', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kunden_id: selectedKunde.id, artikel_sheet_id: sheetId }),
+      body: JSON.stringify({
+        kunden_id: selectedKunde.id,
+        artikel_sheet_id: sheetId,
+        masterartikel: selectedArtikel.map(a => a.handle),
+      }),
     });
     const data = await res.json();
     const box = document.getElementById('resultBox');
@@ -188,6 +242,65 @@ async function doSync() {
 
   btnText.textContent = 'Jetzt synchronisieren';
   btn.disabled = false;
+}
+
+async function openAddModal() {
+  const sel = document.getElementById('entwurfSelect');
+  sel.innerHTML = '<option value="">Lädt …</option>';
+  hide('addErr');
+  show('addModal');
+  try {
+    const res = await fetch(API + 'shopify-entwuerfe-laden?kunden_id=' + selectedKunde.id);
+    const data = await res.json();
+    const bereitsVorhanden = new Set(selectedArtikel.map(a => a.handle));
+    const verfuegbar = (data.produkte || []).filter(p => !bereitsVorhanden.has(p.handle));
+    if (verfuegbar.length === 0) {
+      sel.innerHTML = '<option value="">Alle Entwürfe sind bereits Masterartikel</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">– Entwurf auswählen –</option>';
+    verfuegbar.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.handle;
+      opt.textContent = p.title + ' (' + p.handle + ')';
+      sel.appendChild(opt);
+    });
+  } catch(e) {
+    sel.innerHTML = '<option value="">Fehler beim Laden</option>';
+  }
+}
+
+function closeAddModal() { hide('addModal'); }
+
+async function addMasterartikel() {
+  const handle = document.getElementById('entwurfSelect').value;
+  if (!handle) return;
+  const btn = document.getElementById('addBtn');
+  btn.disabled = true;
+  hide('addErr');
+  try {
+    const res = await fetch(API + 'shopify-masterartikel-hinzufuegen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kunden_id: selectedKunde.id, handle }),
+    });
+    if (res.ok) {
+      closeAddModal();
+      loadArtikel(selectedKunde.id);
+    } else {
+      const data = await res.json();
+      showAddErr(data.error || 'Unbekannter Fehler');
+    }
+  } catch(e) {
+    showAddErr(e.message);
+  }
+  btn.disabled = false;
+}
+
+function showAddErr(msg) {
+  const el = document.getElementById('addErr');
+  el.textContent = msg;
+  el.classList.remove('hidden');
 }
 
 function show(id) { document.getElementById(id).classList.remove('hidden'); }

@@ -20,8 +20,9 @@ exports.handler = async (event) => {
   let body;
   try { body = JSON.parse(event.body || '{}'); } catch (e) { return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'JSON ungültig' }) }; }
 
-  const { kunden_id, artikel_sheet_id } = body;
+  const { kunden_id, artikel_sheet_id, masterartikel } = body;
   if (!kunden_id || !artikel_sheet_id) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'kunden_id und artikel_sheet_id erforderlich' }) };
+  const masterartikelFilter = Array.isArray(masterartikel) && masterartikel.length > 0 ? new Set(masterartikel) : null;
 
   try {
     const tok = await getAccessToken();
@@ -49,6 +50,7 @@ exports.handler = async (event) => {
       const r = rows[i];
       const handle = r[col('Handle')];
       if (!handle) continue;
+      if (masterartikelFilter && !masterartikelFilter.has(handle)) continue;
       if (!produktMap[handle]) produktMap[handle] = [];
       produktMap[handle].push(r);
     }
