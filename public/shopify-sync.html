@@ -73,7 +73,7 @@
     <div class="step-title">Masterartikel auswählen <span class="tag" id="shopName"></span></div>
     <div class="artikel-grid" id="artikelGrid"></div>
     <div class="add-btn-row">
-      <button class="btn btn-ghost btn-sm" onclick="openAddModal()">+ Masterartikel hinzufügen</button>
+      <button class="btn btn-ghost btn-sm" id="addMasterartikelBtn" onclick="openAddModal()" disabled>+ Masterartikel hinzufügen</button>
     </div>
   </div>
 
@@ -157,21 +157,26 @@ function onShopChange() {
 
 async function loadArtikel(kundenId) {
   const grid = document.getElementById('artikelGrid');
+  const addBtn = document.getElementById('addMasterartikelBtn');
   grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Lade Masterartikel …</div>';
+  if (addBtn) { addBtn.disabled = true; }
   show('step2');
   try {
     const res = await fetch(API + 'shopify-masterartikel-scan?kunden_id=' + kundenId);
     const data = await res.json();
     if (!data.produkte || data.produkte.length === 0) {
       grid.innerHTML = '<div style="color:#6B7280;font-size:13px;">Keine Masterartikel hinterlegt.</div>';
-      return;
+    } else {
+      selectedArtikel = [...data.produkte];
+      renderArtikelGrid(data.produkte);
+      show('step3'); show('step4');
+      updateSyncBtn();
     }
-    selectedArtikel = [...data.produkte];
-    renderArtikelGrid(data.produkte);
-    show('step3'); show('step4');
-    updateSyncBtn();
+    await (entwuerfePromise || prefetchEntwuerfe());
+    if (addBtn) addBtn.disabled = false;
   } catch(e) {
     grid.innerHTML = '<div style="color:#B91C1C;font-size:13px;">Fehler: ' + esc(e.message) + '</div>';
+    if (addBtn) addBtn.disabled = false;
   }
 }
 
