@@ -98,14 +98,9 @@ async function loadShops() {
 }
 
 function onShopSelect() {
-  const sel = document.getElementById('shopSelect');
-  const kundeId = sel.value;
-  const link = document.getElementById('uploadLink');
+  const kundeId = document.getElementById('shopSelect').value;
   if (kundeId) {
-    link.href = '/shopify-upload.html?kunde=' + encodeURIComponent(kundeId);
-    link.classList.remove('hidden');
-  } else {
-    link.classList.add('hidden');
+    window.location.href = '/shopify-upload.html?kunde=' + encodeURIComponent(kundeId);
   }
 }
 
