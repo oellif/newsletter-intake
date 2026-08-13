@@ -219,6 +219,35 @@ Alle unter `/.netlify/functions/`:
 
 ---
 
+## Kundendatenbank — Architektur-Entscheidung (WICHTIG)
+
+### Prinzip: Write-Through über Master-Liste
+
+Kunden werden in einer zentralen **Master-Kundenliste** (Google Sheet "MH-Kunden") als einzige Quelle der Wahrheit geführt. Tool-spezifische Listen (Newsletter, Shopify, etc.) sind bewusst redundante Kopien.
+
+**Ablauf bei Neukundenanlage — egal in welchem Tool:**
+1. Prüfe ob Kundenname in Master-Liste bereits existiert
+2. Wenn ja → verwende existierende Kunden-ID, lege nur den tool-spezifischen Eintrag an
+3. Wenn nein → lege Kunden zuerst in Master-Liste an (mit neuer ID), dann tool-spezifischen Eintrag
+4. Rückgabe: Kunden-ID an das aufrufende Tool
+
+**Ablauf bei Kundenauswahl im Tool:**
+- Jedes Tool zeigt Kunden aus seiner **eigenen Tool-Liste** (nicht aus Master)
+- Die Tool-Liste ist immer ein Subset der Master-Liste
+
+**Warum redundante Tool-Listen:**
+- Tools bleiben unabhängig und portabel
+- Kein Runtime-Lookup in Master nötig (Performance)
+- Tools können tool-spezifische Zusatzdaten pro Kunde speichern
+
+**Was das für neue Netlify Functions bedeutet:**
+Jede `kunde-anlegen`-Function (egal in welchem Tool) muss die Master-Liste zuerst prüfen und beschreiben, bevor sie in die eigene Tool-Liste schreibt. Diese Logik darf nie nur in die Tool-Liste schreiben ohne Master-Prüfung.
+
+**Cockpit-Aufgabe (später):**
+Der MH Cockpit Chat baut die Master-Kundenliste und eine Kundendetail-Ansicht, die zeigt welche Tools pro Kunde aktiv sind — verknüpft über die gemeinsame Kunden-ID.
+
+---
+
 ## Pflichtregeln für jede Änderung
 
 1. **Deploy-Workflow verwenden** — nie direkt auf Netlify bearbeiten
