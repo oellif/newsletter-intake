@@ -122,6 +122,7 @@ const API = '/.netlify/functions/';
 let selectedKunde = null;
 let selectedArtikel = [];
 let entwuerfeCache = null;
+let entwuerfePromise = null;
 
 async function init() {
   const res = await fetch(API + 'shopify-kunden-alle');
@@ -145,8 +146,8 @@ function onShopChange() {
   document.getElementById('shopName').textContent = selectedKunde.name;
   selectedArtikel = [];
   entwuerfeCache = null;
+  entwuerfePromise = null;
   hide('step3'); hide('step4'); hide('resultBox');
-  // Beide parallel laden
   loadArtikel(selectedKunde.id);
   prefetchEntwuerfe(selectedKunde.id);
 }
@@ -245,44 +246,42 @@ async function doUpload() {
   btn.disabled = false;
 }
 
-async function prefetchEntwuerfe(kundenId) {
-  try {
-    const res = await fetch(API + 'shopify-entwuerfe-laden?kunden_id=' + kundenId);
-    const data = await res.json();
-    entwuerfeCache = data.produkte || [];
-  } catch(e) {
-    entwuerfeCache = [];
+function prefetchEntwuerfe(kundenId) {
+  entwuerfePromise = fetch(API + 'shopify-entwuerfe-laden?kunden_id=' + kundenId)
+    .then(r => r.json())
+    .then(data => { entwuerfeCache = data.produkte || []; })
+    .catch(() => { entwuerfeCache = []; });
+  return entwuerfePromise;
+}
+
+function fillEntwurfDropdown(sel) {
+  const bereitsVorhanden = new Set(selectedArtikel.map(a => a.handle));
+  const verfuegbar = (entwuerfeCache || []).filter(p => !bereitsVorhanden.has(p.handle));
+  if (verfuegbar.length === 0) {
+    sel.innerHTML = '<option value="">Alle Entwürfe sind bereits Masterartikel</option>';
+    return;
   }
+  sel.innerHTML = '<option value="">– Entwurf auswählen –</option>';
+  verfuegbar.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.handle;
+    opt.textContent = p.title + ' (' + p.handle + ')';
+    sel.appendChild(opt);
+  });
 }
 
 async function openAddModal() {
   if (!selectedKunde) return;
   const sel = document.getElementById('entwurfSelect');
   hide('addErr');
-  show('addModal');
-
-  const fillDropdown = (produkte) => {
-    const bereitsVorhanden = new Set(selectedArtikel.map(a => a.handle));
-    const verfuegbar = (produkte || []).filter(p => !bereitsVorhanden.has(p.handle));
-    if (verfuegbar.length === 0) {
-      sel.innerHTML = '<option value="">Alle Entwürfe sind bereits Masterartikel</option>';
-      return;
-    }
-    sel.innerHTML = '<option value="">– Entwurf auswählen –</option>';
-    verfuegbar.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.handle;
-      opt.textContent = p.title + ' (' + p.handle + ')';
-      sel.appendChild(opt);
-    });
-  };
-
   if (entwuerfeCache !== null) {
-    fillDropdown(entwuerfeCache);
+    fillEntwurfDropdown(sel);
+    show('addModal');
   } else {
     sel.innerHTML = '<option value="">Lädt …</option>';
-    await prefetchEntwuerfe(selectedKunde.id);
-    fillDropdown(entwuerfeCache);
+    show('addModal');
+    await (entwuerfePromise || prefetchEntwuerfe(selectedKunde.id));
+    fillEntwurfDropdown(sel);
   }
 }
 
