@@ -19,7 +19,7 @@ exports.handler = async (event) => {
     if (rowIdx < 0) return { statusCode: 404, headers: h, body: JSON.stringify({ error: 'Kunde nicht gefunden' }) };
 
     const sheetRow = rowIdx + 2;
-    await sheetsWriteValues(tok, SHOPIFY_SHEET_ID, `G${sheetRow}`, [[artikel_sheet_id]]);
+    await sheetsWriteValues(tok, SHOPIFY_SHEET_ID, [[artikel_sheet_id]], `G${sheetRow}`);
 
     return { statusCode: 200, headers: h, body: JSON.stringify({ success: true }) };
   } catch (err) {

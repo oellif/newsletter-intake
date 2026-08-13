@@ -26,7 +26,7 @@ exports.handler = async (event) => {
 
     current.push(handle);
     const sheetRow = rowIdx + 2; // A2 = row index 0 → sheet row 2
-    await sheetsWriteValues(tok, SHOPIFY_SHEET_ID, `E${sheetRow}`, [[current.join(', ')]]);
+    await sheetsWriteValues(tok, SHOPIFY_SHEET_ID, [[current.join(', ')]], `E${sheetRow}`);
 
     return { statusCode: 200, headers: h, body: JSON.stringify({ success: true, masterartikel: current }) };
   } catch (err) {
