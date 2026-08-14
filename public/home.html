@@ -16,6 +16,7 @@
   .tool-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(25,25,25,0.08), 0 12px 32px rgba(25,25,25,0.08); }
   .tool-card.newsletter:hover { border-color: #FA8700; }
   .tool-card.shopify:hover { border-color: #96BF48; }
+  .tool-card.formulare:hover { border-color: #3B82F6; }
   .tool-icon { font-size: 32px; }
   .tool-name { font-size: 18px; font-weight: 800; color: #191919; }
   .tool-desc { font-size: 13px; color: #6B7280; line-height: 1.5; }
@@ -23,9 +24,11 @@
   .tool-pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
   .pill-nl { background: rgba(250,135,0,0.1); color: #FA8700; }
   .pill-sh { background: rgba(150,191,72,0.12); color: #5a9020; }
+  .pill-fo { background: rgba(59,130,246,0.1); color: #2563EB; }
   .tool-arrow { margin-top: auto; font-size: 18px; color: #D1D5DB; align-self: flex-end; }
   .tool-card.newsletter:hover .tool-arrow { color: #FA8700; }
   .tool-card.shopify:hover .tool-arrow { color: #96BF48; }
+  .tool-card.formulare:hover .tool-arrow { color: #3B82F6; }
   @media (max-width: 500px) { .tool-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -55,6 +58,18 @@
         <span class="tool-pill pill-sh">Produkte</span>
         <span class="tool-pill pill-sh">Upload</span>
         <span class="tool-pill pill-sh">Sync</span>
+      </div>
+      <div class="tool-arrow">→</div>
+    </a>
+
+    <a class="tool-card formulare" href="/formulare.html" id="btn-formulare">
+      <div class="tool-icon">📋</div>
+      <div class="tool-name">Formulare</div>
+      <div class="tool-desc">Konzepte prüfen, Kommentare abgeben und Entscheidungen festhalten.</div>
+      <div class="tool-pills">
+        <span class="tool-pill pill-fo">Konzepte</span>
+        <span class="tool-pill pill-fo">Kommentare</span>
+        <span class="tool-pill pill-fo">Freigaben</span>
       </div>
       <div class="tool-arrow">→</div>
     </a>

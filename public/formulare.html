@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<script src="/pw-gate.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formulare — MH Cockpit</title>
+<link rel="stylesheet" href="/mh-ci.css">
+<style>
+  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 28px; }
+  .hub-wrap { max-width: 640px; width: 100%; }
+  .back-link { display: inline-block; font-size: 13px; color: #6B7280; text-decoration: none; margin-bottom: 20px; }
+  .back-link:hover { color: #191919; }
+  .hub-title { font-family: 'Varela Round', 'Manrope', sans-serif; font-size: 32px; font-weight: 400; color: #191919; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .hub-sub { font-size: 15px; color: #6B7280; margin-bottom: 36px; line-height: 1.5; }
+  .form-list { display: flex; flex-direction: column; gap: 14px; }
+  .form-card { background: #fff; border-radius: 16px; padding: 22px 24px; box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 20px rgba(25,25,25,0.06); text-decoration: none; color: inherit; transition: transform 0.12s, box-shadow 0.12s; display: flex; align-items: center; gap: 18px; border: 2px solid transparent; }
+  .form-card:hover { transform: translateY(-2px); border-color: #3B82F6; box-shadow: 0 4px 12px rgba(25,25,25,0.08), 0 12px 32px rgba(25,25,25,0.08); }
+  .form-icon { font-size: 28px; flex-shrink: 0; }
+  .form-body { flex: 1; min-width: 0; }
+  .form-name { font-size: 16px; font-weight: 800; color: #191919; margin-bottom: 3px; }
+  .form-desc { font-size: 13px; color: #6B7280; line-height: 1.5; }
+  .form-meta { font-size: 11px; color: #9CA3AF; margin-top: 6px; }
+  .form-arrow { font-size: 18px; color: #D1D5DB; flex-shrink: 0; }
+  .form-card:hover .form-arrow { color: #3B82F6; }
+</style>
+</head>
+<body>
+<div class="hub-wrap">
+  <a class="back-link" href="/home.html">← Zurück zum Cockpit</a>
+  <div class="hub-title">Formulare</div>
+  <p class="hub-sub">Konzepte prüfen und Kommentare direkt in die Felder schreiben. Am Ende „Kommentare speichern" klicken und den Text im Chat einfügen.</p>
+
+  <div class="form-list">
+    <a class="form-card" href="/formular-masterartikel-optimierer.html">
+      <div class="form-icon">🪵</div>
+      <div class="form-body">
+        <div class="form-name">Masterartikel-Optimierer — Konzept</div>
+        <div class="form-desc">Skill-Konzept zur automatischen Veredelung von Shopify-Artikeln (SEO, Descriptions, Metafelder, Alt-Texte). Kommentare zu jedem Punkt möglich.</div>
+        <div class="form-meta">Stand 14.08.2026 · 4 offene Entscheidungen</div>
+      </div>
+      <div class="form-arrow">→</div>
+    </a>
+  </div>
+</div>
+</body>
+</html>

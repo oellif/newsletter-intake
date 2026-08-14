@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<script src="/pw-gate.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masterartikel-Optimierer — Formular</title>
+<style>
+  :root {
+    --paper: #FBF9F6;
+    --card: #FFFFFF;
+    --ink: #26211C;
+    --ink-soft: #6B6157;
+    --line: #E5DFD6;
+    --walnut: #7A5230;
+    --walnut-soft: #F1E8DE;
+    --easy: #3E7A47;
+    --easy-bg: #E8F1E9;
+    --mid: #A2701F;
+    --mid-bg: #F6EDDA;
+    --hard: #A8412F;
+    --hard-bg: #F7E6E2;
+    --code-bg: #F3EFE9;
+  }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.55;
+    margin: 0;
+    padding: 0 1.25rem 4rem;
+  }
+  main { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 2.5rem; }
+  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; text-wrap: balance; margin: 0; }
+  h1 { font-size: 2.1rem; line-height: 1.15; }
+  h2 { font-size: 1.4rem; border-bottom: 2px solid var(--walnut); padding-bottom: .4rem; }
+  h3 { font-size: 1.05rem; }
+  p { margin: 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: .12em; font-size: .72rem;
+    color: var(--walnut); font-weight: 600; margin-bottom: .5rem;
+  }
+  header .sub { color: var(--ink-soft); margin-top: .6rem; max-width: 62ch; }
+  section { display: flex; flex-direction: column; gap: 1.1rem; }
+  .back-link { font-size: .85rem; color: var(--ink-soft); text-decoration: none; }
+  .back-link:hover { color: var(--ink); }
+
+  /* Kommentar-Toolbar */
+  .toolbar {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--paper);
+    display: flex; gap: .6rem; align-items: center; flex-wrap: wrap;
+    padding: .7rem 0; margin-bottom: 1.8rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .btn {
+    background: var(--walnut); color: var(--paper);
+    border: none; border-radius: 6px; padding: .45rem .95rem;
+    font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer;
+  }
+  .btn.ghost { background: transparent; color: var(--walnut); border: 1px solid var(--walnut); }
+  .btn:focus-visible { outline: 2px solid var(--walnut); outline-offset: 2px; }
+  .kom-count { font-size: .82rem; color: var(--ink-soft); margin-left: auto; font-variant-numeric: tabular-nums; }
+
+  /* Kommentarfelder */
+  .kom-input {
+    display: block; width: 100%; box-sizing: border-box;
+    margin-top: .45rem; padding: .35rem .55rem;
+    background: var(--card); color: var(--ink);
+    border: 1px dashed var(--line); border-radius: 6px;
+    font: inherit; font-size: .84rem; line-height: 1.4;
+    resize: none; overflow: hidden; min-height: 1.9rem;
+  }
+  .kom-input::placeholder { color: var(--ink-soft); opacity: .75; }
+  .kom-input:focus { border-style: solid; border-color: var(--walnut); outline: none; }
+  .kom-input.has-text { border-style: solid; border-color: var(--walnut); }
+  td .kom-input { min-width: 180px; margin-top: 0; }
+
+  /* Toast */
+  #toast {
+    position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%);
+    background: var(--ink); color: var(--paper);
+    padding: .6rem 1.1rem; border-radius: 8px; font-size: .88rem;
+    opacity: 0; pointer-events: none; transition: opacity .25s;
+    max-width: 90vw; text-align: center; z-index: 30;
+  }
+  #toast.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+
+  /* Pipeline */
+  .pipeline { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: grid; grid-template-columns: 2.4rem 1fr; gap: 0 1rem;
+    align-items: start; position: relative; padding-bottom: 1.4rem;
+  }
+  .step:not(:last-child)::before {
+    content: ""; position: absolute; left: 1.15rem; top: 2.4rem; bottom: 0;
+    width: 2px; background: var(--line);
+  }
+  .step-num {
+    width: 2.4rem; height: 2.4rem; border-radius: 50%;
+    background: var(--walnut); color: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem; font-variant-numeric: tabular-nums;
+  }
+  .step-body { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: .8rem 1rem; }
+  .step-body h3 { margin-bottom: .25rem; }
+  .step-body p { color: var(--ink-soft); font-size: .92rem; }
+
+  /* Field table */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: .88rem; background: var(--card); }
+  th, td { text-align: left; padding: .55rem .75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--walnut-soft); color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+  code {
+    background: var(--code-bg); border-radius: 4px; padding: .05rem .35rem;
+    font-family: Consolas, "Courier New", monospace; font-size: .85em;
+  }
+
+  /* Difficulty columns */
+  .diff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+  .diff-col { border-radius: 8px; padding: 1rem 1.1rem; border: 1px solid var(--line); }
+  .diff-col ul { margin: .6rem 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .55rem; font-size: .9rem; }
+  .diff-col.easy { background: var(--easy-bg); }
+  .diff-col.easy h3 { color: var(--easy); }
+  .diff-col.mid { background: var(--mid-bg); }
+  .diff-col.mid h3 { color: var(--mid); }
+  .diff-col.hard { background: var(--hard-bg); }
+  .diff-col.hard h3 { color: var(--hard); }
+  .diff-col .kom-input { background: var(--paper); }
+
+  /* Guardrails + questions */
+  .rules { display: flex; flex-direction: column; gap: .6rem; }
+  .rule {
+    background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--walnut);
+    border-radius: 6px; padding: .65rem .9rem; font-size: .92rem;
+  }
+  .rule strong { color: var(--walnut); }
+  .q-list { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: .7rem; font-size: .95rem; }
+  .q-list li strong { color: var(--walnut); }
+  footer { color: var(--ink-soft); font-size: .8rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="toolbar">
+    <a class="back-link" href="/formulare.html">← Formulare</a>
+    <button class="btn" id="btn-copy" type="button">💾 Kommentare speichern</button>
+    <button class="btn ghost" id="btn-clear" type="button">Alle löschen</button>
+    <span class="kom-count" id="kom-count">0 Kommentare</span>
+  </div>
+
+  <header>
+    <div class="eyebrow">Skill-Konzept · Agentur-Werkzeug · Entwurf</div>
+    <h1>Masterartikel-Optimierer</h1>
+    <p class="sub">Ein Skill, der unvollständige Shopify-Artikel aus der Standard-Import-Vorlage (Google Sheet) nimmt, aus Title, Optionen und Description den Produktkontext erkennt und alle übrigen Felder nach Shopify- und SEO-Best-Practices befüllt — wiederverwendbar für jeden Kunden. <em>Schreib deine Anmerkungen direkt in die Kommentarfelder und klicke am Ende oben auf „Kommentare speichern" — dann den Text im Chat einfügen.</em></p>
+  </header>
+
+  <section>
+    <h2>Pipeline — 6 Schritte</h2>
+    <div class="pipeline">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Einlesen &amp; Gruppieren</h3>
+          <p>Sheet laden, Zeilen über den URL handle zu Masterartikeln bündeln (Hauptzeile + Variantenzeilen). Ist-Zustand jedes Feldes erfassen: leer, schlecht, brauchbar.</p>
+          <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schritt 1 — Einlesen &amp; Gruppieren"></textarea>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Produkt verstehen</h3>
+          <p>Aus Title, Description, Optionsnamen/-werten (z.&nbsp;B. Größe, Holz) ableiten: Produktart, Material, Zielgruppe, Anlass, USPs. Nur belegbare Fakten — nichts erfinden.</p>
+          <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schritt 2 — Produkt verstehen"></textarea>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Keyword-Basis festlegen</h3>
+          <p>Pro Artikel ein Hauptkeyword + 2–3 Nebenkeywords bestimmen (z.&nbsp;B. „Armband Holz Damen"). Ohne Suchvolumen-Tool regelbasiert, mit Ahrefs-Anbindung datenbasiert.</p>
+          <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schritt 3 — Keyword-Basis"></textarea>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Felder generieren</h3>
+          <p>Feld für Feld nach festen Regeln (siehe Regelwerk unten): Title, Handle, Description, SEO Title/Description, Tags, Kategorien, Metafelder, Alt-Texte. Kundenprofil (Brand Voice) fließt überall ein.</p>
+          <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schritt 4 — Felder generieren"></textarea>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>Validieren</h3>
+          <p>Zeichenlimits, Handle-Eindeutigkeit, Varianten-Konsistenz, Shopify-Importregeln (Hauptzeile vs. Variantenzeile), Duplicate-Check über alle Artikel, Heilaussagen-Check.</p>
+          <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schritt 5 — Validieren"></textarea>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <h3>Rückschreiben + Report</h3>
+          <p>Optimierte Daten in neuen Tab/neues Sheet schreiben (Original bleibt unangetastet). Änderungsreport: was wurde geändert, was war unsicher, was braucht menschliche Prüfung.</p>
+          <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schritt 6 — Rückschreiben + Report"></textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Regelwerk pro Feld</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Feld</th><th>Regel</th><th>Limit / Format</th><th>💬 Dein Kommentar</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Title</td><td>Keyword vorn, Produktart + Material + Besonderheit, kein Keyword-Stuffing</td><td>≤ 70 Zeichen</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Title"></textarea></td></tr>
+          <tr><td>URL handle</td><td>Kleinbuchstaben, Bindestriche, Umlaute umschreiben (ä→ae), Hauptkeyword, kurz</td><td><code>armband-holz-nuss</code></td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — URL handle"></textarea></td></tr>
+          <tr><td>Description</td><td>HTML-Struktur: Hook → Nutzen/Emotion → Fakten (Material, Maße, Pflege) → Lieferumfang. Nur belegte Fakten</td><td>150–300 Wörter</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Description"></textarea></td></tr>
+          <tr><td>SEO Title</td><td>Hauptkeyword + USP + Brand, CTR-Trigger (Zahl, Nutzen), Conversion-orientiert</td><td>≤ 60 Zeichen</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — SEO Title"></textarea></td></tr>
+          <tr><td>SEO Description</td><td>Nutzenversprechen + Handlungsaufforderung, aktives Verb, kein Abschneiden in den SERPs</td><td>≤ 155 Zeichen</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — SEO Description"></textarea></td></tr>
+          <tr><td>Tags</td><td>Festes Schema pro Shop: Produktart, Material, Zielgruppe, Anlass — konsistent über alle Artikel</td><td>5–10 Tags</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Tags"></textarea></td></tr>
+          <tr><td>Product category</td><td>Offizielle Shopify-Taxonomie treffen (z.&nbsp;B. Apparel &amp; Accessories &gt; Jewelry &gt; Bracelets)</td><td>Taxonomie-Pfad</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Product category"></textarea></td></tr>
+          <tr><td>Google category</td><td>Google-Shopping-Taxonomie, passend zur Shopify-Kategorie</td><td>Taxonomie-ID/Pfad</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Google category"></textarea></td></tr>
+          <tr><td>Metafelder</td><td>Aus Optionswerten und Description ableiten (z.&nbsp;B. <code>custom.holzart</code> aus Option „Holz")</td><td>je Definition</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Metafelder"></textarea></td></tr>
+          <tr><td>Alt-Texte</td><td>Beschreibend + Keyword, pro Bildposition unterschiedlich, kein „Bild von…", Variantenbilder mit Optionswert</td><td>≤ 125 Zeichen</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Alt-Texte"></textarea></td></tr>
+          <tr><td>Type / Vendor</td><td>Einheitliche Schreibweise über den ganzen Shop, aus Kontext oder Kundenprofil</td><td>konsistent</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Type / Vendor"></textarea></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Aufwandseinschätzung</h2>
+    <div class="diff-grid">
+      <div class="diff-col easy">
+        <h3>Einfach</h3>
+        <ul>
+          <li>Formatregeln &amp; Zeichenlimits<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Einfach — Formatregeln &amp; Zeichenlimits"></textarea></li>
+          <li>Handle-Slugs generieren<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Einfach — Handle-Slugs"></textarea></li>
+          <li>Alt-Text-Muster je Position<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Einfach — Alt-Text-Muster"></textarea></li>
+          <li>Metafelder aus Optionswerten<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Einfach — Metafelder aus Optionswerten"></textarea></li>
+          <li>Varianten-Vererbung (Hauptzeile → Varianten)<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Einfach — Varianten-Vererbung"></textarea></li>
+          <li>Validierung der Importstruktur<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Einfach — Validierung Importstruktur"></textarea></li>
+        </ul>
+      </div>
+      <div class="diff-col mid">
+        <h3>Mittel</h3>
+        <ul>
+          <li>Shopify-/Google-Taxonomie sicher treffen<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Mittel — Taxonomie treffen"></textarea></li>
+          <li>Tag-Systematik shopweit konsistent halten<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Mittel — Tag-Systematik"></textarea></li>
+          <li>Brand Voice pro Kunde (braucht Kundenprofil)<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Mittel — Brand Voice / Kundenprofil"></textarea></li>
+          <li>Conversion-Texte, die nicht generisch klingen<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Mittel — Conversion-Texte"></textarea></li>
+          <li>Mehrsprachigkeit (falls später nötig)<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Mittel — Mehrsprachigkeit"></textarea></li>
+        </ul>
+      </div>
+      <div class="diff-col hard">
+        <h3>Schwierig</h3>
+        <ul>
+          <li>Halluzinationsgefahr: Maße, Materialien, Eigenschaften erfinden<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schwierig — Halluzinationsgefahr"></textarea></li>
+          <li>Keyword-Wahl ohne Suchvolumen-Daten<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schwierig — Keyword-Wahl ohne Daten"></textarea></li>
+          <li>Handle-Änderung bei Live-Artikeln → Rankingverlust ohne Redirects<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schwierig — Handle-Änderung Live-Artikel"></textarea></li>
+          <li>Alt-Texte ohne Bildanalyse (Text beschreibt Bild, das niemand gesehen hat)<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schwierig — Alt-Texte ohne Bildanalyse"></textarea></li>
+          <li>Duplicate Content bei vielen ähnlichen Artikeln<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schwierig — Duplicate Content"></textarea></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Leitplanken</h2>
+    <div class="rules">
+      <div class="rule"><strong>Nichts erfinden:</strong> Fakten nur aus Quelldaten. Fehlt eine Info (Maße, Verschluss, Lieferumfang), wird sie als <em>offen</em> markiert statt geraten.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Nichts erfinden"></textarea></div>
+      <div class="rule"><strong>Handles schützen:</strong> Bei bereits live geschalteten Artikeln Handle nur ändern, wenn Redirects eingeplant sind — sonst Original-Handle behalten.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Handles schützen"></textarea></div>
+      <div class="rule"><strong>Original unangetastet:</strong> Ergebnis immer in neuen Tab/neues Sheet, nie das Quell-Sheet überschreiben.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Original unangetastet"></textarea></div>
+      <div class="rule"><strong>Kundenprofil als Pflicht-Input:</strong> Brand Voice, Du/Sie, verbotene Begriffe, Tag-Schema — einmal pro Kunde definiert, von jedem Lauf gelesen.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Kundenprofil Pflicht-Input"></textarea></div>
+      <div class="rule"><strong>Rechts-Check eingebaut:</strong> Bei Naturprodukten keine Heil- und Wirkversprechen (AMG/HWG) — Prüfung läuft im Validierungsschritt mit.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Rechts-Check"></textarea></div>
+      <div class="rule"><strong>Mensch prüft Unsicheres:</strong> Jeder Lauf endet mit Report; Felder mit niedriger Sicherheit werden zur Freigabe markiert.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Mensch prüft Unsicheres"></textarea></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Offene Entscheidungen</h2>
+    <ol class="q-list">
+      <li><strong>Keyword-Quelle:</strong> Rein regelbasiert oder mit Ahrefs-Daten (Connector vorhanden, braucht einmalige Autorisierung)?<textarea class="kom-input" rows="1" placeholder="Deine Entscheidung / Kommentar…" data-label="Entscheidung 1 — Keyword-Quelle"></textarea></li>
+      <li><strong>Bildanalyse:</strong> Sollen die Produktbilder (Drive-Links) angeschaut werden, damit Alt-Texte den echten Bildinhalt beschreiben? Deutlich bessere Qualität, etwas mehr Laufzeit.<textarea class="kom-input" rows="1" placeholder="Deine Entscheidung / Kommentar…" data-label="Entscheidung 2 — Bildanalyse"></textarea></li>
+      <li><strong>Handle-Politik:</strong> Dürfen Handles bestehender Artikel geändert werden (mit Redirect-Liste als Output) oder bleiben sie fix?<textarea class="kom-input" rows="1" placeholder="Deine Entscheidung / Kommentar…" data-label="Entscheidung 3 — Handle-Politik"></textarea></li>
+      <li><strong>Zuschnitt:</strong> Ein Skill für alles oder Skill-Familie (Analyse / Texte / Validierung getrennt)? Empfehlung: ein Skill mit klaren Phasen, Aufteilung erst bei Bedarf.<textarea class="kom-input" rows="1" placeholder="Deine Entscheidung / Kommentar…" data-label="Entscheidung 4 — Zuschnitt"></textarea></li>
+    </ol>
+  </section>
+
+  <footer>Konzept-Entwurf · WMFE GmbH Agentur-Workflow · Basis: Shopify-Standard-Importvorlage (59 Spalten) · Stand 14.08.2026 · Kommentare werden lokal im Browser gespeichert — mit „Kommentare speichern" übernehmen und im Chat einfügen.</footer>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  var STORE_KEY = 'masterartikel_konzept_comments_v1';
+  var inputs = Array.prototype.slice.call(document.querySelectorAll('.kom-input'));
+  var countEl = document.getElementById('kom-count');
+  var toastEl = document.getElementById('toast');
+  var toastTimer = null;
+
+  function loadStore() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch (e) { return {}; }
+  }
+  function saveStore(store) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+  }
+  function autoGrow(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+  function updateCount() {
+    var n = inputs.filter(function (el) { return el.value.trim() !== ''; }).length;
+    countEl.textContent = n + (n === 1 ? ' Kommentar' : ' Kommentare');
+  }
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2800);
+  }
+
+  var store = loadStore();
+  inputs.forEach(function (el) {
+    var key = el.getAttribute('data-label');
+    if (store[key]) {
+      el.value = store[key];
+      el.classList.add('has-text');
+    }
+    autoGrow(el);
+    el.addEventListener('input', function () {
+      var s = loadStore();
+      var v = el.value;
+      if (v.trim() === '') { delete s[key]; el.classList.remove('has-text'); }
+      else { s[key] = v; el.classList.add('has-text'); }
+      saveStore(s);
+      autoGrow(el);
+      updateCount();
+    });
+  });
+  updateCount();
+
+  function buildExport() {
+    var lines = ['Masterartikel-Optimierer — Kommentare (' + new Date().toLocaleDateString('de-AT') + ')', '========================================'];
+    var count = 0;
+    inputs.forEach(function (el) {
+      var v = el.value.trim();
+      if (!v) return;
+      count++;
+      lines.push('');
+      lines.push('— ' + el.getAttribute('data-label') + ':');
+      lines.push('  ' + v.replace(/\n/g, '\n  '));
+    });
+    return { text: lines.join('\n'), count: count };
+  }
+
+  document.getElementById('btn-copy').addEventListener('click', function () {
+    var res = buildExport();
+    if (res.count === 0) { showToast('Noch keine Kommentare eingetragen.'); return; }
+    function done() { showToast('✓ ' + res.count + ' Kommentare gespeichert — jetzt im Chat einfügen!'); }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = res.text;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { showToast('Speichern in die Zwischenablage fehlgeschlagen — bitte Text manuell markieren.'); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(res.text).then(done, fallback);
+    } else { fallback(); }
+  });
+
+  document.getElementById('btn-clear').addEventListener('click', function () {
+    if (!confirm('Alle Kommentare löschen?')) return;
+    try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+    inputs.forEach(function (el) {
+      el.value = '';
+      el.classList.remove('has-text');
+      autoGrow(el);
+    });
+    updateCount();
+    showToast('Alle Kommentare gelöscht.');
+  });
+})();
+</script>
+</body>
+</html>
