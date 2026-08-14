@@ -99,8 +99,11 @@
       + '.kios-nav-item.sub.active { color: #fff; }'
       + '.kios-nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }'
       + '.kios-nav-item.active { background: #FA8700; color: #fff; font-weight: bold; }'
-      + '.kios-nav-danger { margin-top: auto; padding: 10px 18px; font-size: 13px; text-decoration: none; color: #FCA5A5; border-top: 1px solid rgba(255,255,255,0.06); }'
+      + '.kios-nav-danger { padding: 10px 18px; font-size: 13px; text-decoration: none; color: #FCA5A5; }'
       + '.kios-nav-danger:hover { background: rgba(127,29,29,0.4); color: #fff; }'
+      + '.kios-nav-footer { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.06); }'
+      + '.kios-nav-logout { display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 18px; font-size: 13px; color: rgba(255,255,255,0.35); cursor: pointer; font-family: inherit; }'
+      + '.kios-nav-logout:hover { background: rgba(255,255,255,0.06); color: #fff; }'
       + '.kios-modal-overlay { position: fixed; inset: 0; background: rgba(25,25,25,0.5); z-index: 1000; display: flex; align-items: flex-start; justify-content: center; padding: 60px 16px; backdrop-filter: blur(4px); }'
       + '.kios-modal-box { background: #fff; border-radius: 14px; max-width: 420px; width: 100%; padding: 24px 26px; font-family: "Manrope", Arial, sans-serif; box-shadow: 0 20px 60px rgba(25,25,25,0.18); }'
       + '.kios-modal-box h3 { margin: 0 0 6px 0; font-size: 16px; color: #202228; }'
@@ -277,11 +280,29 @@
         }
       });
 
-      html += '<a class="kios-nav-danger" href="/kunde-loeschen.html">Kunde loeschen (intern)</a>';
+      html += '<div class="kios-nav-footer">'
+        + '<a class="kios-nav-danger" href="/kunde-loeschen.html">Kunde loeschen (intern)</a>'
+        + '<button type="button" id="kios-logout-btn" class="kios-nav-logout">🔒 Ausloggen</button>'
+        + '</div>';
+    }
+
+    if (currentPage === 'home.html' || modus === 'shopify') {
+      html += '<div class="kios-nav-footer">'
+        + '<button type="button" id="kios-logout-btn" class="kios-nav-logout">🔒 Ausloggen</button>'
+        + '</div>';
     }
 
     nav.innerHTML = html;
     document.body.insertBefore(nav, document.body.firstChild);
+
+    // Logout
+    var logoutBtn = nav.querySelector('#kios-logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', function () {
+        try { localStorage.removeItem('mh_cockpit_pw'); } catch (e) {}
+        window.location.href = '/';
+      });
+    }
 
     // ── EVENT HANDLER ────────────────────────────────
 
