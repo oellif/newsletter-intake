@@ -7,6 +7,9 @@ function normalizeFilename(s) {
 const SHOPIFY_KUNDEN_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
 
 exports.handler = async (event) => {
+  const HANDLER_START = Date.now();
+  const TIME_LIMIT_MS = 8500; // leave margin for Netlify's 10s limit
+
   const h = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -120,14 +123,42 @@ exports.handler = async (event) => {
       });
 
       // Build images from pre-filled Mastertabelle columns (written by "Bilder zuordnen")
-      const images = [];
-      const seenGeneralUrls = new Set();
-      const seenVariantUrls = new Set();
+      const seenUrls = new Set();
 
+      // Find discriminating option values: opts that map to exactly 1 variant image URL
+      // (S/M/L map to nuss+ahorn+apfel → not discriminating; "Nuss" only maps to nuss.jpg → discriminating)
+      const optToVarUrls = new Map(); // normalized opt → Set of variant image URLs
+      for (const r of rows) {
+        const url = get(r, 'Variant image URL');
+        if (!url) continue;
+        [get(r, 'Option1 value'), get(r, 'Option2 value'), get(r, 'Option3 value')]
+          .filter(Boolean).forEach(opt => {
+            const norm = normalizeFilename(opt);
+            if (!optToVarUrls.has(norm)) optToVarUrls.set(norm, new Set());
+            optToVarUrls.get(norm).add(url);
+          });
+      }
+      const urlToDiscrimOpts = new Map(); // URL → [discriminating opt values]
+      for (const [norm, urls] of optToVarUrls) {
+        if (urls.size === 1) {
+          const url = [...urls][0];
+          if (!urlToDiscrimOpts.has(url)) urlToDiscrimOpts.set(url, []);
+          urlToDiscrimOpts.get(url).push(norm);
+        }
+      }
+
+      // Variant images go first (priority for time budget), tagged with __vi: for assignment
+      const images = [];
+      for (const [url, opts] of urlToDiscrimOpts) {
+        seenUrls.add(url);
+        images.push({ src: url, position: images.length + 1, alt: `__vi:${opts.join(',')}` });
+      }
+
+      // Then general product images
       for (const r of rows) {
         const imgUrl = get(r, 'Product image URL');
-        if (!imgUrl || seenGeneralUrls.has(imgUrl)) continue;
-        seenGeneralUrls.add(imgUrl);
+        if (!imgUrl || seenUrls.has(imgUrl)) continue;
+        seenUrls.add(imgUrl);
         const pos = parseInt(get(r, 'Image position')) || images.length + 1;
         const alt = get(r, 'Image alt text') || '';
         const obj = { src: imgUrl, position: pos };
@@ -135,17 +166,7 @@ exports.handler = async (event) => {
         images.push(obj);
       }
 
-      for (const r of rows) {
-        const varImgUrl = get(r, 'Variant image URL');
-        if (!varImgUrl || seenVariantUrls.has(varImgUrl)) continue;
-        seenVariantUrls.add(varImgUrl);
-        const optVals = [get(r, 'Option1 value'), get(r, 'Option2 value'), get(r, 'Option3 value')].filter(Boolean);
-        for (const opt of optVals) {
-          images.push({ src: varImgUrl, position: images.length + 1, alt: `__vi:${normalizeFilename(opt)}` });
-          break;
-        }
-      }
-      const hasVariantImages = seenVariantUrls.size > 0;
+      const hasVariantImages = urlToDiscrimOpts.size > 0;
 
       // Create product WITHOUT images first (avoids Shopify synchronous image fetch timeout)
       const payload = { title, body_html: description, vendor, product_type: type, tags, status, handle };
@@ -166,20 +187,19 @@ exports.handler = async (event) => {
 
         const created = shopifyData.product;
 
-        // Upload images in parallel (concurrent Shopify fetch from Drive = faster)
-        let uploadedImages = [];
-        if (images.length && created) {
-          const imgPromises = images.map(img =>
-            fetch(`https://${domain}/admin/api/2024-01/products/${created.id}/images.json`, {
-              method: 'POST',
-              headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ image: { src: img.src, position: img.position, alt: img.alt || '' } }),
-            })
-            .then(r => r.ok ? r.json() : null)
-            .then(d => d ? d.image : null)
-            .catch(() => null)
-          );
-          uploadedImages = (await Promise.all(imgPromises)).filter(Boolean);
+        // Upload images sequentially to avoid Drive rate-limiting (variant images are first = priority)
+        const uploadedImages = [];
+        for (const img of images) {
+          if (Date.now() - HANDLER_START > TIME_LIMIT_MS) break; // stay within Netlify timeout
+          const result = await fetch(`https://${domain}/admin/api/2024-01/products/${created.id}/images.json`, {
+            method: 'POST',
+            headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: { src: img.src, position: img.position, alt: img.alt || '' } }),
+          })
+          .then(r => r.ok ? r.json() : null)
+          .then(d => d ? d.image : null)
+          .catch(() => null);
+          if (result) uploadedImages.push(result);
         }
 
         // Assign variant images using __vi: tags from uploaded image alts
