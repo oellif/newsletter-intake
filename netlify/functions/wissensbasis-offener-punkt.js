@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Ablage- & Versionsregel v1 aktiv - umgestellt am 20260806
 //
 // Netlify Function: haengt einen "offenen Punkt" an das zentrale,
@@ -19,6 +20,7 @@ const { getAccessToken, sheetsAppendValues } = require('./lib/google');
 const OFFENE_PUNKTE_SHEET_ID = '1je_-SswEt-RJDX5ffKFyvUtFXJtkMC2SlOkKHcyhCIk';
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

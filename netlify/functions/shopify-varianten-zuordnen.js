@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Schritt 3 des Uploads: ordnet die bereits hochgeladenen Bilder den
 // Varianten zu. Der Browser schickt die Zuordnung Bild-ID → Optionswerte
 // (aus dem Bild-Plan von shopify-produkt-anlegen); hier werden die
@@ -11,6 +12,7 @@ function normalizeFilename(s) {
 }
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const h = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

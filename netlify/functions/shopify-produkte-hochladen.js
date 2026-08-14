@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 const { getAccessToken, sheetsReadValues } = require('./lib/google');
 const SHOPIFY_SHEET_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
 
@@ -13,6 +14,7 @@ async function shopifyPost(domain, token, path, data) {
 }
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const h = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: h, body: '' };
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers: h, body: JSON.stringify({ error: 'POST required' }) };

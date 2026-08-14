@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Ablage- & Versionsregel v1 aktiv - umgestellt am 20260803
 //
 // Netlify Function (Hilfsfunktion fuer Autopilot + alle Einzel-Skills mit
@@ -53,6 +54,7 @@ function isOpenForStufe(row, stufe) {
 }
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

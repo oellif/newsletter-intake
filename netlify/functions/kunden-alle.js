@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Ablage- & Versionsregel v1 aktiv - umgestellt am 20260804
 //
 // Netlify Function (Hilfsfunktion fuer das globale Navigationsmenue):
@@ -12,6 +13,7 @@ const { getAccessToken, driveFindFile } = require('./lib/google');
 const PARENT_FOLDER_ID = process.env.DRIVE_PARENT_FOLDER_ID;
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

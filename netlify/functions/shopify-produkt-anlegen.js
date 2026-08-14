@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Schritt 1 des Uploads: legt EIN Produkt ohne Bilder an und gibt den
 // Bild-Plan zurueck (welche Drive-Dateien in welcher Reihenfolge, welche
 // davon Variantenbilder sind). Die Bilder selbst laedt der Browser danach
@@ -17,6 +18,7 @@ function extractDriveFileId(url) {
 }
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const h = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

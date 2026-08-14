@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Ablage- & Versionsregel v1 aktiv - neu 20260811
 //
 // Netlify Function: Speichert ein geprueftes Template-Mapping pro Kunde und
@@ -28,6 +29,7 @@ const PARENT_FOLDER_ID = process.env.DRIVE_PARENT_FOLDER_ID;
 const VALID_FIELDS = ['ueberschrift', 'fliesstext', 'bild_1', 'bild_2', 'bild_3', 'cta', 'preheader'];
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

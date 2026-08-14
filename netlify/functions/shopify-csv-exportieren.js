@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 const { getAccessToken, sheetsReadValues } = require('./lib/google');
 
 const SHOPIFY_KUNDEN_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
@@ -72,6 +73,7 @@ function transformValue(shopifyCol, value) {
 }
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const h = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

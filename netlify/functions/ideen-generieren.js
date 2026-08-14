@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Ablage- & Versionsregel v1 aktiv – umgestellt am 20260730
 //
 // Netlify Function: Skill 2 - automatische Ideen-Generierung.
@@ -79,6 +80,7 @@ function buildPrompt(profileText, usedThemesText) {
 }
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Ablage- & Versionsregel v1 aktiv - komplett neu am 20260811
 //
 // Netlify Function (Skill 8: Klaviyo-Template-Builder): liest das gespeicherte
@@ -120,6 +121,7 @@ function applyMappingToDefinition(definition, mappingBlocks, campaignData) {
 }
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

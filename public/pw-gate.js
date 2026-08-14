@@ -15,6 +15,21 @@
     });
   }
 
+  // Jeden Aufruf der Netlify-Funktionen automatisch mit dem Passwort-Header
+  // versehen - die Funktionen pruefen ihn serverseitig (lib/auth.js)
+  var origFetch = window.fetch.bind(window);
+  window.fetch = function (url, opts) {
+    try {
+      if (typeof url === 'string' && url.indexOf('/.netlify/functions/') !== -1) {
+        opts = opts || {};
+        opts.headers = Object.assign({}, opts.headers || {}, {
+          'X-Cockpit-Pw': localStorage.getItem(STORAGE_KEY) || '',
+        });
+      }
+    } catch (e) {}
+    return origFetch(url, opts);
+  };
+
   // Seite sofort verstecken, bis die Pruefung durch ist (kein Inhalts-Blitz)
   document.documentElement.style.visibility = 'hidden';
 
@@ -51,7 +66,9 @@
         sha256(val).then(function (hash) {
           if (hash === PW_HASH) {
             localStorage.setItem(STORAGE_KEY, val);
-            unlock();
+            // Neu laden, damit alle Datenaufrufe der Seite mit Passwort
+            // wiederholt werden (die ersten liefen ggf. schon auf 401)
+            location.reload();
           } else {
             err.textContent = 'Falsches Passwort';
             input.value = '';

@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Ablage- & Versionsregel v1 aktiv - umgestellt am 20260730
 //
 // Netlify Function (Skill 12: Campaign-Versand-Setup): legt eine
@@ -56,6 +57,7 @@ function guessSenderEmail(profileMap) {
 }
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

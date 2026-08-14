@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 const { getAccessToken, sheetsReadValues } = require('./lib/google');
 
 function normalizeFilename(s) {
@@ -7,6 +8,7 @@ function normalizeFilename(s) {
 const SHOPIFY_KUNDEN_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   let UPLOAD_START = null; // set AFTER Sheets reads, so reads don't eat the image time budget
   const TIME_LIMIT_MS = 7500; // time for all products + images (measured from after Sheets reads)
 

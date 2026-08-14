@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Ablage- & Versionsregel v1 aktiv – umgestellt am 20260730
 //
 // Netlify Function: verarbeitet die Checkbox-Freigabe von Skill-2-Vorschlaegen.
@@ -26,6 +27,7 @@ const PARENT_FOLDER_ID = process.env.DRIVE_PARENT_FOLDER_ID;
 const REDAKTIONSPLAN_HEADER = ['Datum', 'Thema / Text', 'Quelle', 'Status'];
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

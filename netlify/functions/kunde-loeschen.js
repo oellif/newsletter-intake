@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Ablage- & Versionsregel v1 aktiv - umgestellt am 20260801
 //
 // Netlify Function (internes Tool: Kunde loeschen, Teil 2 - Loeschen):
@@ -15,6 +16,7 @@
 const { getAccessToken, driveTrashFile } = require('./lib/google');
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

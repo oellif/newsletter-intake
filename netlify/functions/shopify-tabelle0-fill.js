@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 const { getAccessToken, sheetsReadValues, sheetsWriteValues } = require('./lib/google');
 
 const SHOPIFY_SHEET_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
@@ -98,6 +99,7 @@ function buildProductRows(product) {
 }
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const h = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

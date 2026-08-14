@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Ablage- & Versionsregel v1 aktiv - umgestellt am 20260731
 //
 // Netlify Function (Skill 13: Vorschau an Kunden senden): sendet dem
@@ -33,6 +34,7 @@ const PREVIEW_LIST_NAME = 'KI-OS Kunden-Vorschau';
 const FALLBACK_SENDER_EMAIL = process.env.INTERNAL_TEST_EMAIL || 'office@kf-laserworks.com';
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

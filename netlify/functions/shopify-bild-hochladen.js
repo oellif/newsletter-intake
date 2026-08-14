@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Schritt 2 des Uploads: laedt EIN Bild hoch. Wir laden die Datei selbst
 // authentifiziert von Google Drive (keine oeffentliche Freigabe noetig,
 // kein Rate-Limit durch Shopify-Server) und schicken Shopify die rohen
@@ -15,6 +16,7 @@ const EXT_BY_MIME = {
 };
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const h = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

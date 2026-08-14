@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Netlify Function: Liest alle Eintraege aus der Master-Kundenliste (Google Sheet).
 // Gibt alle Felder zurueck: ID, Name, E-Mail, Telefon, Adresse, PLZ, Stadt,
 // Website, Ansprechpartner, Notizen, Erstellt.
@@ -8,6 +9,7 @@ const { getAccessToken, sheetsReadValues } = require('./lib/google');
 const SHEET_ID = process.env.MASTER_KUNDEN_SHEET_ID || '1CveKc783N8K_LxKvM2weZA4-rXxMAs6inB4jUCwpXrg';
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

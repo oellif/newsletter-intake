@@ -1,3 +1,4 @@
+const { requireAuth } = require('./lib/auth');
 // Ablage- & Versionsregel v1 aktiv – umgestellt am 20260730
 //
 // Netlify Function (Skill 5: Newsletter-Produkt-Sync): zieht den aktuellen
@@ -20,6 +21,7 @@ const PARENT_FOLDER_ID = process.env.DRIVE_PARENT_FOLDER_ID;
 const HEADER = ['Externe ID', 'Titel', 'Beschreibung', 'Preis', 'URL', 'Bild-URL', 'Zuletzt synchronisiert am'];
 
 exports.handler = async (event) => {
+  const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
