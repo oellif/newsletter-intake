@@ -4,52 +4,6 @@ function normalizeFilename(s) {
   return s.toLowerCase().replace(/[\s_]+/g, '-');
 }
 
-function driveUrl(fileId) {
-  return `https://drive.google.com/uc?export=view&id=${fileId}`;
-}
-
-async function listDriveImages(tok, folderId) {
-  const q   = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
-  const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=1000`;
-  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + tok } });
-  const data = await res.json();
-  if (!res.ok) throw new Error('Drive-Fehler: ' + JSON.stringify(data));
-  return (data.files || []).filter(f => f.name && !f.name.startsWith('.'));
-}
-
-function categorizeImages(driveImages, handle, optionValues) {
-  const normHandle  = normalizeFilename(handle);
-  const normOptions = optionValues.map(v => normalizeFilename(v));
-  const general     = [];
-  const variantMap  = new Map();
-
-  for (const img of driveImages) {
-    const normName = normalizeFilename(img.name.replace(/\.[^.]+$/, ''));
-    if (!normName.startsWith(normHandle)) continue;
-    const suffix = normName.slice(normHandle.length).replace(/^-/, '');
-
-    if (suffix === '' || /^\d+$/.test(suffix)) {
-      general.push({ img, position: suffix === '' ? 1 : parseInt(suffix) });
-    } else {
-      const match = normOptions.find(o => o === suffix);
-      if (match) {
-        variantMap.set(match, img);
-      } else {
-        general.push({ img, position: 9999 });
-      }
-    }
-  }
-
-  general.sort((a, b) => a.position - b.position || a.img.name.localeCompare(b.img.name));
-  const generalImages = general.map(({ img }, i) => ({
-    src: driveUrl(img.id),
-    position: i + 1,
-    alt: img.name.replace(/\.[^.]+$/, ''),
-  }));
-
-  return { generalImages, variantMap };
-}
-
 const SHOPIFY_KUNDEN_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
 
 exports.handler = async (event) => {
@@ -76,8 +30,6 @@ exports.handler = async (event) => {
     const domain          = kundeRow[2];
     const token           = kundeRow[3];
     const mastertabelleId = kundeRow[6];
-    const folderId        = kundeRow[7] || '';
-
     if (!mastertabelleId) {
       return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Keine Mastertabelle gefunden. Bitte zuerst generieren.' }) };
     }
@@ -108,9 +60,6 @@ exports.handler = async (event) => {
       }
       productMap.get(handle).push(row);
     }
-
-    // Drive-Images werden nach dem Upload gematcht (Timeout-Schutz: nur wenn Zeit reicht)
-    const allDriveImages = [];
 
     const results = [];
     const errors  = [];
@@ -170,32 +119,33 @@ exports.handler = async (event) => {
         return v;
       });
 
-      // Match Drive images to the REAL handle (from the filled Mastertabelle)
-      const optionValues = [];
-      if (opt1name) collectOption('Option1 value').forEach(v => optionValues.push(v));
-      if (opt2name) collectOption('Option2 value').forEach(v => optionValues.push(v));
-      if (opt3name) collectOption('Option3 value').forEach(v => optionValues.push(v));
+      // Build images from pre-filled Mastertabelle columns (written by "Bilder zuordnen")
+      const images = [];
+      const seenGeneralUrls = new Set();
+      const seenVariantUrls = new Set();
 
-      const { generalImages, variantMap } = allDriveImages.length
-        ? categorizeImages(allDriveImages, handle, optionValues)
-        : { generalImages: [], variantMap: new Map() };
-
-      // Build images array: general images first
-      const images = generalImages.map(img => {
-        const obj = { src: img.src, position: img.position };
-        if (img.alt) obj.alt = img.alt;
-        return obj;
-      });
-
-      // Add variant images with __vi: tag for post-creation assignment
-      const variantImgAdded = new Set();
-      for (const [normOpt, driveImg] of variantMap) {
-        const vsrc = driveUrl(driveImg.id);
-        if (variantImgAdded.has(vsrc)) continue;
-        variantImgAdded.add(vsrc);
-        images.push({ src: vsrc, position: images.length + 1, alt: `__vi:${normOpt}` });
+      for (const r of rows) {
+        const imgUrl = get(r, 'Product image URL');
+        if (!imgUrl || seenGeneralUrls.has(imgUrl)) continue;
+        seenGeneralUrls.add(imgUrl);
+        const pos = parseInt(get(r, 'Image position')) || images.length + 1;
+        const alt = get(r, 'Image alt text') || '';
+        const obj = { src: imgUrl, position: pos };
+        if (alt) obj.alt = alt;
+        images.push(obj);
       }
-      const hasVariantImages = variantMap.size > 0;
+
+      for (const r of rows) {
+        const varImgUrl = get(r, 'Variant image URL');
+        if (!varImgUrl || seenVariantUrls.has(varImgUrl)) continue;
+        seenVariantUrls.add(varImgUrl);
+        const optVals = [get(r, 'Option1 value'), get(r, 'Option2 value'), get(r, 'Option3 value')].filter(Boolean);
+        for (const opt of optVals) {
+          images.push({ src: varImgUrl, position: images.length + 1, alt: `__vi:${normalizeFilename(opt)}` });
+          break;
+        }
+      }
+      const hasVariantImages = seenVariantUrls.size > 0;
 
       const payload = { title, body_html: description, vendor, product_type: type, tags, status, handle };
       if (options.length)  payload.options  = options;

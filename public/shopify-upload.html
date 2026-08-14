@@ -122,6 +122,17 @@
     <div id="generierenStatus" class="hidden" style="margin-top:14px;"></div>
   </div>
 
+  <!-- Bilder zuordnen (optional) -->
+  <div class="card hidden" id="step45">
+    <div class="step-label">Optional · Bilder</div>
+    <div class="step-title">Bilder zuordnen</div>
+    <p class="step-hint">Trägt Bild-URLs aus dem Bildordner in die Mastertabelle ein. Dateinamen-Konvention: <code style="background:#f3f4f6;border-radius:4px;padding:1px 6px;font-size:11px;">handle.jpg</code> für das Hauptbild, <code style="background:#f3f4f6;border-radius:4px;padding:1px 6px;font-size:11px;">handle-nuss.jpg</code> für Variantenbilder, <code style="background:#f3f4f6;border-radius:4px;padding:1px 6px;font-size:11px;">handle-2.jpg</code> für zweites Bild. Danach Tabelle prüfen, dann hochladen.</p>
+    <button class="btn btn-primary" id="bilderBtn" onclick="doBilderZuordnen()">
+      <span id="bilderBtnText">Bilder zuordnen</span>
+    </button>
+    <div id="bilderResult" class="hidden" style="margin-top:14px;"></div>
+  </div>
+
   <!-- Schritt 5: Upload starten -->
   <div class="card hidden" id="step5">
     <div class="step-label">Schritt 5</div>
@@ -223,6 +234,7 @@ function onShopChange() {
   document.getElementById('shopName').textContent = selectedKunde.name;
   document.getElementById('folderInput').value = '';
   document.getElementById('folderHint').classList.add('hidden');
+  hide('step45');
   hide('step5');
   hide('uploadResult');
   hide('generierenStatus');
@@ -331,7 +343,7 @@ function updateUploadBtn() {
   const btn = document.getElementById('uploadBtn');
   if (!btn) return;
   btn.disabled = !mastertabelleId;
-  if (mastertabelleId) show('step5');
+  if (mastertabelleId) { show('step45'); show('step5'); }
 }
 
 // ── Mastertabelle generieren ───────────────────────────────────────
@@ -395,6 +407,39 @@ async function generiereTabelle(isRegenerate) {
       document.getElementById('generierenBtnText').textContent = 'Mastertabelle generieren';
     }
   }
+}
+
+// ── Bilder zuordnen ────────────────────────────────────────────────
+async function doBilderZuordnen() {
+  const btn     = document.getElementById('bilderBtn');
+  const btnText = document.getElementById('bilderBtnText');
+  const result  = document.getElementById('bilderResult');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> Wird zugeordnet …';
+  hide('bilderResult');
+
+  try {
+    const res  = await fetch(API + 'shopify-bilder-zuordnen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kunden_id: selectedKunde.id }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Unbekannter Fehler');
+
+    result.className = 'result-box result-ok';
+    result.innerHTML = `✓ ${data.handles_matched} Produkt(e) mit Bildern versorgt`
+      + ` · ${data.total_drive_images} Dateien im Ordner — `
+      + `<a href="https://docs.google.com/spreadsheets/d/${mastertabelleId}/edit" target="_blank" class="sheet-link">Tabelle prüfen ↗</a>`;
+    show('bilderResult');
+  } catch(e) {
+    result.className = 'result-box result-err';
+    result.innerHTML = '✗ ' + esc(e.message);
+    show('bilderResult');
+  }
+
+  btnText.textContent = 'Bilder zuordnen';
+  btn.disabled = false;
 }
 
 // ── Upload starten ─────────────────────────────────────────────────
