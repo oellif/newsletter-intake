@@ -155,7 +155,7 @@
   <header>
     <div class="eyebrow">Skill-Konzept · Agentur-Werkzeug · Entwurf</div>
     <h1>Masterartikel-Optimierer</h1>
-    <p class="sub">Ein Skill, der unvollständige Shopify-Artikel aus der Standard-Import-Vorlage (Google Sheet) nimmt, aus Title, Optionen und Description den Produktkontext erkennt und alle übrigen Felder nach Shopify- und SEO-Best-Practices befüllt — wiederverwendbar für jeden Kunden. <em>Schreib deine Anmerkungen direkt in die Kommentarfelder und klicke am Ende oben auf „Kommentare speichern" — dann den Text im Chat einfügen.</em></p>
+    <p class="sub">Ein Skill, der unvollständige Shopify-Artikel aus der Standard-Import-Vorlage (Google Sheet) nimmt, aus Title, Optionen und Description den Produktkontext erkennt und alle übrigen Felder nach Shopify- und SEO-Best-Practices befüllt — wiederverwendbar für jeden Kunden. <em>Schreib deine Anmerkungen direkt in die Kommentarfelder und klicke am Ende oben auf „Kommentare speichern" — sie landen automatisch in der Kommentar-Tabelle und Claude liest sie von dort.</em></p>
   </header>
 
   <section>
@@ -295,7 +295,7 @@
     </ol>
   </section>
 
-  <footer>Konzept-Entwurf · WMFE GmbH Agentur-Workflow · Basis: Shopify-Standard-Importvorlage (59 Spalten) · Stand 14.08.2026 · Kommentare werden lokal im Browser gespeichert — mit „Kommentare speichern" übernehmen und im Chat einfügen.</footer>
+  <footer>Konzept-Entwurf · WMFE GmbH Agentur-Workflow · Basis: Shopify-Standard-Importvorlage (59 Spalten) · Stand 14.08.2026 · „Kommentare speichern" schreibt in die zentrale Kommentar-Tabelle (Google Sheets); zusätzlich lokale Sicherung im Browser.</footer>
 </main>
 
 <div id="toast" role="status" aria-live="polite"></div>
@@ -349,36 +349,51 @@
   });
   updateCount();
 
-  function buildExport() {
-    var lines = ['Masterartikel-Optimierer — Kommentare (' + new Date().toLocaleDateString('de-AT') + ')', '========================================'];
-    var count = 0;
-    inputs.forEach(function (el) {
-      var v = el.value.trim();
-      if (!v) return;
-      count++;
-      lines.push('');
-      lines.push('— ' + el.getAttribute('data-label') + ':');
-      lines.push('  ' + v.replace(/\n/g, '\n  '));
-    });
-    return { text: lines.join('\n'), count: count };
+  // Speichern: schickt alle seit dem letzten erfolgreichen Speichern neuen
+  // oder geaenderten Kommentare an die Netlify-Function, die sie in das
+  // zentrale Google Sheet "Cockpit Formular-Kommentare" schreibt.
+  var SAVED_KEY = STORE_KEY + '_saved';
+  var FORMULAR_NAME = 'masterartikel-optimierer';
+
+  function loadSaved() {
+    try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '{}'); } catch (e) { return {}; }
   }
 
   document.getElementById('btn-copy').addEventListener('click', function () {
-    var res = buildExport();
-    if (res.count === 0) { showToast('Noch keine Kommentare eingetragen.'); return; }
-    function done() { showToast('✓ ' + res.count + ' Kommentare gespeichert — jetzt im Chat einfügen!'); }
-    function fallback() {
-      var ta = document.createElement('textarea');
-      ta.value = res.text;
-      ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); done(); } catch (e) { showToast('Speichern in die Zwischenablage fehlgeschlagen — bitte Text manuell markieren.'); }
-      document.body.removeChild(ta);
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(res.text).then(done, fallback);
-    } else { fallback(); }
+    var saved = loadSaved();
+    var pending = [];
+    var snapshot = {};
+    inputs.forEach(function (el) {
+      var v = el.value.trim();
+      if (!v) return;
+      var label = el.getAttribute('data-label');
+      snapshot[label] = v;
+      if (saved[label] !== v) pending.push({ punkt: label, text: v });
+    });
+    if (Object.keys(snapshot).length === 0) { showToast('Noch keine Kommentare eingetragen.'); return; }
+    if (pending.length === 0) { showToast('Alles schon gespeichert — keine neuen Änderungen.'); return; }
+
+    var btn = document.getElementById('btn-copy');
+    btn.disabled = true;
+    showToast('Speichere…');
+    fetch('/.netlify/functions/formular-kommentare-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ formular: FORMULAR_NAME, kommentare: pending }),
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+    }).then(function (r) {
+      if (r.ok && r.data.success) {
+        try { localStorage.setItem(SAVED_KEY, JSON.stringify(snapshot)); } catch (e) {}
+        showToast('✓ ' + r.data.gespeichert + ' Kommentare in der Tabelle gespeichert!');
+      } else {
+        showToast('Fehler beim Speichern: ' + ((r.data && r.data.error) || 'unbekannt'));
+      }
+    }).catch(function () {
+      showToast('Netzwerkfehler — Kommentare sind lokal gesichert, bitte später erneut speichern.');
+    }).finally(function () {
+      btn.disabled = false;
+    });
   });
 
   document.getElementById('btn-clear').addEventListener('click', function () {
