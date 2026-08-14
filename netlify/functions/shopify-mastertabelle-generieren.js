@@ -235,9 +235,14 @@ exports.handler = async (event) => {
     // Write header + data rows
     await sheetsWriteValues(tok, created.id, [HEADERS, ...allDataRows], 'A1');
 
-    // Save sheet ID (G) and folder_id (H) to kunden sheet
+    // Save sheet ID (G); folder_id (H) nur schreiben wenn uebergeben,
+    // sonst bleibt der beim "Bilder zuordnen" gespeicherte Wert erhalten
     const sheetRow = rowIdx + 2;
-    await sheetsWriteValues(tok, SHOPIFY_KUNDEN_ID, [[created.id, folder_id || '']], `G${sheetRow}`);
+    if (folder_id) {
+      await sheetsWriteValues(tok, SHOPIFY_KUNDEN_ID, [[created.id, folder_id]], `G${sheetRow}`);
+    } else {
+      await sheetsWriteValues(tok, SHOPIFY_KUNDEN_ID, [[created.id]], `G${sheetRow}`);
+    }
 
     const sheetUrl = created.webViewLink || `https://docs.google.com/spreadsheets/d/${created.id}/edit`;
 

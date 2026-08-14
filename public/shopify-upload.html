@@ -86,18 +86,9 @@
     </div>
   </div>
 
-  <!-- Schritt 3: Bildordner (optional) -->
-  <div class="card hidden" id="step3">
-    <div class="step-label">Schritt 3 · Optional</div>
-    <div class="step-title">Bildordner angeben</div>
-    <p class="step-hint">Google Drive Ordner mit Produktbildern. Bilder werden automatisch in die Mastertabelle eingetragen. Beim direkten Upload ist keine Freigabe nötig — nur für den CSV-Import muss der Ordner auf „Jeder mit dem Link" stehen.</p>
-    <input type="text" id="folderInput" placeholder="Google Drive Ordner-URL oder ID …" oninput="onFolderInput()">
-    <div id="folderHint" class="folder-id-hint hidden">Erkannte Ordner-ID: <code id="folderIdDisplay"></code></div>
-  </div>
-
-  <!-- Schritt 4: Mastertabelle generieren -->
+  <!-- Schritt 3: Mastertabelle generieren -->
   <div class="card hidden" id="step4">
-    <div class="step-label">Schritt 4</div>
+    <div class="step-label">Schritt 3</div>
     <div class="step-title">Mastertabelle generieren</div>
 
     <!-- Bestehende Mastertabelle -->
@@ -112,7 +103,7 @@
 
     <!-- Noch keine Mastertabelle -->
     <div id="mastertabelleNeu" class="hidden">
-      <p class="step-hint">Erstellt eine neue Google Tabelle mit den Daten der gewählten Masterartikel. Bilder aus dem Bildordner werden automatisch zugeordnet.</p>
+      <p class="step-hint">Erstellt eine neue Google Tabelle mit den Daten der gewählten Masterartikel. Danach die Tabelle mit echten Produktdaten befüllen.</p>
       <button class="btn btn-primary" id="generierenBtn" onclick="generiereTabelle(false)" disabled>
         <span id="generierenBtnText">Mastertabelle generieren</span>
       </button>
@@ -122,14 +113,18 @@
     <div id="generierenStatus" class="hidden" style="margin-top:14px;"></div>
   </div>
 
-  <!-- Bilder zuordnen (optional) -->
+  <!-- Schritt 4: Bildordner + Bilder zuordnen (optional) -->
   <div class="card hidden" id="step45">
-    <div class="step-label">Optional · Bilder</div>
+    <div class="step-label">Schritt 4 · Optional</div>
     <div class="step-title">Bilder zuordnen</div>
-    <p class="step-hint">Trägt Bild-URLs aus dem Bildordner in die Mastertabelle ein. Dateinamen-Konvention: <code style="background:#f3f4f6;border-radius:4px;padding:1px 6px;font-size:11px;">handle.jpg</code> für das Hauptbild, <code style="background:#f3f4f6;border-radius:4px;padding:1px 6px;font-size:11px;">handle-nuss.jpg</code> für Variantenbilder, <code style="background:#f3f4f6;border-radius:4px;padding:1px 6px;font-size:11px;">handle-2.jpg</code> für zweites Bild. Danach Tabelle prüfen, dann hochladen.</p>
-    <button class="btn btn-primary" id="bilderBtn" onclick="doBilderZuordnen()">
-      <span id="bilderBtnText">Bilder zuordnen</span>
-    </button>
+    <p class="step-hint">Google Drive Ordner mit Produktbildern angeben — die Bild-URLs werden automatisch in die Mastertabelle eingetragen. Dateinamen-Konvention: <code style="background:#f3f4f6;border-radius:4px;padding:1px 6px;font-size:11px;">handle.jpg</code> für das Hauptbild, <code style="background:#f3f4f6;border-radius:4px;padding:1px 6px;font-size:11px;">handle-2.jpg</code> für das zweite Bild, <code style="background:#f3f4f6;border-radius:4px;padding:1px 6px;font-size:11px;">handle-nuss.jpg</code> für Variantenbilder. Keine Freigabe des Ordners nötig.</p>
+    <input type="text" id="folderInput" placeholder="Google Drive Ordner-URL oder ID …" oninput="onFolderInput()">
+    <div id="folderHint" class="folder-id-hint hidden">Erkannte Ordner-ID: <code id="folderIdDisplay"></code></div>
+    <div style="margin-top:14px;">
+      <button class="btn btn-primary" id="bilderBtn" onclick="doBilderZuordnen()">
+        <span id="bilderBtnText">Bilder zuordnen</span>
+      </button>
+    </div>
     <div id="bilderResult" class="hidden" style="margin-top:14px;"></div>
   </div>
 
@@ -247,7 +242,7 @@ function onShopChange() {
   const sel = document.getElementById('shopSelect');
   const opt = sel.options[sel.selectedIndex];
   if (!opt || !opt.dataset.json) {
-    ['step2','step3','step4','step5'].forEach(hide);
+    ['step2','step4','step45','step5'].forEach(hide);
     return;
   }
   selectedKunde   = JSON.parse(opt.dataset.json);
@@ -266,7 +261,6 @@ function onShopChange() {
 
   loadArtikel(selectedKunde.id);
   prefetchEntwuerfe();
-  show('step3');
   setupMastertabelleCard();
 }
 
@@ -375,8 +369,6 @@ function updateUploadBtn() {
 
 // ── Mastertabelle generieren ───────────────────────────────────────
 async function generiereTabelle(isRegenerate) {
-  const folderId = extractFolderId(document.getElementById('folderInput').value);
-
   const genBtn = document.getElementById('generierenBtn');
   const neuBtn = document.getElementById('neuGenerierenBtn');
   const statusDiv = document.getElementById('generierenStatus');
@@ -397,7 +389,6 @@ async function generiereTabelle(isRegenerate) {
       body: JSON.stringify({
         kunden_id: selectedKunde.id,
         handles: selectedArtikel.map(a => a.handle),
-        folder_id: folderId || undefined,
       }),
     });
     const data = await res.json();
@@ -412,10 +403,7 @@ async function generiereTabelle(isRegenerate) {
 
     // Show success status
     statusDiv.className = 'result-box result-ok';
-    const bilderHinweis = data.bilder_im_ordner != null
-      ? ` · ${data.bilder_im_ordner} Bild(er) im Ordner gefunden`
-      : '';
-    statusDiv.innerHTML = `✓ ${data.rows} Zeilen generiert${bilderHinweis} — `
+    statusDiv.innerHTML = `✓ ${data.rows} Zeilen generiert — `
       + `<a href="${esc(data.sheet_url)}" target="_blank" class="sheet-link">Tabelle öffnen und befüllen ↗</a>`;
     show('generierenStatus');
 
@@ -489,10 +477,14 @@ async function doBilderZuordnen() {
   hide('bilderResult');
 
   try {
+    const folderId = extractFolderId(document.getElementById('folderInput').value);
     const res  = await fetch(API + 'shopify-bilder-zuordnen', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kunden_id: selectedKunde.id }),
+      body: JSON.stringify({
+        kunden_id: selectedKunde.id,
+        folder_id: folderId || undefined,
+      }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Unbekannter Fehler');

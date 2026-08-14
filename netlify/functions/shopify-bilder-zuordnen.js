@@ -63,21 +63,28 @@ exports.handler = async (event) => {
 
   let body = {};
   try { body = JSON.parse(event.body || '{}'); } catch(e) {}
-  const { kunden_id } = body;
+  const { kunden_id, folder_id } = body;
   if (!kunden_id) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'kunden_id erforderlich' }) };
 
   try {
     const tok = await getAccessToken();
 
-    const kundenRows    = await sheetsReadValues(tok, SHOPIFY_KUNDEN_ID, 'A2:H500');
-    const kundeRow      = (kundenRows || []).find(r => r[0] === kunden_id);
-    if (!kundeRow) return { statusCode: 404, headers: h, body: JSON.stringify({ error: 'Kunde nicht gefunden' }) };
+    const kundenRows = await sheetsReadValues(tok, SHOPIFY_KUNDEN_ID, 'A2:H500');
+    const rowIdx     = (kundenRows || []).findIndex(r => r[0] === kunden_id);
+    if (rowIdx < 0) return { statusCode: 404, headers: h, body: JSON.stringify({ error: 'Kunde nicht gefunden' }) };
+    const kundeRow = kundenRows[rowIdx];
 
     const mastertabelleId = kundeRow[6];
-    const folderId        = kundeRow[7] || '';
+    // Ordner-ID: direkt uebergeben gewinnt, sonst gespeicherter Wert (Spalte H)
+    const folderId = folder_id || kundeRow[7] || '';
 
     if (!mastertabelleId) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Keine Mastertabelle vorhanden.' }) };
-    if (!folderId)        return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Kein Bildordner gespeichert. Bitte Mastertabelle neu generieren mit Bildordner.' }) };
+    if (!folderId)        return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Kein Bildordner angegeben.' }) };
+
+    // Uebergebene Ordner-ID fuer das naechste Mal speichern
+    if (folder_id && folder_id !== kundeRow[7]) {
+      await sheetsWriteValues(tok, SHOPIFY_KUNDEN_ID, [[folder_id]], 'H' + (rowIdx + 2));
+    }
 
     // Read Mastertabelle
     const allRows = await sheetsReadValues(tok, mastertabelleId, 'A1:BH2000');
