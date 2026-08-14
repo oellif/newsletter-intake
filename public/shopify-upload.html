@@ -133,14 +133,29 @@
     <div id="bilderResult" class="hidden" style="margin-top:14px;"></div>
   </div>
 
-  <!-- Schritt 5: Upload starten -->
+  <!-- Schritt 5: In Shopify anlegen -->
   <div class="card hidden" id="step5">
     <div class="step-label">Schritt 5</div>
-    <div class="step-title">Upload starten</div>
-    <p class="step-hint">Liest die Mastertabelle und legt alle Produkte als Entwurf in Shopify an.</p>
-    <button class="btn btn-primary" id="uploadBtn" onclick="doUpload()" disabled>
-      <span id="uploadBtnText">Jetzt hochladen</span>
-    </button>
+    <div class="step-title">In Shopify anlegen</div>
+
+    <!-- Option A: CSV für Bulk-Import -->
+    <div style="border:1.5px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Für viele Artikel (empfohlen)</div>
+      <p class="step-hint" style="margin-bottom:12px;">Lädt eine fertige CSV-Datei herunter. In Shopify-Admin unter <strong>Produkte → Importieren</strong> hochladen. Shopify verarbeitet Bilder automatisch im Hintergrund — keine Zeitbegrenzung, beliebig viele Artikel.</p>
+      <button class="btn btn-primary" id="csvBtn" onclick="doCSVExport()" disabled>
+        <span id="csvBtnText">Shopify CSV herunterladen</span>
+      </button>
+    </div>
+
+    <!-- Option B: Direkter API-Upload -->
+    <div style="border:1.5px solid var(--border);border-radius:10px;padding:18px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Für wenige Artikel (1–5)</div>
+      <p class="step-hint" style="margin-bottom:12px;">Legt Produkte direkt per Shopify-API an. Bilder werden hochgeladen — aber wegen der 10s-Zeitbegrenzung maximal ~4 Bilder pro Produkt. Bei mehr Artikeln lieber CSV nutzen.</p>
+      <button class="btn btn-ghost" id="uploadBtn" onclick="doUpload()" disabled>
+        <span id="uploadBtnText">Direkt hochladen (API)</span>
+      </button>
+    </div>
+
     <div id="uploadResult" class="hidden upload-results" style="margin-top:16px;"></div>
   </div>
 </div>
@@ -340,10 +355,12 @@ function updateActionBtns() {
 }
 
 function updateUploadBtn() {
-  const btn = document.getElementById('uploadBtn');
-  if (!btn) return;
-  btn.disabled = !mastertabelleId;
-  if (mastertabelleId) { show('step45'); show('step5'); }
+  const uploadBtn = document.getElementById('uploadBtn');
+  const csvBtn    = document.getElementById('csvBtn');
+  const hasMT = !!mastertabelleId;
+  if (uploadBtn) uploadBtn.disabled = !hasMT;
+  if (csvBtn)    csvBtn.disabled    = !hasMT;
+  if (hasMT) { show('step45'); show('step5'); }
 }
 
 // ── Mastertabelle generieren ───────────────────────────────────────
@@ -407,6 +424,49 @@ async function generiereTabelle(isRegenerate) {
       document.getElementById('generierenBtnText').textContent = 'Mastertabelle generieren';
     }
   }
+}
+
+// ── CSV Export ─────────────────────────────────────────────────────
+async function doCSVExport() {
+  const btn     = document.getElementById('csvBtn');
+  const btnText = document.getElementById('csvBtnText');
+  const result  = document.getElementById('uploadResult');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> CSV wird erstellt …';
+
+  try {
+    const res = await fetch(API + 'shopify-csv-exportieren', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kunden_id: selectedKunde.id }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Unbekannter Fehler');
+    }
+
+    // Trigger browser download
+    const csvText = await res.text();
+    const blob    = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+    const url     = URL.createObjectURL(blob);
+    const a       = document.createElement('a');
+    a.href        = url;
+    a.download    = 'shopify-import.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    result.className = 'result-box result-ok';
+    result.innerHTML = '✓ CSV heruntergeladen — jetzt in Shopify importieren: <strong>Produkte → Importieren → Datei auswählen</strong>. Shopify verarbeitet Bilder im Hintergrund.';
+    show('uploadResult');
+  } catch(e) {
+    result.className = 'result-box result-err';
+    result.innerHTML = '✗ ' + esc(e.message);
+    show('uploadResult');
+  }
+
+  btnText.textContent = 'Shopify CSV herunterladen';
+  btn.disabled = false;
 }
 
 // ── Bilder zuordnen ────────────────────────────────────────────────

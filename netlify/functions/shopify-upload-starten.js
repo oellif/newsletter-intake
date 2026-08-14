@@ -7,8 +7,8 @@ function normalizeFilename(s) {
 const SHOPIFY_KUNDEN_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
 
 exports.handler = async (event) => {
-  const HANDLER_START = Date.now();
-  const TIME_LIMIT_MS = 8500; // leave margin for Netlify's 10s limit
+  let UPLOAD_START = null; // set AFTER Sheets reads, so reads don't eat the image time budget
+  const TIME_LIMIT_MS = 7500; // time for all products + images (measured from after Sheets reads)
 
   const h = {
     'Access-Control-Allow-Origin': '*',
@@ -63,6 +63,8 @@ exports.handler = async (event) => {
       }
       productMap.get(handle).push(row);
     }
+
+    UPLOAD_START = Date.now(); // start timer AFTER Sheets reads are done
 
     const results = [];
     const errors  = [];
@@ -190,7 +192,7 @@ exports.handler = async (event) => {
         // Upload images sequentially to avoid Drive rate-limiting (variant images are first = priority)
         const uploadedImages = [];
         for (const img of images) {
-          if (Date.now() - HANDLER_START > TIME_LIMIT_MS) break; // stay within Netlify timeout
+          if (Date.now() - UPLOAD_START > TIME_LIMIT_MS) break; // stay within Netlify timeout
           const result = await fetch(`https://${domain}/admin/api/2024-01/products/${created.id}/images.json`, {
             method: 'POST',
             headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
