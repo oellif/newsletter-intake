@@ -1,5 +1,20 @@
 const { getAccessToken, sheetsReadValues } = require('./lib/google');
 
+function driveFileIdFromUrl(url) {
+  const m = (url || '').match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+async function driveImageAsBase64(tok, fileId) {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`,
+    { headers: { Authorization: 'Bearer ' + tok } }
+  );
+  if (!res.ok) throw new Error(`Drive-Download ${fileId}: ${res.status}`);
+  const buf = await res.arrayBuffer();
+  return Buffer.from(buf).toString('base64');
+}
+
 const SHOPIFY_KUNDEN_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
 
 exports.handler = async (event) => {
@@ -116,16 +131,31 @@ exports.handler = async (event) => {
         return v;
       });
 
-      // Product images: unique non-empty URLs
+      // Product images: download from Drive as base64 (public URLs not reliable)
       const seenUrls = new Set();
       const images   = [];
       for (const r of rows) {
         const src = get(r, 'Product image URL');
         if (!src || seenUrls.has(src)) continue;
         seenUrls.add(src);
-        const imgObj = { src, position: parseInt(get(r, 'Image position')) || images.length + 1 };
-        const alt = get(r, 'Image alt text'); if (alt) imgObj.alt = alt;
-        images.push(imgObj);
+        const alt      = get(r, 'Image alt text') || '';
+        const position = parseInt(get(r, 'Image position')) || images.length + 1;
+        const driveId  = driveFileIdFromUrl(src);
+        if (driveId) {
+          try {
+            const b64     = await driveImageAsBase64(tok, driveId);
+            const fname   = (alt || driveId).replace(/[^a-zA-Z0-9._-]/g, '-') + '.jpg';
+            const imgObj  = { attachment: b64, filename: fname, position };
+            if (alt) imgObj.alt = alt;
+            images.push(imgObj);
+          } catch(e) {
+            errors.push({ handle, error: 'Bild-Download fehlgeschlagen: ' + e.message });
+          }
+        } else {
+          const imgObj = { src, position };
+          if (alt) imgObj.alt = alt;
+          images.push(imgObj);
+        }
       }
 
       const payload = { title, body_html: description, vendor, product_type: type, tags, status, handle };
