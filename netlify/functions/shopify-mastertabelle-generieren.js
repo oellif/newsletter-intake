@@ -35,7 +35,8 @@ async function listDriveImages(tok, folderId) {
   const res = await fetch(url, { headers: { Authorization: 'Bearer ' + tok } });
   const data = await res.json();
   if (!res.ok) throw new Error('Drive-Ordner-Fehler: ' + JSON.stringify(data));
-  return (data.files || []).filter(f => (f.mimeType || '').startsWith('image/'));
+  // Kein mimeType-Filter – Dateien ohne Extension haben oft keinen image/* Typ
+  return (data.files || []).filter(f => f.name && !f.name.startsWith('.'));
 }
 
 function driveUrl(fileId) {
@@ -196,7 +197,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: h,
-      body: JSON.stringify({ success: true, sheet_id: created.id, sheet_url: sheetUrl, rows: allDataRows.length }),
+      body: JSON.stringify({ success: true, sheet_id: created.id, sheet_url: sheetUrl, rows: allDataRows.length, bilder_im_ordner: allDriveImages.length }),
     };
 
   } catch(err) {

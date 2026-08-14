@@ -373,7 +373,10 @@ async function generiereTabelle(isRegenerate) {
 
     // Show success status
     statusDiv.className = 'result-box result-ok';
-    statusDiv.innerHTML = `✓ ${data.rows} Zeilen generiert — `
+    const bilderHinweis = data.bilder_im_ordner != null
+      ? ` · ${data.bilder_im_ordner} Bild(er) im Ordner gefunden`
+      : '';
+    statusDiv.innerHTML = `✓ ${data.rows} Zeilen generiert${bilderHinweis} — `
       + `<a href="${esc(data.sheet_url)}" target="_blank" class="sheet-link">Tabelle öffnen und befüllen ↗</a>`;
     show('generierenStatus');
 
