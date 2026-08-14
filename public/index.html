@@ -340,6 +340,12 @@
 
   </div>
 
+  <section class="card">
+    <h2>Sonstiges</h2>
+    <label for="sonstiges">Kommentar / weitere Hinweise</label>
+    <textarea id="sonstiges" placeholder="Alles was sonst noch wichtig ist ..." style="min-height:100px;"></textarea>
+  </section>
+
   <p class="note">Absenden legt automatisch einen Kundenordner in Google Drive und ein Kundenprofil-Sheet mit allen Angaben an. Kein Google-Login noetig.</p>
 
 </div>
@@ -449,6 +455,7 @@ function buildPayload() {
     payload.ansprechpartner = val('ansprechpartner');
     payload.vorlaufzeit = val('vorlaufzeit');
   }
+  payload.sonstiges = val('sonstiges');
   return payload;
 }
 function buildBody() {
@@ -489,7 +496,8 @@ var FIELD_LABELS = {
   frequenz: 'Versandfrequenz',
   saison: 'Saisonale Besonderheiten',
   ansprechpartner: 'Ansprechpartner Freigaben',
-  vorlaufzeit: 'Uebliche Vorlaufzeit'
+  vorlaufzeit: 'Uebliche Vorlaufzeit',
+  sonstiges: 'Sonstiges'
 };
 function openReview() {
   if (!val('kundenname')) { alert('Bitte mindestens den Kundennamen angeben.'); return; }
