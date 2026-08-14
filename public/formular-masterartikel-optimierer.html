@@ -5,36 +5,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Masterartikel-Optimierer — Formular</title>
+<link rel="stylesheet" href="/mh-ci.css">
 <style>
   :root {
-    --paper: #FBF9F6;
+    --paper: #F7F6F3;
     --card: #FFFFFF;
-    --ink: #26211C;
-    --ink-soft: #6B6157;
-    --line: #E5DFD6;
-    --walnut: #7A5230;
-    --walnut-soft: #F1E8DE;
-    --easy: #3E7A47;
-    --easy-bg: #E8F1E9;
-    --mid: #A2701F;
-    --mid-bg: #F6EDDA;
-    --hard: #A8412F;
-    --hard-bg: #F7E6E2;
-    --code-bg: #F3EFE9;
+    --ink: #191919;
+    --ink-soft: #6B7280;
+    --line: #E5E7EB;
+    --walnut: #FA8700;
+    --walnut-soft: rgba(250,135,0,0.10);
+    --easy: #059669;
+    --easy-bg: rgba(5,150,105,0.07);
+    --mid: #D97706;
+    --mid-bg: rgba(217,119,6,0.07);
+    --hard: #DC2626;
+    --hard-bg: rgba(220,38,38,0.06);
+    --code-bg: #F3F4F6;
   }
   body {
     background: var(--paper);
     color: var(--ink);
-    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-family: 'Manrope', Arial, sans-serif;
     line-height: 1.55;
     margin: 0;
     padding: 0 1.25rem 4rem;
   }
   main { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 2.5rem; }
-  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; text-wrap: balance; margin: 0; }
-  h1 { font-size: 2.1rem; line-height: 1.15; }
-  h2 { font-size: 1.4rem; border-bottom: 2px solid var(--walnut); padding-bottom: .4rem; }
-  h3 { font-size: 1.05rem; }
+  h1, h2, h3 { font-family: 'Varela Round', 'Manrope', sans-serif; font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: 2.1rem; line-height: 1.15; letter-spacing: -0.5px; }
+  h2 { font-size: 1.35rem; border-bottom: 2px solid var(--walnut); padding-bottom: .4rem; }
+  h3 { font-size: 1.02rem; }
   p { margin: 0; }
   .eyebrow {
     text-transform: uppercase; letter-spacing: .12em; font-size: .72rem;
@@ -54,11 +55,15 @@
     border-bottom: 1px solid var(--line);
   }
   .btn {
-    background: var(--walnut); color: var(--paper);
-    border: none; border-radius: 6px; padding: .45rem .95rem;
-    font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer;
+    background: var(--walnut); color: #fff;
+    border: none; border-radius: 40px; padding: .5rem 1.15rem;
+    font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer;
+    box-shadow: 0 8px 22px rgba(250,135,0,0.28);
   }
-  .btn.ghost { background: transparent; color: var(--walnut); border: 1px solid var(--walnut); }
+  .btn:hover:not(:disabled) { box-shadow: 0 12px 28px rgba(250,135,0,0.28); }
+  .btn:disabled { background: rgba(250,135,0,0.35); box-shadow: none; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); box-shadow: none; }
+  .btn.ghost:hover { border-color: var(--ink); background: rgba(25,25,25,0.04); }
   .btn:focus-visible { outline: 2px solid var(--walnut); outline-offset: 2px; }
   .kom-count { font-size: .82rem; color: var(--ink-soft); margin-left: auto; font-variant-numeric: tabular-nums; }
 
@@ -79,7 +84,7 @@
   /* Toast */
   #toast {
     position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%);
-    background: var(--ink); color: var(--paper);
+    background: #202228; color: #fff;
     padding: .6rem 1.1rem; border-radius: 8px; font-size: .88rem;
     opacity: 0; pointer-events: none; transition: opacity .25s;
     max-width: 90vw; text-align: center; z-index: 30;
@@ -99,16 +104,16 @@
   }
   .step-num {
     width: 2.4rem; height: 2.4rem; border-radius: 50%;
-    background: var(--walnut); color: var(--paper);
+    background: var(--walnut); color: #fff;
     display: flex; align-items: center; justify-content: center;
     font-weight: 700; font-size: 1rem; font-variant-numeric: tabular-nums;
   }
-  .step-body { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: .8rem 1rem; }
+  .step-body { background: var(--card); border: none; border-radius: 14px; padding: .9rem 1.1rem; box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 16px rgba(25,25,25,0.04); }
   .step-body h3 { margin-bottom: .25rem; }
   .step-body p { color: var(--ink-soft); font-size: .92rem; }
 
   /* Field table */
-  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+  .table-wrap { overflow-x: auto; border: none; border-radius: 14px; box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 16px rgba(25,25,25,0.04); }
   table { border-collapse: collapse; width: 100%; font-size: .88rem; background: var(--card); }
   th, td { text-align: left; padding: .55rem .75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
   th { background: var(--walnut-soft); color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; }
@@ -121,7 +126,7 @@
 
   /* Difficulty columns */
   .diff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
-  .diff-col { border-radius: 8px; padding: 1rem 1.1rem; border: 1px solid var(--line); }
+  .diff-col { border-radius: 14px; padding: 1rem 1.1rem; border: none; box-shadow: 0 1px 4px rgba(25,25,25,0.05); }
   .diff-col ul { margin: .6rem 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .55rem; font-size: .9rem; }
   .diff-col.easy { background: var(--easy-bg); }
   .diff-col.easy h3 { color: var(--easy); }
@@ -134,8 +139,9 @@
   /* Guardrails + questions */
   .rules { display: flex; flex-direction: column; gap: .6rem; }
   .rule {
-    background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--walnut);
-    border-radius: 6px; padding: .65rem .9rem; font-size: .92rem;
+    background: var(--card); border: none; border-left: 4px solid var(--walnut);
+    border-radius: 10px; padding: .65rem .9rem; font-size: .92rem;
+    box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 16px rgba(25,25,25,0.04);
   }
   .rule strong { color: var(--walnut); }
   .q-list { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: .7rem; font-size: .95rem; }
