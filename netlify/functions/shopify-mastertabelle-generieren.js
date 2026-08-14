@@ -213,8 +213,8 @@ exports.handler = async (event) => {
         ? productDriveImages
         : (handles.length === 1 ? allDriveImages : []);
 
-      const { generalImages, variantMap } = categorizeImages(useDriveImages, handle, optionValues);
-      allDataRows.push(...buildProductRows(product, generalImages, variantMap));
+      // Images werden beim Upload mit dem echten Handle gematcht, nicht hier
+      allDataRows.push(...buildProductRows(product, [], new Map()));
     }
 
     if (!allDataRows.length) {
@@ -235,9 +235,9 @@ exports.handler = async (event) => {
     // Write header + data rows
     await sheetsWriteValues(tok, created.id, [HEADERS, ...allDataRows], 'A1');
 
-    // Save sheet ID to column G of kunden sheet
+    // Save sheet ID (G) and folder_id (H) to kunden sheet
     const sheetRow = rowIdx + 2;
-    await sheetsWriteValues(tok, SHOPIFY_KUNDEN_ID, [[created.id]], `G${sheetRow}`);
+    await sheetsWriteValues(tok, SHOPIFY_KUNDEN_ID, [[created.id, folder_id || '']], `G${sheetRow}`);
 
     const sheetUrl = created.webViewLink || `https://docs.google.com/spreadsheets/d/${created.id}/edit`;
 
