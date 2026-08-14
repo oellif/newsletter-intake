@@ -1,4 +1,3 @@
-const { requireAuth } = require('./lib/auth');
 // Netlify Function: Erstellt oder aktualisiert einen Kunden in der
 // Master-Kundenliste (Google Sheet). Sucht per Name — existiert der Kunde
 // bereits, wird die Zeile aktualisiert; sonst wird eine neue Zeile angehaengt.
@@ -10,6 +9,7 @@ const {
   sheetsWriteValues,
   sheetsAppendValues,
 } = require('./lib/google');
+const { requireAuth } = require('./lib/auth');
 
 const SHEET_ID = process.env.MASTER_KUNDEN_SHEET_ID || '1CveKc783N8K_LxKvM2weZA4-rXxMAs6inB4jUCwpXrg';
 
@@ -26,7 +26,7 @@ exports.handler = async (event) => {
   const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Cockpit-Pw',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
 

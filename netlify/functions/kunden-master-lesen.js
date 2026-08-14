@@ -12,7 +12,7 @@ exports.handler = async (event) => {
   const authErr = requireAuth(event); if (authErr) return authErr;
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Cockpit-Pw',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
   };
 
