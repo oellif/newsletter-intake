@@ -4,7 +4,7 @@
 // bleibt im localStorage, damit es spaeter bei jedem Funktionsaufruf als
 // Header mitgeschickt werden kann (serverseitige Pruefung).
 (function () {
-  var PW_HASH = 'fdd9d7d17d1117a33dbec88420a79b126ecf010df6f0bf444bf3affde823ff15';
+  var PW_HASH = '4d37e19217cab195189d033f6e939540f34e84740747be49af0eda6a88875caa';
   var STORAGE_KEY = 'mh_cockpit_pw';
 
   function sha256(text) {
