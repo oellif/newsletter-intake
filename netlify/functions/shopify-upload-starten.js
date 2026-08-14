@@ -147,10 +147,10 @@ exports.handler = async (event) => {
       }
       const hasVariantImages = seenVariantUrls.size > 0;
 
+      // Create product WITHOUT images first (avoids Shopify synchronous image fetch timeout)
       const payload = { title, body_html: description, vendor, product_type: type, tags, status, handle };
       if (options.length)  payload.options  = options;
       if (variants.length) payload.variants = variants;
-      if (images.length)   payload.images   = images;
 
       try {
         const shopifyRes = await fetch(`https://${domain}/admin/api/2024-01/products.json`, {
@@ -166,17 +166,31 @@ exports.handler = async (event) => {
 
         const created = shopifyData.product;
 
-        // Assign variant images after creation (we now know image IDs and variant IDs)
-        if (hasVariantImages && created) {
-          // Build map: normalized option value → shopify image id
+        // Upload images in parallel (concurrent Shopify fetch from Drive = faster)
+        let uploadedImages = [];
+        if (images.length && created) {
+          const imgPromises = images.map(img =>
+            fetch(`https://${domain}/admin/api/2024-01/products/${created.id}/images.json`, {
+              method: 'POST',
+              headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: { src: img.src, position: img.position, alt: img.alt || '' } }),
+            })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => d ? d.image : null)
+            .catch(() => null)
+          );
+          uploadedImages = (await Promise.all(imgPromises)).filter(Boolean);
+        }
+
+        // Assign variant images using __vi: tags from uploaded image alts
+        if (hasVariantImages && uploadedImages.length) {
           const imageIdByOpt = new Map();
-          for (const img of created.images || []) {
+          for (const img of uploadedImages) {
             if (img.alt && img.alt.startsWith('__vi:')) {
               img.alt.slice(5).split(',').forEach(opt => imageIdByOpt.set(opt, img.id));
             }
           }
 
-          // Match each created variant to its image
           const variantUpdates = [];
           for (const v of created.variants || []) {
             const optVals = [v.option1, v.option2, v.option3].filter(Boolean);
@@ -186,8 +200,7 @@ exports.handler = async (event) => {
             }
           }
 
-          // Clean up __vi: alt texts from variant images
-          const altCleanup = (created.images || [])
+          const altCleanup = uploadedImages
             .filter(img => img.alt && img.alt.startsWith('__vi:'))
             .map(img => ({ id: img.id, alt: '' }));
 
