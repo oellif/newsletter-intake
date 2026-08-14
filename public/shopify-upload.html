@@ -147,13 +147,23 @@
       </button>
     </div>
 
-    <!-- Option B: Direkter API-Upload -->
+    <!-- Option B: Automatischer Bulk-Upload -->
     <div style="border:1.5px solid var(--border);border-radius:10px;padding:18px;">
-      <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Für wenige Artikel (1–5)</div>
-      <p class="step-hint" style="margin-bottom:12px;">Legt Produkte direkt per Shopify-API an. Bilder werden hochgeladen — aber wegen der 10s-Zeitbegrenzung maximal ~4 Bilder pro Produkt. Bei mehr Artikeln lieber CSV nutzen.</p>
-      <button class="btn btn-ghost" id="uploadBtn" onclick="doUpload()" disabled>
-        <span id="uploadBtnText">Direkt hochladen (API)</span>
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Direkt hochladen (automatisch)</div>
+      <p class="step-hint" style="margin-bottom:12px;">Legt alle Artikel automatisch per Shopify-API an — der Browser läuft sie nacheinander durch, kein manueller Schritt nötig. Ca. 8–10 Sekunden pro Artikel. Bilder aus der Mastertabelle werden mit hochgeladen.</p>
+      <button class="btn btn-ghost" id="uploadBtn" onclick="doUploadAuto()" disabled>
+        <span id="uploadBtnText">Alle Artikel hochladen</span>
       </button>
+      <div id="uploadProgress" class="hidden" style="margin-top:14px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#6B7280;margin-bottom:5px;">
+          <span id="progressLabel">0 / 0 Artikel</span>
+          <span id="etaLabel"></span>
+        </div>
+        <div style="background:#E5E7EB;border-radius:4px;height:8px;overflow:hidden;">
+          <div id="progressBar" style="height:100%;background:var(--green);border-radius:4px;transition:width .3s;width:0%;"></div>
+        </div>
+        <div id="progressLog" style="margin-top:10px;font-size:12px;line-height:1.8;max-height:160px;overflow-y:auto;"></div>
+      </div>
     </div>
 
     <div id="uploadResult" class="hidden upload-results" style="margin-top:16px;"></div>
@@ -502,52 +512,110 @@ async function doBilderZuordnen() {
   btn.disabled = false;
 }
 
-// ── Upload starten ─────────────────────────────────────────────────
-async function doUpload() {
+// ── Automatischer Bulk-Upload ──────────────────────────────────────
+async function doUploadAuto() {
   const btn     = document.getElementById('uploadBtn');
   const btnText = document.getElementById('uploadBtnText');
   const result  = document.getElementById('uploadResult');
   btn.disabled = true;
-  btnText.innerHTML = '<span class="spinner"></span> Wird hochgeladen …';
+  btnText.innerHTML = '<span class="spinner-dark"></span> Lade Artikel …';
   hide('uploadResult');
+  hide('uploadProgress');
 
+  // 1. Handles-Liste holen
+  let handles;
   try {
-    const res  = await fetch(API + 'shopify-upload-starten', {
+    const r = await fetch(API + 'shopify-mastertabelle-handles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kunden_id: selectedKunde.id }),
     });
-    const data = await res.json();
-
-    if (!res.ok) {
-      result.className = 'result-box result-err';
-      result.innerHTML = '✗ Fehler: ' + esc(data.error || JSON.stringify(data));
-    } else {
-      const ok  = data.results || [];
-      const err = data.errors  || [];
-      let html = '';
-      if (ok.length) {
-        html += `<strong>✓ ${ok.length} Produkt(e) in Shopify angelegt:</strong><br>`;
-        html += ok.map(r =>
-          `&nbsp;&nbsp;· <a href="${esc(r.url)}" target="_blank">${esc(r.title)}</a>`
-          + ` <span style="color:#6B7280;font-size:12px;">#${r.shopify_id}</span>`
-        ).join('<br>');
-      }
-      if (err.length) {
-        html += (ok.length ? '<br><br>' : '') + `<strong style="color:#B91C1C;">✗ ${err.length} Fehler:</strong><br>`;
-        html += err.map(e => `&nbsp;&nbsp;· ${esc(e.handle)}: <span style="color:#B91C1C;">${esc(e.error)}</span>`).join('<br>');
-      }
-      result.className = (err.length && !ok.length) ? 'result-box result-err' : 'result-box result-ok';
-      result.innerHTML = html || 'Keine Zeilen verarbeitet.';
-    }
-    show('uploadResult');
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Fehler beim Laden der Artikel');
+    handles = d.handles || [];
   } catch(e) {
     result.className = 'result-box result-err';
     result.innerHTML = '✗ ' + esc(e.message);
     show('uploadResult');
+    btnText.textContent = 'Alle Artikel hochladen';
+    btn.disabled = false;
+    return;
   }
 
-  btnText.textContent = 'Jetzt hochladen';
+  if (!handles.length) {
+    result.className = 'result-box result-err';
+    result.innerHTML = '✗ Keine Artikel in der Mastertabelle gefunden.';
+    show('uploadResult');
+    btnText.textContent = 'Alle Artikel hochladen';
+    btn.disabled = false;
+    return;
+  }
+
+  const total = handles.length;
+  const logEl = document.getElementById('progressLog');
+  logEl.innerHTML = '';
+  document.getElementById('progressLabel').textContent = `0 / ${total} Artikel`;
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('etaLabel').textContent = '';
+  show('uploadProgress');
+
+  const okList  = [];
+  const errList = [];
+  const startTime = Date.now();
+
+  for (let i = 0; i < handles.length; i++) {
+    const { handle, title } = handles[i];
+    btnText.innerHTML = `<span class="spinner-dark"></span> ${i + 1} / ${total} …`;
+
+    try {
+      const r = await fetch(API + 'shopify-upload-starten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kunden_id: selectedKunde.id, handle }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Shopify-Fehler');
+      if (d.errors && d.errors.length) {
+        errList.push({ handle, error: d.errors[0].error });
+        logEl.innerHTML += `<div style="color:#B91C1C;">✗ ${esc(title || handle)}</div>`;
+      } else if (d.results && d.results.length) {
+        okList.push(d.results[0]);
+        logEl.innerHTML += `<div style="color:#3d6b0d;">✓ <a href="${esc(d.results[0].url)}" target="_blank" style="color:var(--green);text-decoration:none;">${esc(d.results[0].title)}</a></div>`;
+      }
+    } catch(e) {
+      errList.push({ handle, error: e.message });
+      logEl.innerHTML += `<div style="color:#B91C1C;">✗ ${esc(title || handle)}: ${esc(e.message)}</div>`;
+    }
+    logEl.scrollTop = logEl.scrollHeight;
+
+    const done    = i + 1;
+    const elapsed = Date.now() - startTime;
+    const avgMs   = elapsed / done;
+    const etaSec  = Math.round(Math.max(0, (total - done) * avgMs) / 1000);
+    document.getElementById('progressLabel').textContent = `${done} / ${total} Artikel`;
+    document.getElementById('progressBar').style.width = `${(done / total * 100).toFixed(1)}%`;
+    document.getElementById('etaLabel').textContent = done < total ? `noch ~${etaSec}s` : '';
+  }
+
+  hide('uploadProgress');
+
+  let html = '';
+  if (okList.length) {
+    html += `<strong>✓ ${okList.length} Produkt(e) in Shopify angelegt:</strong><br>`;
+    html += okList.map(r =>
+      `&nbsp;&nbsp;· <a href="${esc(r.url)}" target="_blank">${esc(r.title)}</a>`
+      + ` <span style="color:#6B7280;font-size:12px;">#${r.shopify_id}</span>`
+    ).join('<br>');
+  }
+  if (errList.length) {
+    html += (okList.length ? '<br><br>' : '') + `<strong style="color:#B91C1C;">✗ ${errList.length} Fehler:</strong><br>`;
+    html += errList.map(e => `&nbsp;&nbsp;· ${esc(e.handle)}: <span style="color:#B91C1C;">${esc(e.error)}</span>`).join('<br>');
+  }
+  result.className = (errList.length && !okList.length) ? 'result-box result-err' : 'result-box result-ok';
+  result.innerHTML = html || 'Keine Zeilen verarbeitet.';
+  show('uploadResult');
+
+  btnText.textContent = 'Alle Artikel hochladen';
   btn.disabled = false;
 }
 

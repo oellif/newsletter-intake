@@ -20,7 +20,7 @@ exports.handler = async (event) => {
 
   let body = {};
   try { body = JSON.parse(event.body || '{}'); } catch(e) {}
-  const { kunden_id } = body;
+  const { kunden_id, handle: singleHandle } = body; // singleHandle: only process this one product
   if (!kunden_id) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'kunden_id erforderlich' }) };
 
   try {
@@ -69,7 +69,8 @@ exports.handler = async (event) => {
     const results = [];
     const errors  = [];
 
-    for (const handle of order) {
+    for (const handle of (singleHandle ? [singleHandle] : order)) {
+      if (!productMap.has(handle)) continue;
       const rows     = productMap.get(handle);
       const firstRow = rows.find(r => get(r, 'Title')) || rows[0];
 
