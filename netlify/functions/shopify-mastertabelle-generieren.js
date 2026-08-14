@@ -191,8 +191,14 @@ exports.handler = async (event) => {
     // List Drive images if folder_id provided
     const allDriveImages = folder_id ? await listDriveImages(tok, folder_id) : [];
 
-    // Fetch each masterartikel and build rows
+    // Fetch each masterartikel and build rows.
+    // Metafelder werden als dynamische Zusatzspalten angehaengt, Format:
+    // "Metafield: namespace.key [type]" - so kann der Upload sie ohne
+    // weitere API-Abfragen korrekt zurueckschreiben.
     const allDataRows = [];
+    const metafieldCols   = []; // geordnete Spaltennamen
+    const mfColIndex      = new Map(); // Spaltenname → Index in metafieldCols
+    const mfAssignments   = []; // { row: erste Zeile des Produkts, values: Map }
     for (const handle of handles) {
       const shopRes  = await fetch(
         `https://${domain}/admin/api/2024-01/products.json?handle=${encodeURIComponent(handle)}&status=draft`,
@@ -216,7 +222,32 @@ exports.handler = async (event) => {
         : (handles.length === 1 ? allDriveImages : []);
 
       // Images werden beim Upload mit dem echten Handle gematcht, nicht hier
-      allDataRows.push(...buildProductRows(product, [], new Map()));
+      const prodRows = buildProductRows(product, [], new Map());
+
+      // Metafelder des Masterartikels auslesen (App-eigene und Shopify-
+      // interne Namespaces ueberspringen)
+      const mfRes  = await fetch(
+        `https://${domain}/admin/api/2024-01/products/${product.id}/metafields.json?limit=250`,
+        { headers: { 'X-Shopify-Access-Token': token } }
+      );
+      const mfData = await mfRes.json();
+      const metafields = (mfRes.ok ? (mfData.metafields || []) : [])
+        .filter(m => !m.namespace.startsWith('shopify') && !m.namespace.includes('--'));
+
+      if (metafields.length && prodRows.length) {
+        const values = new Map();
+        for (const m of metafields) {
+          const colName = `Metafield: ${m.namespace}.${m.key} [${m.type}]`;
+          if (!mfColIndex.has(colName)) {
+            mfColIndex.set(colName, metafieldCols.length);
+            metafieldCols.push(colName);
+          }
+          values.set(colName, typeof m.value === 'object' ? JSON.stringify(m.value) : String(m.value));
+        }
+        mfAssignments.push({ row: prodRows[0], values });
+      }
+
+      allDataRows.push(...prodRows);
     }
 
     if (!allDataRows.length) {
@@ -234,8 +265,17 @@ exports.handler = async (event) => {
       parents: [MASTERTABELLEN_FOLDER_ID],
     });
 
-    // Write header + data rows
-    await sheetsWriteValues(tok, created.id, [HEADERS, ...allDataRows], 'A1');
+    // Write header + data rows (inkl. dynamischer Metafeld-Spalten)
+    const fullHeaders = [...HEADERS, ...metafieldCols];
+    if (metafieldCols.length) {
+      for (const r of allDataRows) { while (r.length < fullHeaders.length) r.push(''); }
+      for (const { row, values } of mfAssignments) {
+        for (const [col, val] of values) {
+          row[HEADERS.length + mfColIndex.get(col)] = val;
+        }
+      }
+    }
+    await sheetsWriteValues(tok, created.id, [fullHeaders, ...allDataRows], 'A1');
 
     // Save sheet ID (G); folder_id (H) nur schreiben wenn uebergeben,
     // sonst bleibt der beim "Bilder zuordnen" gespeicherte Wert erhalten

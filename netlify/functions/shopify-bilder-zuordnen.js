@@ -87,7 +87,7 @@ exports.handler = async (event) => {
     }
 
     // Read Mastertabelle
-    const allRows = await sheetsReadValues(tok, mastertabelleId, 'A1:BH2000');
+    const allRows = await sheetsReadValues(tok, mastertabelleId, 'A1:CZ2000');
     if (!allRows || allRows.length < 2) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Mastertabelle ist leer.' }) };
 
     const headerRow = allRows[0];

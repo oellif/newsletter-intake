@@ -42,7 +42,7 @@ exports.handler = async (event) => {
     const mastertabelleId = kundeRow[6];
     if (!mastertabelleId) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Keine Mastertabelle vorhanden.' }) };
 
-    const allRows = await sheetsReadValues(tok, mastertabelleId, 'A1:BH2000');
+    const allRows = await sheetsReadValues(tok, mastertabelleId, 'A1:CZ2000');
     if (!allRows || allRows.length < 2) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Mastertabelle ist leer.' }) };
 
     const CI = {};
@@ -160,6 +160,36 @@ exports.handler = async (event) => {
     }
 
     const created = shopifyData.product;
+
+    // Metafelder aus den dynamischen Spalten ("Metafield: ns.key [type]")
+    // ans neue Produkt schreiben. Wert: erste nicht-leere Zelle der Spalte
+    // innerhalb der Produktzeilen.
+    const MF_RE = /^Metafield: ([^.\s]+)\.([^\s\[]+) \[([^\]]+)\]$/;
+    let metafieldsSet = 0;
+    const metafieldErrors = [];
+    for (const col of Object.keys(CI)) {
+      const m = col.match(MF_RE);
+      if (!m) continue;
+      const raw = rows.map(r => get(r, col)).find(v => v) || '';
+      if (!raw) continue;
+
+      let value = raw;
+      if (m[3] === 'number_integer')      value = parseInt(raw) || 0;
+      else if (m[3] === 'number_decimal') value = parseFloat(raw) || 0;
+      else if (m[3] === 'boolean')        value = raw.toLowerCase() === 'true';
+
+      const mfRes = await fetch(`https://${domain}/admin/api/2024-01/products/${created.id}/metafields.json`, {
+        method: 'POST',
+        headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metafield: { namespace: m[1], key: m[2], type: m[3], value } }),
+      });
+      if (mfRes.ok) metafieldsSet++;
+      else {
+        const err = await mfRes.json().catch(() => ({}));
+        metafieldErrors.push(`${m[1]}.${m[2]}: ${JSON.stringify(err.errors || err)}`);
+      }
+    }
+
     return {
       statusCode: 200,
       headers: h,
@@ -169,6 +199,8 @@ exports.handler = async (event) => {
         title: created.title,
         admin_url: `https://${domain}/admin/products/${created.id}`,
         images,
+        metafields_set: metafieldsSet,
+        metafield_errors: metafieldErrors,
       }),
     };
 
