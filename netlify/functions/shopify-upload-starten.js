@@ -1,5 +1,9 @@
 const { getAccessToken, sheetsReadValues } = require('./lib/google');
 
+function normalizeFilename(s) {
+  return s.toLowerCase().replace(/[\s_]+/g, '-');
+}
+
 const SHOPIFY_KUNDEN_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
 
 exports.handler = async (event) => {
@@ -116,7 +120,7 @@ exports.handler = async (event) => {
         return v;
       });
 
-      // Product images: unique non-empty URLs
+      // General product images
       const seenUrls = new Set();
       const images   = [];
       for (const r of rows) {
@@ -127,6 +131,24 @@ exports.handler = async (event) => {
         const alt = get(r, 'Image alt text'); if (alt) imgObj.alt = alt;
         images.push(imgObj);
       }
+
+      // Variant images: collect unique, tag with __vi: for matching after creation
+      // Map: src → set of normalized option values this image covers
+      const variantImgMeta = new Map();
+      for (const r of rows) {
+        const vsrc = get(r, 'Variant image URL');
+        if (!vsrc) continue;
+        if (!variantImgMeta.has(vsrc)) variantImgMeta.set(vsrc, new Set());
+        [get(r,'Option1 value'), get(r,'Option2 value'), get(r,'Option3 value')]
+          .filter(Boolean)
+          .forEach(v => variantImgMeta.get(vsrc).add(normalizeFilename(v)));
+      }
+      for (const [vsrc, optSet] of variantImgMeta) {
+        if (seenUrls.has(vsrc)) continue;
+        seenUrls.add(vsrc);
+        images.push({ src: vsrc, position: images.length + 1, alt: `__vi:${[...optSet].join(',')}` });
+      }
+      const hasVariantImages = variantImgMeta.size > 0;
 
       const payload = { title, body_html: description, vendor, product_type: type, tags, status, handle };
       if (options.length)  payload.options  = options;
@@ -142,14 +164,54 @@ exports.handler = async (event) => {
         const shopifyData = await shopifyRes.json();
         if (!shopifyRes.ok) {
           errors.push({ handle, error: JSON.stringify(shopifyData.errors || shopifyData) });
-        } else {
-          results.push({
-            handle,
-            shopify_id: shopifyData.product.id,
-            title: shopifyData.product.title,
-            url: `https://${domain}/admin/products/${shopifyData.product.id}`,
-          });
+          continue;
         }
+
+        const created = shopifyData.product;
+
+        // Assign variant images after creation (we now know image IDs and variant IDs)
+        if (hasVariantImages && created) {
+          // Build map: normalized option value → shopify image id
+          const imageIdByOpt = new Map();
+          for (const img of created.images || []) {
+            if (img.alt && img.alt.startsWith('__vi:')) {
+              img.alt.slice(5).split(',').forEach(opt => imageIdByOpt.set(opt, img.id));
+            }
+          }
+
+          // Match each created variant to its image
+          const variantUpdates = [];
+          for (const v of created.variants || []) {
+            const optVals = [v.option1, v.option2, v.option3].filter(Boolean);
+            for (const opt of optVals) {
+              const imgId = imageIdByOpt.get(normalizeFilename(opt));
+              if (imgId) { variantUpdates.push({ id: v.id, image_id: imgId }); break; }
+            }
+          }
+
+          // Clean up __vi: alt texts from variant images
+          const altCleanup = (created.images || [])
+            .filter(img => img.alt && img.alt.startsWith('__vi:'))
+            .map(img => ({ id: img.id, alt: '' }));
+
+          if (variantUpdates.length || altCleanup.length) {
+            const putBody = { product: { id: created.id } };
+            if (variantUpdates.length) putBody.product.variants = variantUpdates;
+            if (altCleanup.length)     putBody.product.images   = altCleanup;
+            await fetch(`https://${domain}/admin/api/2024-01/products/${created.id}.json`, {
+              method: 'PUT',
+              headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
+              body: JSON.stringify(putBody),
+            });
+          }
+        }
+
+        results.push({
+          handle,
+          shopify_id: created.id,
+          title: created.title,
+          url: `https://${domain}/admin/products/${created.id}`,
+        });
       } catch(e) {
         errors.push({ handle, error: e.message });
       }

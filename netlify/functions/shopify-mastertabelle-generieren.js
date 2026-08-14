@@ -47,12 +47,45 @@ function normalizeFilename(s) {
   return s.toLowerCase().replace(/[\s_]+/g, '-');
 }
 
-function buildProductRows(product, driveImages) {
-  const variants     = product.variants || [];
-  const shopifyImages = product.images  || [];
+function categorizeImages(driveImages, handle, optionValues) {
+  const normHandle  = normalizeFilename(handle);
+  const normOptions = optionValues.map(v => normalizeFilename(v));
+  const general     = [];
+  const variantMap  = new Map(); // normalized option value → drive file object
 
-  const useImages = driveImages.length > 0
-    ? driveImages.map((img, i) => ({ src: driveUrl(img.id), position: i + 1, alt: img.name.replace(/\.[^.]+$/, '') }))
+  for (const img of driveImages) {
+    const normName = normalizeFilename(img.name.replace(/\.[^.]+$/, ''));
+    if (!normName.startsWith(normHandle)) continue;
+    const suffix = normName.slice(normHandle.length).replace(/^-/, '');
+
+    if (suffix === '' || /^\d+$/.test(suffix)) {
+      general.push({ img, position: suffix === '' ? 1 : parseInt(suffix) });
+    } else {
+      const match = normOptions.find(o => o === suffix);
+      if (match) {
+        variantMap.set(match, img);
+      } else {
+        general.push({ img, position: 9999 });
+      }
+    }
+  }
+
+  general.sort((a, b) => a.position - b.position || a.img.name.localeCompare(b.img.name));
+  const generalImages = general.map(({ img }, i) => ({
+    src: driveUrl(img.id),
+    position: i + 1,
+    alt: img.name.replace(/\.[^.]+$/, ''),
+  }));
+
+  return { generalImages, variantMap };
+}
+
+function buildProductRows(product, generalImages, variantMap) {
+  const variants      = product.variants  || [];
+  const shopifyImages = product.images    || [];
+
+  const useImages = generalImages.length > 0
+    ? generalImages
     : shopifyImages.map(img => ({ src: img.src, position: img.position, alt: img.alt || '' }));
 
   const imageMap = {};
@@ -99,9 +132,17 @@ function buildProductRows(product, driveImages) {
       row[C['Weight unit for display']]            = v.weight_unit || '';
       row[C['Requires shipping']]                  = v.requires_shipping ? 'TRUE' : 'FALSE';
       row[C['Fulfillment service']]                = v.fulfillment_service || '';
-      if (v.image_id && imageMap[v.image_id]) {
-        row[C['Variant image URL']] = imageMap[v.image_id];
+      // Variant image: Drive match first, then existing Shopify image
+      const optVals = [v.option1, v.option2, v.option3].filter(Boolean);
+      let varImgSrc = null;
+      for (const opt of optVals) {
+        const driveImg = variantMap.get(normalizeFilename(opt));
+        if (driveImg) { varImgSrc = driveUrl(driveImg.id); break; }
       }
+      if (!varImgSrc && v.image_id && imageMap[v.image_id]) {
+        varImgSrc = imageMap[v.image_id];
+      }
+      if (varImgSrc) row[C['Variant image URL']] = varImgSrc;
     }
 
     if (img) {
@@ -158,16 +199,22 @@ exports.handler = async (event) => {
       const shopData = await shopRes.json();
       if (!shopData.products || !shopData.products.length) continue;
 
-      // Filter Drive images relevant to this product (filename starts with handle)
-      const productImages = allDriveImages.filter(img =>
+      const product = shopData.products[0];
+
+      // Collect all option values for this product
+      const optionValues = [];
+      for (const opt of (product.options || [])) optionValues.push(...(opt.values || []));
+
+      // Filter Drive images for this product
+      const productDriveImages = allDriveImages.filter(img =>
         normalizeFilename(img.name).startsWith(normalizeFilename(handle))
       );
-      // Fallback: use all drive images if single product and no handle-specific images found
-      const useImages = productImages.length > 0
-        ? productImages
+      const useDriveImages = productDriveImages.length > 0
+        ? productDriveImages
         : (handles.length === 1 ? allDriveImages : []);
 
-      allDataRows.push(...buildProductRows(shopData.products[0], useImages));
+      const { generalImages, variantMap } = categorizeImages(useDriveImages, handle, optionValues);
+      allDataRows.push(...buildProductRows(product, generalImages, variantMap));
     }
 
     if (!allDataRows.length) {
