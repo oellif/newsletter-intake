@@ -93,7 +93,7 @@
 
     <!-- Bestehende Mastertabelle -->
     <div id="mastertabelleVorhanden" class="hidden">
-      <div class="status-row">
+      <div class="status-row" id="mastertabelleStatusRow">
         <span>✓ Mastertabelle vorhanden</span>
         <a id="mastertabelleLink" href="#" target="_blank" class="sheet-link">Tabelle öffnen ↗</a>
       </div>
@@ -339,6 +339,7 @@ function setupMastertabelleCard() {
   if (mastertabelleId) {
     document.getElementById('mastertabelleLink').href = `https://docs.google.com/spreadsheets/d/${mastertabelleId}/edit`;
     show('mastertabelleVorhanden');
+    show('mastertabelleStatusRow');
     hide('mastertabelleNeu');
   } else {
     hide('mastertabelleVorhanden');
@@ -396,9 +397,11 @@ async function generiereTabelle(isRegenerate) {
 
     mastertabelleId = data.sheet_id;
 
-    // Update "Vorhanden" sub-view
+    // Update "Vorhanden" sub-view - Statuszeile verstecken, damit direkt
+    // nach dem Generieren nur EINE Meldung mit Tabellen-Link sichtbar ist
     document.getElementById('mastertabelleLink').href = data.sheet_url;
     show('mastertabelleVorhanden');
+    hide('mastertabelleStatusRow');
     hide('mastertabelleNeu');
 
     // Show success status
