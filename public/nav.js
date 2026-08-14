@@ -381,6 +381,7 @@
     'shopify-dashboard.html':                 true,
     'shopify-upload.html':                    true,
     'shopify-sync.html':                      true,
+    'formulare.html':                         true,
     'formular-masterartikel-optimierer.html': true,
     'kunden-datenbank.html':                  true,
     'kunden-bearbeiten.html':                 true,
