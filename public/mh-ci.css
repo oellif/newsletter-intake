@@ -22,6 +22,21 @@ body {
 /* ── Header ─────────────────────────────────── */
 header {
   background: var(--dark) !important;
+  color: rgba(255,255,255,0.9) !important;
+  padding: 2rem 1.5rem !important;
+  border-radius: 14px !important;
+}
+header h1,
+header h2,
+header h3 {
+  color: #fff !important;
+}
+header p,
+header .sub {
+  color: rgba(255,255,255,0.6) !important;
+}
+header .eyebrow {
+  color: var(--accent) !important;
 }
 
 /* ── Cards ──────────────────────────────────── */
