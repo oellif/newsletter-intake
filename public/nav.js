@@ -374,13 +374,16 @@
   }
 
   var NO_KUNDE_PAGES = {
-    'home.html':              true,
-    'index.html':             true,
-    'kunde-loeschen.html':    true,
-    'anleitung.html':         true,
-    'shopify-dashboard.html': true,
-    'shopify-upload.html':    true,
-    'shopify-sync.html':      true,
+    'home.html':                              true,
+    'index.html':                             true,
+    'kunde-loeschen.html':                    true,
+    'anleitung.html':                         true,
+    'shopify-dashboard.html':                 true,
+    'shopify-upload.html':                    true,
+    'shopify-sync.html':                      true,
+    'formular-masterartikel-optimierer.html': true,
+    'kunden-datenbank.html':                  true,
+    'kunden-bearbeiten.html':                 true,
   };
 
   function autoPromptIfNeeded() {
