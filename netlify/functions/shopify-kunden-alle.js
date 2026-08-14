@@ -9,11 +9,11 @@ exports.handler = async (event) => {
   try {
     const tok = await getAccessToken();
     const rows = await sheetsReadValues(tok, SHEET_ID, 'A2:G500');
+    // Token und Claid-Key bleiben bewusst serverseitig - die Funktionen
+    // holen sie selbst aus der Kundentabelle, der Browser braucht sie nie
     const kunden = (rows || []).filter(r => r[1]).map(r => ({
       id: r[0] || '', name: r[1] || '', domain: r[2] || '',
-      token: r[3] || '',
       masterartikel: r[4] ? r[4].split(',').map(s => s.trim()).filter(Boolean) : [],
-      claid_key: r[5] || '',
       artikel_sheet_id: r[6] || '',
     }));
     return { statusCode: 200, headers: h, body: JSON.stringify({ kunden }) };

@@ -675,7 +675,7 @@ function prefetchEntwuerfe() {
   entwuerfePromise = fetch(API + 'shopify-entwuerfe-laden', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ domain: selectedKunde.domain, token: selectedKunde.token }),
+    body: JSON.stringify({ kunden_id: selectedKunde.id }),
   })
     .then(r => r.json())
     .then(data => { entwuerfeCache = data.produkte || []; })
