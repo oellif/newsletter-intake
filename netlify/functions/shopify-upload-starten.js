@@ -109,8 +109,8 @@ exports.handler = async (event) => {
       productMap.get(handle).push(row);
     }
 
-    // Load Drive images once for all products
-    const allDriveImages = folderId ? await listDriveImages(tok, folderId) : [];
+    // Drive-Images werden nach dem Upload gematcht (Timeout-Schutz: nur wenn Zeit reicht)
+    const allDriveImages = [];
 
     const results = [];
     const errors  = [];
