@@ -1,7 +1,9 @@
 const { getAccessToken, sheetsReadValues, sheetsWriteValues, driveCreateFile } = require('./lib/google');
 
 const SHOPIFY_KUNDEN_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
-const CLAUDE_FOLDER_ID  = '1Eb7QWpzwF97tfFaD9IsHB2Mt2gxXSxiE';
+// Ablageort der generierten Mastertabellen: Drive-Ordner
+// "Claude Code > Shopify > Master Tabellen"
+const MASTERTABELLEN_FOLDER_ID = '1JsT09BPz8VVrBQx8NsahaEt0iuDIYS2O';
 
 const HEADERS = [
   'Title','URL handle','Description','Vendor','Product category','Type','Tags',
@@ -229,7 +231,7 @@ exports.handler = async (event) => {
     const created = await driveCreateFile(tok, {
       name: sheetTitle,
       mimeType: 'application/vnd.google-apps.spreadsheet',
-      parents: [CLAUDE_FOLDER_ID],
+      parents: [MASTERTABELLEN_FOLDER_ID],
     });
 
     // Write header + data rows
