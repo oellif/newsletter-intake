@@ -1,7 +1,7 @@
 # MH Cockpit — Plattform-Dokumentation
 
 Internes Agentur-Tool für Marktplatz Helden. Kein öffentliches Storefront.
-Live-URL: **https://newsletter-nfy46.netlify.app**
+Live-URL: **https://mh-cockpit.netlify.app**
 
 ---
 
