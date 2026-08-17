@@ -24,6 +24,9 @@
   .form-meta { font-size: 11px; color: #9CA3AF; margin-top: 6px; }
   .form-arrow { font-size: 18px; color: #D1D5DB; flex-shrink: 0; }
   .form-card:hover .form-arrow { color: #3B82F6; }
+  .ordner { display: flex; flex-direction: column; gap: 10px; }
+  .ordner-kopf { font-size: 15px; font-weight: 800; color: #191919; display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .ordner-inhalt { display: flex; flex-direction: column; gap: 12px; padding-left: 14px; border-left: 2px solid #E5E7EB; margin-left: 9px; }
 </style>
 </head>
 <body>
@@ -33,15 +36,29 @@
   <p class="hub-sub">Konzepte prüfen und Kommentare direkt in die Felder schreiben. Am Ende „Kommentare speichern" klicken — die Kommentare landen automatisch in der zentralen Tabelle und Claude liest sie von dort.</p>
 
   <div class="form-list">
-    <a class="form-card" href="/formular-masterartikel-optimierer.html">
-      <div class="form-icon">🪵</div>
-      <div class="form-body">
-        <div class="form-name">Masterartikel-Optimierer — Konzept</div>
-        <div class="form-desc">Skill-Konzept zur automatischen Veredelung von Shopify-Artikeln (SEO, Descriptions, Metafelder, Alt-Texte). Kommentare zu jedem Punkt möglich.</div>
-        <div class="form-meta">Stand 14.08.2026 · 4 offene Entscheidungen</div>
+    <div class="ordner">
+      <div class="ordner-kopf">📁 Masterartikel-Optimierer</div>
+      <div class="ordner-inhalt">
+        <a class="form-card" href="/formular-masterartikel-optimierer.html">
+          <div class="form-icon">🪵</div>
+          <div class="form-body">
+            <div class="form-name">Konzept</div>
+            <div class="form-desc">Skill-Konzept zur automatischen Veredelung von Shopify-Artikeln (SEO, Descriptions, Metafelder, Alt-Texte). Kommentare zu jedem Punkt möglich.</div>
+            <div class="form-meta">Stand 17.08.2026 · Kommentar-Runde 1 eingearbeitet · 3 offene Entscheidungen</div>
+          </div>
+          <div class="form-arrow">→</div>
+        </a>
+        <a class="form-card" href="/auswertung-masterartikel-optimierer.html">
+          <div class="form-icon">📊</div>
+          <div class="form-body">
+            <div class="form-name">Auswertung der Kommentare</div>
+            <div class="form-desc">Jeder Kommentar aus Runde 1 mit Antwort und Umsetzung im Konzept — inkl. der getroffenen Entscheidung zur Handle-Politik.</div>
+            <div class="form-meta">Runde 1 · 17.08.2026 · 6 Kommentare ausgewertet</div>
+          </div>
+          <div class="form-arrow">→</div>
+        </a>
       </div>
-      <div class="form-arrow">→</div>
-    </a>
+    </div>
   </div>
 </div>
 <script src="formulare-nav.js"></script>

@@ -172,7 +172,7 @@
         <div class="step-num">1</div>
         <div class="step-body">
           <h3>Einlesen &amp; Gruppieren</h3>
-          <p>Sheet laden, Zeilen über den URL handle zu Masterartikeln bündeln (Hauptzeile + Variantenzeilen). Ist-Zustand jedes Feldes erfassen: leer, schlecht, brauchbar.</p>
+          <p>In der Import-Tabelle ist ein Produkt nicht eine Zeile, sondern mehrere: Nur die erste Zeile trägt Titel, Beschreibung usw., die Zeilen darunter sind die Varianten (z.&nbsp;B. Größe S/M/L × Holz Nuss/Ahorn/Apfel = 9 Zeilen). Verbunden sind sie nur über den identischen URL handle. Dieser Schritt setzt die Zeilen wieder zu ganzen Produkten („Masterartikeln") zusammen — damit jedes Produkt <em>einmal</em> optimiert wird statt 9× einzeln. Danach wird pro Feld erfasst, was da ist: leer, schlecht oder brauchbar.</p>
           <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schritt 1 — Einlesen &amp; Gruppieren"></textarea>
         </div>
       </div>
@@ -227,11 +227,11 @@
           <tr><th>Feld</th><th>Regel</th><th>Limit / Format</th><th>💬 Dein Kommentar</th></tr>
         </thead>
         <tbody>
-          <tr><td>Title</td><td>Keyword vorn, Produktart + Material + Besonderheit, kein Keyword-Stuffing</td><td>≤ 70 Zeichen</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Title"></textarea></td></tr>
+          <tr><td>Title</td><td>Vorhandener Title aus dem Sheet ist die Basis — nur bereinigen/optimieren, wenn er schlecht oder kaputt ist. Dann: Keyword vorn, Produktart + Material + Besonderheit, kein Keyword-Stuffing</td><td>≤ 70 Zeichen</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Title"></textarea></td></tr>
           <tr><td>URL handle</td><td>Kleinbuchstaben, Bindestriche, Umlaute umschreiben (ä→ae), Hauptkeyword, kurz</td><td><code>armband-holz-nuss</code></td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — URL handle"></textarea></td></tr>
           <tr><td>Description</td><td>HTML-Struktur: Hook → Nutzen/Emotion → Fakten (Material, Maße, Pflege) → Lieferumfang. Nur belegte Fakten</td><td>150–300 Wörter</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Description"></textarea></td></tr>
-          <tr><td>SEO Title</td><td>Hauptkeyword + USP + Brand, CTR-Trigger (Zahl, Nutzen), Conversion-orientiert</td><td>≤ 60 Zeichen</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — SEO Title"></textarea></td></tr>
-          <tr><td>SEO Description</td><td>Nutzenversprechen + Handlungsaufforderung, aktives Verb, kein Abschneiden in den SERPs</td><td>≤ 155 Zeichen</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — SEO Description"></textarea></td></tr>
+          <tr><td>SEO Title</td><td>Hauptkeyword + USP, CTR-Trigger (Zahl, Nutzen), Conversion-orientiert. Eher kurz halten; Brand nur anhängen, wenn die Marke Suchrelevanz hat</td><td>≤ 60 Zeichen</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — SEO Title"></textarea></td></tr>
+          <tr><td>SEO Description</td><td>Nutzenversprechen + Keyword, aktives Verb, CTA — kein Abschneiden in den SERPs</td><td>≤ 155 Zeichen</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — SEO Description"></textarea></td></tr>
           <tr><td>Tags</td><td>Festes Schema pro Shop: Produktart, Material, Zielgruppe, Anlass — konsistent über alle Artikel</td><td>5–10 Tags</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Tags"></textarea></td></tr>
           <tr><td>Product category</td><td>Offizielle Shopify-Taxonomie treffen (z.&nbsp;B. Apparel &amp; Accessories &gt; Jewelry &gt; Bracelets)</td><td>Taxonomie-Pfad</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Product category"></textarea></td></tr>
           <tr><td>Google category</td><td>Google-Shopping-Taxonomie, passend zur Shopify-Kategorie</td><td>Taxonomie-ID/Pfad</td><td><textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Regelwerk — Google category"></textarea></td></tr>
@@ -272,7 +272,7 @@
         <ul>
           <li>Halluzinationsgefahr: Maße, Materialien, Eigenschaften erfinden<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schwierig — Halluzinationsgefahr"></textarea></li>
           <li>Keyword-Wahl ohne Suchvolumen-Daten<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schwierig — Keyword-Wahl ohne Daten"></textarea></li>
-          <li>Handle-Änderung bei Live-Artikeln → Rankingverlust ohne Redirects<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schwierig — Handle-Änderung Live-Artikel"></textarea></li>
+          <li>Handle-Änderung bei Live-Artikeln → entschärft: Handles bestehender Artikel bleiben grundsätzlich unverändert (Entscheidung 17.08.2026)<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schwierig — Handle-Änderung Live-Artikel"></textarea></li>
           <li>Alt-Texte ohne Bildanalyse (Text beschreibt Bild, das niemand gesehen hat)<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schwierig — Alt-Texte ohne Bildanalyse"></textarea></li>
           <li>Duplicate Content bei vielen ähnlichen Artikeln<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Schwierig — Duplicate Content"></textarea></li>
         </ul>
@@ -284,10 +284,10 @@
     <h2>Leitplanken</h2>
     <div class="rules">
       <div class="rule"><strong>Nichts erfinden:</strong> Fakten nur aus Quelldaten. Fehlt eine Info (Maße, Verschluss, Lieferumfang), wird sie als <em>offen</em> markiert statt geraten.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Nichts erfinden"></textarea></div>
-      <div class="rule"><strong>Handles schützen:</strong> Bei bereits live geschalteten Artikeln Handle nur ändern, wenn Redirects eingeplant sind — sonst Original-Handle behalten.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Handles schützen"></textarea></div>
+      <div class="rule"><strong>Handles schützen:</strong> Handles bereits live geschalteter Artikel werden niemals geändert (Entscheidung 17.08.2026). Nur neue, noch nicht veröffentlichte Artikel bekommen SEO-optimierte Handles.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Handles schützen"></textarea></div>
       <div class="rule"><strong>Original unangetastet:</strong> Ergebnis immer in neuen Tab/neues Sheet, nie das Quell-Sheet überschreiben.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Original unangetastet"></textarea></div>
       <div class="rule"><strong>Kundenprofil als Pflicht-Input:</strong> Brand Voice, Du/Sie, verbotene Begriffe, Tag-Schema — einmal pro Kunde definiert, von jedem Lauf gelesen.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Kundenprofil Pflicht-Input"></textarea></div>
-      <div class="rule"><strong>Rechts-Check eingebaut:</strong> Bei Naturprodukten keine Heil- und Wirkversprechen (AMG/HWG) — Prüfung läuft im Validierungsschritt mit.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Rechts-Check"></textarea></div>
+      <div class="rule"><strong>Rechts-Check eingebaut:</strong> Health-Claims-Check für <em>alle</em> generierten Texte, egal welche Produktart — keine Heil-, Gesundheits- und Wirkversprechen (AMG/HWG/Health-Claims-VO). Prüfung läuft im Validierungsschritt über jeden Artikel.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Rechts-Check"></textarea></div>
       <div class="rule"><strong>Mensch prüft Unsicheres:</strong> Jeder Lauf endet mit Report; Felder mit niedriger Sicherheit werden zur Freigabe markiert.<textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Leitplanke — Mensch prüft Unsicheres"></textarea></div>
     </div>
   </section>
@@ -297,7 +297,7 @@
     <ol class="q-list">
       <li><strong>Keyword-Quelle:</strong> Rein regelbasiert oder mit Ahrefs-Daten (Connector vorhanden, braucht einmalige Autorisierung)?<textarea class="kom-input" rows="1" placeholder="Deine Entscheidung / Kommentar…" data-label="Entscheidung 1 — Keyword-Quelle"></textarea></li>
       <li><strong>Bildanalyse:</strong> Sollen die Produktbilder (Drive-Links) angeschaut werden, damit Alt-Texte den echten Bildinhalt beschreiben? Deutlich bessere Qualität, etwas mehr Laufzeit.<textarea class="kom-input" rows="1" placeholder="Deine Entscheidung / Kommentar…" data-label="Entscheidung 2 — Bildanalyse"></textarea></li>
-      <li><strong>Handle-Politik:</strong> Dürfen Handles bestehender Artikel geändert werden (mit Redirect-Liste als Output) oder bleiben sie fix?<textarea class="kom-input" rows="1" placeholder="Deine Entscheidung / Kommentar…" data-label="Entscheidung 3 — Handle-Politik"></textarea></li>
+      <li><strong>Handle-Politik:</strong> <span style="color: var(--easy); font-weight: 700;">✅ Entschieden (17.08.2026): Nein</span> — Handles bestehender Artikel werden niemals geändert. SEO-Handles gibt es nur für neue Artikel, die noch nicht live sind.<textarea class="kom-input" rows="1" placeholder="Kommentar zur Entscheidung…" data-label="Entscheidung 3 — Handle-Politik"></textarea></li>
       <li><strong>Zuschnitt:</strong> Ein Skill für alles oder Skill-Familie (Analyse / Texte / Validierung getrennt)? Empfehlung: ein Skill mit klaren Phasen, Aufteilung erst bei Bedarf.<textarea class="kom-input" rows="1" placeholder="Deine Entscheidung / Kommentar…" data-label="Entscheidung 4 — Zuschnitt"></textarea></li>
     </ol>
   </section>
@@ -307,7 +307,7 @@
     <textarea class="kom-input" rows="3" placeholder="Weitere Anmerkungen, Fragen, Ideen…" data-label="Sonstiges — Kommentar" style="min-height:100px;"></textarea>
   </section>
 
-  <footer>Konzept-Entwurf · WMFE GmbH Agentur-Workflow · Basis: Shopify-Standard-Importvorlage (59 Spalten) · Stand 14.08.2026 · „Kommentare speichern" schreibt in die zentrale Kommentar-Tabelle (Google Sheets); zusätzlich lokale Sicherung im Browser.</footer>
+  <footer>Konzept-Entwurf · WMFE GmbH Agentur-Workflow · Basis: Shopify-Standard-Importvorlage (59 Spalten) · Stand 17.08.2026 (Kommentar-Runde 1 eingearbeitet — siehe <a href="/auswertung-masterartikel-optimierer.html">Auswertung</a>) · „Kommentare speichern" schreibt in die zentrale Kommentar-Tabelle (Google Sheets).</footer>
 </main>
 
 <div id="toast" role="status" aria-live="polite"></div>

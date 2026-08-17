@@ -1,13 +1,17 @@
 // Formulare-Sidebar — eigene Nav für den Formulare-Bereich
 // Ersetzt nav.js auf formulare.html und formular-*.html Seiten.
 (function () {
-  var FORMULARE = [
+  // Formulare sind in Ordner (Projekte) gruppiert. Neues Projekt = neuer
+  // Eintrag mit ordner + items; neues Formular = neues Item im Ordner.
+  var ORDNER = [
     {
-      label: 'Masterartikel-Optimierer',
-      seite: 'formular-masterartikel-optimierer.html',
-      desc:  'SEO · Descriptions · Metafelder',
+      ordner: 'Masterartikel-Optimierer',
+      items: [
+        { label: 'Konzept',    seite: 'formular-masterartikel-optimierer.html',   desc: 'SEO · Descriptions · Metafelder' },
+        { label: 'Auswertung', seite: 'auswertung-masterartikel-optimierer.html', desc: 'Kommentar-Runde 1 · 17.08.2026' },
+      ],
     },
-    // Weitere Formulare hier ergänzen
+    // Weitere Ordner hier ergänzen
   ];
 
   function getCurrentPage() {
@@ -31,6 +35,8 @@
       + '.fnav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }'
       + '.fnav-item.active { background: rgba(250,135,0,0.12); color: #fff; border-left-color: #FA8700; font-weight: 700; }'
       + '.fnav-item-desc { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }'
+      + '.fnav-ordner { padding: 10px 18px 4px 18px; font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,0.85); }'
+      + '.fnav-sub { padding-left: 34px; }'
       + '.fnav-footer { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.06); }'
       + '.fnav-back { display: block; padding: 10px 18px; font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none; }'
       + '.fnav-back:hover { color: #fff; background: rgba(255,255,255,0.06); }'
@@ -56,12 +62,15 @@
 
     html += '<div class="fnav-group">Formulare</div>';
 
-    FORMULARE.forEach(function (f) {
-      var isActive = f.seite === currentPage || ('/' + f.seite) === window.location.pathname + '.html';
-      html += '<a class="fnav-item' + (isActive ? ' active' : '') + '" href="/' + f.seite + '">'
-        + f.label
-        + (f.desc ? '<div class="fnav-item-desc">' + f.desc + '</div>' : '')
-        + '</a>';
+    ORDNER.forEach(function (o) {
+      html += '<div class="fnav-ordner">📁 ' + o.ordner + '</div>';
+      o.items.forEach(function (f) {
+        var isActive = f.seite === currentPage;
+        html += '<a class="fnav-item fnav-sub' + (isActive ? ' active' : '') + '" href="/' + f.seite + '">'
+          + f.label
+          + (f.desc ? '<div class="fnav-item-desc">' + f.desc + '</div>' : '')
+          + '</a>';
+      });
     });
 
     html += '<div class="fnav-footer">'
