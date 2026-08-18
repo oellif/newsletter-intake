@@ -237,7 +237,7 @@
         + '</a>';
       html += '<a class="kios-nav-tool-btn" href="#" id="kios-tool-formulare">'
         + '<div class="kios-tool-icon">📋</div>'
-        + '<div><div class="kios-tool-name">Formulare</div><div class="kios-tool-desc">Konzepte · Kommentare · Freigaben</div></div>'
+        + '<div><div class="kios-tool-name">ProjektHub</div><div class="kios-tool-desc">Entscheidungen · Infos · Kommentare</div></div>'
         + '</a>';
 
     } else if (modus === 'shopify') {

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<script src="/pw-gate.js"></script>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEO-Tool: Ahrefs oder Seobility — Entscheidung</title>
+<link rel="stylesheet" href="/mh-ci.css">
+<style>
+  :root {
+    --paper:#F7F6F3;--card:#fff;--ink:#191919;--ink-soft:#6B7280;
+    --line:#E5E7EB;--accent:#3B82F6;--accent-soft:rgba(59,130,246,0.10);
+    --green:#059669;--green-bg:rgba(5,150,105,0.07);
+  }
+  body { background:var(--paper);color:var(--ink);font-family:'Manrope',Arial,sans-serif;line-height:1.55;margin:0;padding:0 1.25rem 4rem; }
+  main { max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:2.2rem; }
+  h1,h2,h3 { font-family:'Varela Round','Manrope',sans-serif;font-weight:400;margin:0; }
+  h1 { font-size:2rem;letter-spacing:-0.5px; }
+  h2 { font-size:1.25rem;border-bottom:2px solid var(--accent);padding-bottom:.4rem;color:var(--ink); }
+  h3 { font-size:1rem; }
+  p { margin:0; }
+  .eyebrow { text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;color:var(--accent);font-weight:600;margin-bottom:.5rem; }
+  .sub { color:var(--ink-soft);margin-top:.6rem;max-width:62ch;font-size:.95rem; }
+  .back-link { font-size:.85rem;color:var(--ink-soft);text-decoration:none; }
+  .back-link:hover { color:var(--ink); }
+
+  /* Toolbar */
+  .toolbar { position:sticky;top:0;z-index:20;background:var(--paper);display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;padding:.7rem 0;margin-bottom:1.2rem;border-bottom:1px solid var(--line); }
+  .btn { background:var(--accent);color:#fff;border:none;border-radius:40px;padding:.5rem 1.15rem;font:inherit;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(59,130,246,0.28); }
+  .btn:hover:not(:disabled) { box-shadow:0 10px 24px rgba(59,130,246,0.32); }
+  .btn:disabled { background:rgba(59,130,246,0.35);box-shadow:none;cursor:default; }
+  .btn.ghost { background:transparent;color:var(--ink);border:1.5px solid var(--line);box-shadow:none; }
+  .btn.ghost:hover { border-color:var(--ink);background:rgba(25,25,25,0.04); }
+  .kom-count { font-size:.82rem;color:var(--ink-soft);margin-left:auto; }
+
+  /* Punkte */
+  .punkt-card { background:var(--card);border-radius:14px;padding:1rem 1.1rem;box-shadow:0 1px 4px rgba(25,25,25,0.06),0 4px 16px rgba(25,25,25,0.04);display:flex;flex-direction:column;gap:.6rem; }
+  .punkt-header { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem; }
+  .punkt-titel { font-size:1rem;font-weight:700;color:var(--ink); }
+  .punkt-text { font-size:.9rem;color:var(--ink-soft);line-height:1.55; }
+
+  /* Daniel-Checkbox */
+  .daniel-row { display:flex;align-items:center;gap:.5rem;padding:.45rem .7rem;background:var(--green-bg);border-radius:8px;width:fit-content;cursor:pointer;user-select:none; }
+  .daniel-row input { width:17px;height:17px;cursor:pointer;accent-color:var(--green);flex-shrink:0; }
+  .daniel-row label { font-size:.82rem;font-weight:700;color:var(--green);cursor:pointer; }
+  .punkt-card.done .daniel-row { background:rgba(5,150,105,0.15); }
+
+  /* Kommentarfeld */
+  .kom-input { display:block;width:100%;box-sizing:border-box;margin-top:.3rem;padding:.4rem .6rem;background:var(--card);color:var(--ink);border:1px dashed var(--line);border-radius:6px;font:inherit;font-size:.84rem;line-height:1.4;resize:none;overflow:hidden;min-height:2rem; }
+  .kom-input::placeholder { color:var(--ink-soft);opacity:.7; }
+  .kom-input:focus { border-style:solid;border-color:var(--accent);outline:none; }
+  .kom-input.has-text { border-style:solid;border-color:var(--accent); }
+
+  /* Sonstiges */
+  .sonstiges-card { background:var(--card);border-radius:14px;padding:1rem 1.1rem;box-shadow:0 1px 4px rgba(25,25,25,0.06),0 4px 16px rgba(25,25,25,0.04); }
+  .sonstiges-label { font-size:.85rem;font-weight:700;color:var(--ink-soft);margin-bottom:.4rem; }
+
+  /* Runde-Header */
+  .runde-header { display:flex;align-items:center;gap:.8rem;margin-bottom:.2rem; }
+  .runde-badge { background:var(--accent-soft);color:var(--accent);font-size:.78rem;font-weight:700;padding:.2rem .7rem;border-radius:20px; }
+
+  /* Toast */
+  #toast { position:fixed;left:50%;bottom:1.5rem;transform:translateX(-50%);background:#202228;color:#fff;padding:.6rem 1.1rem;border-radius:8px;font-size:.88rem;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;text-align:center;z-index:30; }
+  #toast.show { opacity:1; }
+</style>
+</head>
+<body>
+<main>
+  <div class="toolbar">
+    <a class="back-link" href="/formulare.html">← ProjektHub</a>
+    <button class="btn" id="btn-save" type="button">💾 Kommentare speichern</button>
+    <button class="btn ghost" id="btn-clear" type="button">Alle löschen</button>
+    <span class="kom-count" id="kom-count">0 Kommentare</span>
+  </div>
+
+  <header>
+    <div class="eyebrow">Konzept · Runde 1 · August 2026</div>
+    <h1>SEO-Tool: Ahrefs oder Seobility</h1>
+    <p class="sub">Vergleich der beiden SEO-Tools mit Preisen, Stärken und Schwächen sowie eine Empfehlung, welches Tool wofür angeschafft wird. Ausführliche Gegenüberstellung: <a href="https://claude.ai/code/artifact/80b4af82-8e80-4e3e-b13b-48d536a79be9">Vergleichsseite öffnen</a>. <em>Schreib deine Anmerkungen direkt in die Kommentarfelder und klicke am Ende „Kommentare speichern".</em></p>
+  </header>
+
+  <!-- RUNDE 1 -->
+  <section>
+    <div class="runde-header">
+      <h2>Runde 1</h2>
+      <span class="runde-badge">Runde 1</span>
+    </div>
+
+    <div class="punkt-card" id="punkt-grundsatz">
+      <div class="punkt-header">
+        <div class="punkt-titel">1. Was die beiden Tools grundsätzlich unterscheidet</div>
+      </div>
+      <p class="punkt-text">Ahrefs verkauft einen eigenen Datenindex: Backlinks, Keywords und Inhalte fremder Domains weltweit. Seobility verkauft ein Monitoring-Abo für die eigenen Websites: technisches Onpage-Audit, Rankings, Uptime. Die Tools konkurrieren deshalb weniger miteinander, als die Featurelisten vermuten lassen — sie beantworten unterschiedliche Fragen. Alles Weitere folgt aus diesem Unterschied.</p>
+      <div class="daniel-row">
+        <input type="checkbox" class="daniel-check" id="chk-grundsatz-r1" data-punkt="grundsatz" data-runde="1">
+        <label for="chk-grundsatz-r1">Daniel bearbeitet</label>
+      </div>
+      <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Was die beiden Tools grundsätzlich unterscheidet (Runde 1)"></textarea>
+    </div>
+
+    <div class="punkt-card" id="punkt-ahrefs-profil">
+      <div class="punkt-header">
+        <div class="punkt-titel">2. Ahrefs — Stärken und Schwächen</div>
+      </div>
+      <p class="punkt-text">Stärken: größter praktisch nutzbarer Backlink-Index, Keyword-Recherche mit Suchvolumen und SERP-Historie, Content Gap und Content Explorer, historische Daten bis 5 Jahre. Schwächen: Einstieg erst ab 119 € / Monat sinnvoll, nur ein Nutzer inklusive (Zusatznutzer 37–75 €), Credit-Logik macht die Kosten schwer planbar, kein Uptime-Monitoring, keine deutschsprachige Redaktionshilfe.</p>
+      <div class="daniel-row">
+        <input type="checkbox" class="daniel-check" id="chk-ahrefs-profil-r1" data-punkt="ahrefs-profil" data-runde="1">
+        <label for="chk-ahrefs-profil-r1">Daniel bearbeitet</label>
+      </div>
+      <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Ahrefs — Stärken und Schwächen (Runde 1)"></textarea>
+    </div>
+
+    <div class="punkt-card" id="punkt-seobility-profil">
+      <div class="punkt-header">
+        <div class="punkt-titel">3. Seobility — Stärken und Schwächen</div>
+      </div>
+      <p class="punkt-text">Stärken: sehr gutes technisches Onpage-Audit mit klaren Handlungsanweisungen, WDF*IDF auf Deutsch, tägliches Ranking-Monitoring für Desktop und Mobile, Uptime-Check, deutschsprachiger Support, EU-Anbieter, dauerhaft kostenloser Basis-Tarif. Schwächen: Backlink- und Keyword-Daten deutlich dünner, keine echte Wettbewerbs-Intelligence über fremde Domains, international kaum belastbar.</p>
+      <div class="daniel-row">
+        <input type="checkbox" class="daniel-check" id="chk-seobility-profil-r1" data-punkt="seobility-profil" data-runde="1">
+        <label for="chk-seobility-profil-r1">Daniel bearbeitet</label>
+      </div>
+      <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Seobility — Stärken und Schwächen (Runde 1)"></textarea>
+    </div>
+
+    <div class="punkt-card" id="punkt-preise">
+      <div class="punkt-header">
+        <div class="punkt-titel">4. Tarife und Kosten</div>
+      </div>
+      <p class="punkt-text">Ahrefs (Monatszahlung): Free 0 € · Starter 27 € · Lite 119 € · Standard 229 € · Advanced 419 € · Enterprise 1.394 € nur jährlich. Seobility: Basis 0 € · Premium 49,90 € (479 € / Jahr) · Agency 179,90 € (1.727 € / Jahr). Bei Seobility spart Jahreszahlung rund 20 %, Zusatzprojekte kosten 9,90–12,90 €. Stand 17.08.2026, alle Preise netto.</p>
+      <div class="daniel-row">
+        <input type="checkbox" class="daniel-check" id="chk-preise-r1" data-punkt="preise" data-runde="1">
+        <label for="chk-preise-r1">Daniel bearbeitet</label>
+      </div>
+      <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Tarife und Kosten (Runde 1)"></textarea>
+    </div>
+
+    <div class="punkt-card" id="punkt-keyword-rechnung">
+      <div class="punkt-header">
+        <div class="punkt-titel">5. Preis-Realitätscheck</div>
+      </div>
+      <p class="punkt-text">Pro überwachtem Keyword kosten Ahrefs Standard und Seobility Agency praktisch identisch 0,12 € im Monat. Der Preisabstand liegt also nicht im Monitoring, sondern im Zugang zum Datenindex — rund 69 € Aufpreis pro Monat für Backlink- und Wettbewerbsdaten. Das ist kein Aufschlag für dieselbe Leistung: Seobility hat diese Daten schlicht nicht im Angebot.</p>
+      <div class="daniel-row">
+        <input type="checkbox" class="daniel-check" id="chk-keyword-rechnung-r1" data-punkt="keyword-rechnung" data-runde="1">
+        <label for="chk-keyword-rechnung-r1">Daniel bearbeitet</label>
+      </div>
+      <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Preis-Realitätscheck (Runde 1)"></textarea>
+    </div>
+
+    <div class="punkt-card" id="punkt-automatisierung">
+      <div class="punkt-header">
+        <div class="punkt-titel">6. Automatisierung: API und MCP</div>
+      </div>
+      <p class="punkt-text">Ahrefs hat eine produktiv nutzbare API v3 (kostenpflichtig, Abrechnung über API-Units) und ein offizielles MCP, das sich direkt mit Claude verbinden lässt — die OAuth-Freigabe steht bei uns noch aus. Seobility bietet nur eine Ranking-API im Agency-Tarif auf Anfrage, ohne Backlinkdaten; das angekündigte MCP ist noch nicht offen. Wer SEO-Daten automatisiert in eigene Workflows holen will, kann das heute nur über Ahrefs.</p>
+      <div class="daniel-row">
+        <input type="checkbox" class="daniel-check" id="chk-automatisierung-r1" data-punkt="automatisierung" data-runde="1">
+        <label for="chk-automatisierung-r1">Daniel bearbeitet</label>
+      </div>
+      <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Automatisierung: API und MCP (Runde 1)"></textarea>
+    </div>
+
+    <div class="punkt-card" id="punkt-empfehlung">
+      <div class="punkt-header">
+        <div class="punkt-titel">7. Empfehlung</div>
+      </div>
+      <p class="punkt-text">Seobility Premium (49,90 €) dauerhaft als Monitoring für die eigenen Seiten, Ahrefs Lite oder Standard nur in den Monaten, in denen tatsächlich Recherche ansteht. Zusammen bleibt das unter 180 € im Monat und deckt beide Aufgaben besser ab als ein einzelner Ahrefs-Advanced-Tarif für 419 €. Zu entscheiden ist, ob wir bei dieser Kombination bleiben oder auf ein Tool reduzieren.</p>
+      <div class="daniel-row">
+        <input type="checkbox" class="daniel-check" id="chk-empfehlung-r1" data-punkt="empfehlung" data-runde="1">
+        <label for="chk-empfehlung-r1">Daniel bearbeitet</label>
+      </div>
+      <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Empfehlung (Runde 1)"></textarea>
+    </div>
+
+    <div class="punkt-card" id="punkt-offene-entscheidungen">
+      <div class="punkt-header">
+        <div class="punkt-titel">8. Offene Entscheidungen</div>
+      </div>
+      <p class="punkt-text">Drei Punkte brauchen eine Festlegung: (a) Wie hoch ist das monatliche SEO-Tool-Budget? (b) Buchen wir Ahrefs dauerhaft oder nur projektweise für Recherchephasen? (c) Wer bekommt den Ahrefs-Zugang, da nur ein Nutzer inklusive ist — und soll das Ahrefs-MCP für Claude freigeschaltet werden?</p>
+      <div class="daniel-row">
+        <input type="checkbox" class="daniel-check" id="chk-offene-entscheidungen-r1" data-punkt="offene-entscheidungen" data-runde="1">
+        <label for="chk-offene-entscheidungen-r1">Daniel bearbeitet</label>
+      </div>
+      <textarea class="kom-input" rows="1" placeholder="Dein Kommentar…" data-label="Offene Entscheidungen (Runde 1)"></textarea>
+    </div>
+
+    <!-- Sonstiges -->
+    <div class="sonstiges-card">
+      <div class="sonstiges-label">💬 Sonstiges — weitere Anmerkungen</div>
+      <textarea class="kom-input" rows="3" placeholder="Weitere Gedanken, Fragen oder Hinweise…" data-label="Sonstiges (Runde 1)"></textarea>
+    </div>
+  </section>
+
+</main>
+<div id="toast"></div>
+
+<script>
+var FORMULAR_ID = 'seo-tool-ahrefs-seobility';
+var RUNDE = 1;
+
+// Auto-resize Textareas
+document.querySelectorAll('.kom-input').forEach(function(t) {
+  t.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = this.scrollHeight + 'px';
+    this.classList.toggle('has-text', this.value.trim().length > 0);
+    updateCount();
+  });
+});
+
+function updateCount() {
+  var n = document.querySelectorAll('.kom-input.has-text').length;
+  document.getElementById('kom-count').textContent = n + ' Kommentar' + (n === 1 ? '' : 'e');
+}
+
+// Daniel-Status laden
+async function ladeStatus() {
+  try {
+    var res = await fetch('/.netlify/functions/entscheidung-status-lesen?formular=' + FORMULAR_ID);
+    if (!res.ok) return;
+    var data = await res.json();
+    (data.status || []).forEach(function(s) {
+      var m = s.punkt.match(/^__daniel__:([^:]+):runde:(\d+)$/);
+      if (!m) return;
+      var punktId = m[1], runde = parseInt(m[2]);
+      var chk = document.getElementById('chk-' + punktId + '-r' + runde);
+      if (chk) {
+        chk.checked = s.bearbeitet;
+        var card = chk.closest('.punkt-card');
+        if (card) card.classList.toggle('done', s.bearbeitet);
+      }
+    });
+  } catch(e) {}
+}
+
+// Daniel-Checkbox speichern
+async function speichereDanielStatus(punktId, runde, bearbeitet) {
+  try {
+    await fetch('/.netlify/functions/formular-kommentare-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        formular: FORMULAR_ID,
+        kommentare: [{ punkt: '__daniel__:' + punktId + ':runde:' + runde, text: String(bearbeitet) }]
+      })
+    });
+  } catch(e) {}
+}
+
+document.querySelectorAll('.daniel-check').forEach(function(chk) {
+  chk.addEventListener('change', function() {
+    var card = this.closest('.punkt-card');
+    if (card) card.classList.toggle('done', this.checked);
+    speichereDanielStatus(this.dataset.punkt, parseInt(this.dataset.runde), this.checked);
+  });
+});
+
+// Kommentare speichern
+document.getElementById('btn-save').addEventListener('click', async function() {
+  var btn = this;
+  var inputs = document.querySelectorAll('.kom-input');
+  var kommentare = [];
+  inputs.forEach(function(t) {
+    var val = t.value.trim();
+    if (val) kommentare.push({ punkt: t.dataset.label, text: val });
+  });
+  if (!kommentare.length) { showToast('Keine Kommentare zum Speichern.'); return; }
+  btn.disabled = true;
+  try {
+    var res = await fetch('/.netlify/functions/formular-kommentare-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ formular: FORMULAR_ID, kommentare: kommentare })
+    });
+    var data = await res.json();
+    if (data.success) showToast('✓ ' + data.gespeichert + ' Kommentar' + (data.gespeichert === 1 ? '' : 'e') + ' gespeichert');
+    else showToast('Fehler: ' + (data.error || 'unbekannt'));
+  } catch(e) { showToast('Netzwerkfehler'); }
+  btn.disabled = false;
+});
+
+// Löschen
+document.getElementById('btn-clear').addEventListener('click', function() {
+  document.querySelectorAll('.kom-input').forEach(function(t) {
+    t.value = ''; t.style.height = ''; t.classList.remove('has-text');
+  });
+  updateCount();
+});
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+ladeStatus();
+updateCount();
+</script>
+<script src="formulare-nav.js"></script>
+</body>
+</html>

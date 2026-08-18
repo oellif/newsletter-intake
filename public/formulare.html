@@ -5,62 +5,322 @@
 <meta charset="UTF-8">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Formulare — MH Cockpit</title>
+<title>ProjektHub — MH Cockpit</title>
 <link rel="stylesheet" href="/mh-ci.css">
 <style>
-  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 28px; }
-  .hub-wrap { max-width: 640px; width: 100%; }
+  body { display: flex; align-items: flex-start; justify-content: center; min-height: 100vh; padding: 40px 28px; }
+  .hub-wrap { max-width: 680px; width: 100%; }
   .back-link { display: inline-block; font-size: 13px; color: #6B7280; text-decoration: none; margin-bottom: 20px; }
   .back-link:hover { color: #191919; }
   .hub-title { font-family: 'Varela Round', 'Manrope', sans-serif; font-size: 32px; font-weight: 400; color: #191919; letter-spacing: -0.5px; margin-bottom: 6px; }
   .hub-sub { font-size: 15px; color: #6B7280; margin-bottom: 36px; line-height: 1.5; }
-  .form-list { display: flex; flex-direction: column; gap: 14px; }
-  .form-card { background: #fff; border-radius: 16px; padding: 22px 24px; box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 20px rgba(25,25,25,0.06); text-decoration: none; color: inherit; transition: transform 0.12s, box-shadow 0.12s; display: flex; align-items: center; gap: 18px; border: 2px solid transparent; }
-  .form-card:hover { transform: translateY(-2px); border-color: #3B82F6; box-shadow: 0 4px 12px rgba(25,25,25,0.08), 0 12px 32px rgba(25,25,25,0.08); }
-  .form-icon { font-size: 28px; flex-shrink: 0; }
-  .form-body { flex: 1; min-width: 0; }
-  .form-name { font-size: 16px; font-weight: 800; color: #191919; margin-bottom: 3px; }
-  .form-desc { font-size: 13px; color: #6B7280; line-height: 1.5; }
-  .form-meta { font-size: 11px; color: #9CA3AF; margin-top: 6px; }
-  .form-arrow { font-size: 18px; color: #D1D5DB; flex-shrink: 0; }
-  .form-card:hover .form-arrow { color: #3B82F6; }
-  .ordner { display: flex; flex-direction: column; gap: 10px; }
-  .ordner-kopf { font-size: 15px; font-weight: 800; color: #191919; display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+
+  /* Sektions-Header */
+  .sektion { margin-bottom: 36px; }
+  .sektion-kopf { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #F3F4F6; }
+  .sektion-icon { font-size: 17px; }
+  .sektion-titel { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #9CA3AF; }
+
+  /* Ordner */
+  .ordner { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .ordner.all-deleted { display: none; }
+  .ordner-kopf { font-size: 15px; font-weight: 800; color: #191919; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+  .ordner-kopf-left { display: flex; align-items: center; gap: 8px; }
   .ordner-inhalt { display: flex; flex-direction: column; gap: 12px; padding-left: 14px; border-left: 2px solid #E5E7EB; margin-left: 9px; }
+
+  /* Karte */
+  .form-row { display: flex; align-items: stretch; gap: 10px; }
+  .form-row.deleted { display: none; }
+  .form-card { flex: 1; background: #fff; border-radius: 16px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 20px rgba(25,25,25,0.06); text-decoration: none; color: inherit; transition: transform 0.12s, box-shadow 0.12s; display: flex; align-items: center; gap: 14px; border: 2px solid transparent; min-width: 0; }
+  .form-card:hover { transform: translateY(-2px); border-color: #3B82F6; box-shadow: 0 4px 12px rgba(25,25,25,0.08), 0 12px 32px rgba(25,25,25,0.08); }
+  .form-icon { font-size: 26px; flex-shrink: 0; }
+  .form-body { flex: 1; min-width: 0; }
+  .form-name { font-size: 15px; font-weight: 800; color: #191919; margin-bottom: 2px; }
+  .form-desc { font-size: 12px; color: #6B7280; line-height: 1.5; }
+  .form-meta { font-size: 11px; color: #9CA3AF; margin-top: 5px; }
+  .form-arrow { font-size: 16px; color: #D1D5DB; flex-shrink: 0; }
+  .form-card:hover .form-arrow { color: #3B82F6; }
+
+  /* Daniel-Checkbox */
+  .daniel-block {
+    background: #fff; border-radius: 16px; padding: 0 16px;
+    box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 20px rgba(25,25,25,0.06);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; min-width: 72px; flex-shrink: 0; cursor: pointer; border: 2px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .daniel-block:hover { border-color: #E5E7EB; }
+  .daniel-block.done { border-color: #059669; background: rgba(5,150,105,0.05); }
+  .daniel-block input[type=checkbox] { width: 20px; height: 20px; cursor: pointer; accent-color: #059669; }
+  .daniel-label { font-size: 10px; font-weight: 700; color: #6B7280; text-align: center; line-height: 1.3; user-select: none; }
+  .daniel-block.done .daniel-label { color: #059669; }
+
+  /* Löschen-Buttons */
+  .delete-card-btn {
+    background: #fff; border-radius: 16px; padding: 0 13px;
+    box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 20px rgba(25,25,25,0.06);
+    display: flex; align-items: center; justify-content: center;
+    min-width: 46px; flex-shrink: 0; cursor: pointer; border: 2px solid transparent;
+    font-size: 15px; color: #D1D5DB; opacity: 0;
+    transition: opacity 0.15s, border-color 0.15s, background 0.15s, color 0.15s;
+  }
+  .form-row:hover .delete-card-btn { opacity: 1; }
+  .delete-card-btn:hover, .delete-card-btn.confirming {
+    border-color: #FCA5A5; background: #FEF2F2; color: #EF4444; opacity: 1;
+  }
+  .delete-card-btn.confirming { font-size: 11px; font-weight: 800; padding: 0 8px; min-width: 70px; }
+  .delete-folder-btn {
+    font-size: 13px; color: #D1D5DB; cursor: pointer; padding: 2px 7px; border-radius: 7px;
+    border: none; background: none; opacity: 0; transition: opacity 0.15s, color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+  .ordner-kopf:hover .delete-folder-btn { opacity: 1; }
+  .delete-folder-btn:hover, .delete-folder-btn.confirming { color: #EF4444; background: #FEF2F2; opacity: 1; }
+  .delete-folder-btn.confirming { font-size: 11px; font-weight: 800; padding: 2px 8px; }
+
+  /* Info Hub leerer Zustand */
+  .infohub-empty {
+    background: #F9FAFB; border-radius: 16px; padding: 32px 24px;
+    text-align: center; border: 2px dashed #E5E7EB; color: #9CA3AF; font-size: 14px;
+  }
+  .infohub-empty .empty-icon { font-size: 32px; margin-bottom: 10px; }
+  .infohub-empty .empty-text { line-height: 1.6; }
 </style>
 </head>
 <body>
 <div class="hub-wrap">
   <a class="back-link" href="/home.html">← Zurück zum Cockpit</a>
-  <div class="hub-title">Formulare</div>
-  <p class="hub-sub">Konzepte prüfen und Kommentare direkt in die Felder schreiben. Am Ende „Kommentare speichern" klicken — die Kommentare landen automatisch in der zentralen Tabelle und Claude liest sie von dort.</p>
+  <div class="hub-title">ProjektHub</div>
+  <p class="hub-sub">Entscheidungen dokumentieren, Informationen ablegen und Kommentare festhalten — alles an einem Ort.</p>
 
-  <div class="form-list">
-    <div class="ordner">
-      <div class="ordner-kopf">📁 Masterartikel-Optimierer</div>
-      <div class="ordner-inhalt">
-        <a class="form-card" href="/formular-masterartikel-optimierer.html">
-          <div class="form-icon">🪵</div>
-          <div class="form-body">
-            <div class="form-name">Konzept</div>
-            <div class="form-desc">Skill-Konzept zur automatischen Veredelung von Shopify-Artikeln (SEO, Descriptions, Metafelder, Alt-Texte). Kommentare zu jedem Punkt möglich.</div>
-            <div class="form-meta">Stand 17.08.2026 · Kommentar-Runde 1 eingearbeitet · 3 offene Entscheidungen</div>
+  <!-- ═══ ENTSCHEIDUNGS-WORKFLOW ══════════════════════════════════════════ -->
+  <div class="sektion">
+    <div class="sektion-kopf">
+      <span class="sektion-icon">⚖️</span>
+      <span class="sektion-titel">Entscheidungs-Workflow</span>
+    </div>
+
+    <div id="form-list">
+
+      <div class="ordner" data-ordner-id="masterartikel-optimierer">
+        <div class="ordner-kopf">
+          <div class="ordner-kopf-left">📁 Masterartikel-Optimierer</div>
+          <button class="delete-folder-btn" onclick="deleteFolder(this,'masterartikel-optimierer')">🗑</button>
+        </div>
+        <div class="ordner-inhalt">
+
+          <div class="form-row" data-card-id="masterartikel-optimierer-konzept">
+            <div class="daniel-block" data-formular="masterartikel-optimierer" data-typ="overview" onclick="toggleOverviewStatus(this)">
+              <input type="checkbox" onclick="event.stopPropagation()">
+              <div class="daniel-label">Daniel<br>bearb.</div>
+            </div>
+            <a class="form-card" href="/formular-masterartikel-optimierer.html">
+              <div class="form-icon">🪵</div>
+              <div class="form-body">
+                <div class="form-name">Konzept</div>
+                <div class="form-desc">Skill-Konzept zur automatischen Veredelung von Shopify-Artikeln (SEO, Descriptions, Metafelder, Alt-Texte).</div>
+                <div class="form-meta">Stand 17.08.2026 · Kommentar-Runde 1 eingearbeitet · 3 offene Entscheidungen</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'masterartikel-optimierer-konzept')">🗑</button>
           </div>
-          <div class="form-arrow">→</div>
-        </a>
-        <a class="form-card" href="/auswertung-masterartikel-optimierer.html">
-          <div class="form-icon">📊</div>
-          <div class="form-body">
-            <div class="form-name">Auswertung der Kommentare</div>
-            <div class="form-desc">Jeder Kommentar aus Runde 1 mit Antwort und Umsetzung im Konzept — inkl. der getroffenen Entscheidung zur Handle-Politik.</div>
-            <div class="form-meta">Runde 1 · 17.08.2026 · 6 Kommentare ausgewertet</div>
+
+          <div class="form-row" data-card-id="masterartikel-optimierer-auswertung">
+            <div class="daniel-block" data-formular="masterartikel-optimierer-auswertung" data-typ="overview" onclick="toggleOverviewStatus(this)">
+              <input type="checkbox" onclick="event.stopPropagation()">
+              <div class="daniel-label">Daniel<br>bearb.</div>
+            </div>
+            <a class="form-card" href="/auswertung-masterartikel-optimierer.html">
+              <div class="form-icon">📊</div>
+              <div class="form-body">
+                <div class="form-name">Auswertung der Kommentare</div>
+                <div class="form-desc">Jeder Kommentar aus Runde 1 mit Antwort und Umsetzung im Konzept — inkl. der getroffenen Entscheidung zur Handle-Politik.</div>
+                <div class="form-meta">Runde 1 · 17.08.2026 · 6 Kommentare ausgewertet</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'masterartikel-optimierer-auswertung')">🗑</button>
           </div>
-          <div class="form-arrow">→</div>
-        </a>
+
+        </div>
+      </div>
+
+      <div class="ordner" data-ordner-id="seo">
+        <div class="ordner-kopf">
+          <div class="ordner-kopf-left">📁 SEO</div>
+          <button class="delete-folder-btn" onclick="deleteFolder(this,'seo')">🗑</button>
+        </div>
+        <div class="ordner-inhalt">
+
+          <div class="form-row" data-card-id="seo-tool-ahrefs-seobility">
+            <div class="daniel-block" data-formular="seo-tool-ahrefs-seobility" data-typ="overview" onclick="toggleOverviewStatus(this)">
+              <input type="checkbox" onclick="event.stopPropagation()">
+              <div class="daniel-label">Daniel<br>bearb.</div>
+            </div>
+            <a class="form-card" href="/entscheidung-seo-tool-ahrefs-seobility.html">
+              <div class="form-icon">🔍</div>
+              <div class="form-body">
+                <div class="form-name">SEO-Tool: Ahrefs oder Seobility</div>
+                <div class="form-desc">Vergleich der beiden SEO-Tools mit Preisen, Stärken und Schwächen — plus Empfehlung, welches Tool wofür angeschafft wird.</div>
+                <div class="form-meta">Stand 17.08.2026 · Runde 1 · 3 offene Entscheidungen</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'seo-tool-ahrefs-seobility')">🗑</button>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="ordner" data-ordner-id="server-infrastruktur">
+        <div class="ordner-kopf">
+          <div class="ordner-kopf-left">📁 Server &amp; Infrastruktur</div>
+          <button class="delete-folder-btn" onclick="deleteFolder(this,'server-infrastruktur')">🗑</button>
+        </div>
+        <div class="ordner-inhalt">
+
+          <div class="form-row" data-card-id="hetzner-vps-automation">
+            <div class="daniel-block" data-formular="hetzner-vps-automation" data-typ="overview" onclick="toggleOverviewStatus(this)">
+              <input type="checkbox" onclick="event.stopPropagation()">
+              <div class="daniel-label">Daniel<br>bearb.</div>
+            </div>
+            <a class="form-card" href="/entscheidung-hetzner-vps-automation.html">
+              <div class="form-icon">🖥️</div>
+              <div class="form-body">
+                <div class="form-name">Hetzner VPS Automation Server</div>
+                <div class="form-desc">Entscheidungen und Setup für den neuen Hetzner VPS (78.47.144.205) — Odoo MCP, Automation-Jobs und Sync-Pipelines.</div>
+                <div class="form-meta">Stand 17.08.2026 · Runde 1</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'hetzner-vps-automation')">🗑</button>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="ordner" data-ordner-id="mh-zukunftsstrategie">
+        <div class="ordner-kopf">
+          <div class="ordner-kopf-left">📁 MH Zukunftsstrategie</div>
+          <button class="delete-folder-btn" onclick="deleteFolder(this,'mh-zukunftsstrategie')">🗑</button>
+        </div>
+        <div class="ordner-inhalt">
+
+          <div class="form-row" data-card-id="mh-zukunftsstrategie-2026">
+            <div class="daniel-block" data-formular="mh-zukunftsstrategie-2026" data-typ="overview" onclick="toggleOverviewStatus(this)">
+              <input type="checkbox" onclick="event.stopPropagation()">
+              <div class="daniel-label">Daniel<br>bearb.</div>
+            </div>
+            <a class="form-card" href="/entscheidung-mh-zukunftsstrategie-2026.html">
+              <div class="form-icon">🏆</div>
+              <div class="form-body">
+                <div class="form-name">MH Zukunftsstrategie 2026</div>
+                <div class="form-desc">KI-gestützte Sales- &amp; Wettbewerbsanalyse: 40 Kunden, 4 Wettbewerber, Social Media Stärke, ROI-Ranking und Automatisierungsplan.</div>
+                <div class="form-meta">Stand 17.08.2026 · KI-Analyse</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'mh-zukunftsstrategie-2026')">🗑</button>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /form-list -->
+  </div>
+
+  <!-- ═══ INFO HUB ════════════════════════════════════════════════════════ -->
+  <div class="sektion">
+    <div class="sektion-kopf">
+      <span class="sektion-icon">📚</span>
+      <span class="sektion-titel">Info Hub</span>
+    </div>
+    <div id="infohub-list">
+      <!-- Einträge vom /infohub-neu Skill hier einfügen -->
+      <div class="infohub-empty" id="infohub-empty">
+        <div class="empty-icon">📄</div>
+        <div class="empty-text">Noch keine Info-Seiten hinterlegt.<br>Mit dem <strong>/infohub-neu</strong> Skill einen Eintrag hinzufügen.</div>
       </div>
     </div>
   </div>
+
 </div>
+
+<script>
+async function ladeStatus() {
+  try {
+    const res = await fetch('/.netlify/functions/entscheidung-status-lesen');
+    if (!res.ok) return;
+    const data = await res.json();
+    for (const s of (data.status || [])) {
+      const p = s.punkt;
+      if (p.startsWith('__daniel__:overview:')) {
+        const formularId = p.replace('__daniel__:overview:', '');
+        const block = document.querySelector('[data-formular="' + formularId + '"][data-typ="overview"]');
+        if (!block) continue;
+        const chk = block.querySelector('input[type=checkbox]');
+        if (chk) chk.checked = s.bearbeitet;
+        block.classList.toggle('done', s.bearbeitet);
+      }
+      if (p.startsWith('__deleted__:card:') && s.bearbeitet) {
+        const row = document.querySelector('[data-card-id="' + p.replace('__deleted__:card:','') + '"]');
+        if (row) row.classList.add('deleted');
+      }
+      if (p.startsWith('__deleted__:folder:') && s.bearbeitet) {
+        const ordner = document.querySelector('[data-ordner-id="' + p.replace('__deleted__:folder:','') + '"]');
+        if (ordner) ordner.classList.add('all-deleted');
+      }
+    }
+  } catch (e) {}
+}
+
+async function toggleOverviewStatus(block) {
+  const chk = block.querySelector('input[type=checkbox]');
+  const newVal = !chk.checked;
+  chk.checked = newVal;
+  block.classList.toggle('done', newVal);
+  const formularId = block.dataset.formular;
+  try {
+    await fetch('/.netlify/functions/formular-kommentare-save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ formular: formularId, kommentare: [{ punkt: '__daniel__:overview:' + formularId, text: String(newVal) }] })
+    });
+  } catch (e) {}
+}
+
+function deleteCard(btn, cardId) {
+  if (!btn.dataset.c) {
+    btn.dataset.c = '1'; btn.textContent = 'Sicher?'; btn.classList.add('confirming');
+    setTimeout(() => { if (btn.dataset.c) { delete btn.dataset.c; btn.textContent = '🗑'; btn.classList.remove('confirming'); } }, 3000);
+    return;
+  }
+  delete btn.dataset.c;
+  const row = document.querySelector('[data-card-id="' + cardId + '"]');
+  if (row) row.classList.add('deleted');
+  fetch('/.netlify/functions/formular-kommentare-save', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ formular: 'projekthub-index', kommentare: [{ punkt: '__deleted__:card:' + cardId, text: 'true' }] })
+  }).catch(() => {});
+}
+
+function deleteFolder(btn, folderId) {
+  if (!btn.dataset.c) {
+    btn.dataset.c = '1'; btn.textContent = 'Sicher?'; btn.classList.add('confirming');
+    setTimeout(() => { if (btn.dataset.c) { delete btn.dataset.c; btn.textContent = '🗑'; btn.classList.remove('confirming'); } }, 3000);
+    return;
+  }
+  delete btn.dataset.c;
+  const ordner = document.querySelector('[data-ordner-id="' + folderId + '"]');
+  if (ordner) ordner.classList.add('all-deleted');
+  fetch('/.netlify/functions/formular-kommentare-save', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ formular: 'projekthub-index', kommentare: [{ punkt: '__deleted__:folder:' + folderId, text: 'true' }] })
+  }).catch(() => {});
+}
+
+ladeStatus();
+</script>
 <script src="formulare-nav.js"></script>
 </body>
 </html>
