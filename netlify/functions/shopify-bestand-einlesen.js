@@ -22,7 +22,10 @@ exports.handler = async (event) => {
 
   let body = {};
   try { body = JSON.parse(event.body || '{}'); } catch(e) {}
-  const { kunden_id, handles } = body;
+  // master_handle: der Masterartikel dient als NORM-Vorlage - seine
+  // Metafeld-Spalten werden fuer ALLE eingelesenen Artikel angelegt,
+  // damit die Normalisierung/Optimierung sie befuellen kann
+  const { kunden_id, handles, master_handle } = body;
   if (!kunden_id) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'kunden_id erforderlich' }) };
   if (!handles || !handles.length) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Mindestens ein Artikel erforderlich' }) };
 
@@ -41,6 +44,25 @@ exports.handler = async (event) => {
     const metafieldCols = [];
     const mfColIndex    = new Map();
     const mfAssignments = [];
+
+    // Metafeld-Spalten der Master-Vorlage ZUERST anlegen - so bekommt jeder
+    // Artikel diese Spalten, auch wenn er die Metafelder noch nicht hat
+    if (master_handle) {
+      const mRes  = await fetch(
+        `https://${domain}/admin/api/2024-01/products.json?handle=${encodeURIComponent(master_handle)}&fields=id`,
+        { headers: { 'X-Shopify-Access-Token': token } }
+      );
+      const mData = await mRes.json();
+      if (mRes.ok && (mData.products || []).length) {
+        const masterMfs = await ladeProduktMetafelder(domain, token, mData.products[0].id);
+        for (const m of masterMfs) {
+          if (!mfColIndex.has(m.colName)) {
+            mfColIndex.set(m.colName, metafieldCols.length);
+            metafieldCols.push(m.colName);
+          }
+        }
+      }
+    }
 
     for (const handle of handles) {
       const shopRes  = await fetch(

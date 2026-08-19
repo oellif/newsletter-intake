@@ -81,11 +81,11 @@
 
   <section class="card">
     <h2>Befundlage</h2>
-    <p>14 Befunde über vier Prüfblöcke. Der Rechtsteil ging ohne Beanstandung durch.</p>
+    <p>16 Befunde über vier Prüfblöcke, Checkout im zweiten Anlauf erfasst. Der Rechtsteil ging ohne Beanstandung durch.</p>
     <div class="ampel">
       <div class="tile" style="--c:var(--krit)"><div class="n">3</div><div class="l">kritisch</div><div class="d">Barrierefreiheit, rechtlich bindend</div></div>
       <div class="tile" style="--c:var(--hoch)"><div class="n">5</div><div class="l">hoch</div><div class="d">Ladezeit, Widersprüche, Bedienung</div></div>
-      <div class="tile" style="--c:var(--mittel)"><div class="n">6</div><div class="l">mittel</div><div class="d">Sprache, Format, Auszeichnung</div></div>
+      <div class="tile" style="--c:var(--mittel)"><div class="n">8</div><div class="l">mittel</div><div class="d">Sprache, Format, Auszeichnung</div></div>
       <div class="tile" style="--c:var(--gut)"><div class="n">0</div><div class="l">Recht</div><div class="d">Pflichtangaben vollständig</div></div>
     </div>
   </section>
@@ -138,7 +138,7 @@
   </section>
 
   <section class="card">
-    <h2><span class="stufe s-mittel">mittel</span> &nbsp;Sprache, Format, Auszeichnung — 6 Befunde</h2>
+    <h2><span class="stufe s-mittel">mittel</span> &nbsp;Sprache, Format, Auszeichnung — 8 Befunde</h2>
     <div class="tabwrap">
     <table>
       <thead><tr><th>#</th><th>Fundstelle</th><th>Befund</th><th>Empfehlung</th></tr></thead>
@@ -149,6 +149,8 @@
         <tr><td>12</td><td>Startseite · H1</td><td>Einzige H1 lautet „eydl Wood Jewelry" — beschreibt die Marke, nicht den Inhalt</td><td>„Handgefertigter Holzschmuck aus Österreich"</td></tr>
         <tr><td>13</td><td>&lt;html lang&gt;</td><td>Österreichischer Shop mit EN-Version deklariert nur <code>de</code></td><td><code>lang="de-AT"</code></td></tr>
         <tr><td>14</td><td>Startseite · Browserkonsole</td><td>Fehler werden beim Laden protokolliert</td><td>im Theme nachsehen</td></tr>
+        <tr><td>15</td><td>Checkout · Fußzeile</td><td>Cookie-Link heißt <strong>„Plätzchen"</strong> — wörtliche Fehlübersetzung an der sensibelsten Stelle des Kaufs</td><td>Checkout-Sprachdatei auf „Cookies" ändern</td></tr>
+        <tr><td>16</td><td>Checkout · Versand</td><td>Versandarten erscheinen erst nach vollständiger Adresseingabe — unter der 65-€-Schwelle sieht der Kunde die Kosten sehr spät</td><td>Versandkosten schon im Warenkorb beziffern</td></tr>
       </tbody>
     </table>
     </div>
@@ -165,6 +167,7 @@
       <li><strong>ODR-Plattform</strong> — kein toter Link mehr vorhanden. Das ist korrekt, viele Shops schleppen ihn noch mit</li>
       <li><strong>Streitschlichtung</strong> — Ombudsstelle in den AGB erwähnt</li>
       <li><strong>Cookie-Banner</strong> — gleichwertige Optionen, kein Dark Pattern · HTTPS erzwungen · SEO-Score 100</li>
+      <li><strong>Checkout</strong> — Rechtslinks vollständig in der Fußzeile (Widerrufsrecht, Versand, Datenschutz, AGB, Impressum, Kontakt), Gastbestellung ohne Kontozwang, Newsletter-Kästchen <em>nicht</em> vorangekreuzt (§ 174 TKG 2021), Land auf Österreich vorbelegt, eps-Überweisung als AT-übliche Zahlart vorhanden</li>
     </ul>
   </section>
 
@@ -172,7 +175,8 @@
     <h2>Nicht geprüft</h2>
     <p>Was fehlt, gehört genauso in den Report wie das Gefundene.</p>
     <ul>
-      <li><strong>Checkout</strong> — die Aufnahme lief zweimal in einen 45-Sekunden-Timeout. Bei 19 s bis zur Bedienbarkeit auf der Startseite ist das womöglich selbst ein Symptom, nicht nur eine Scriptgrenze. Der wichtigste Trichterschritt fehlt damit</li>
+      <li><strong>Der finale Bestellbutton</strong> — der Checkout endet sichtbar auf „Bestellung überprüfen", der eigentliche Bestellbutton liegt einen Schritt dahinter. Ob er die von <strong>§ 8 Abs 2 FAGG</strong> geforderte eindeutige Kennzeichnung der Zahlungspflicht trägt, bleibt ungeprüft — und das ist der rechtlich heikelste Punkt im Kaufweg</li>
+      <li><strong>Kreditkartenfelder</strong> — auf dem Bild ohne sichtbare Beschriftung. Kann am noch nicht geladenen Zahlungs-Frame liegen; als Befund nicht belastbar, aber einen Blick wert</li>
       <li>AGB- und Datenschutzklauseln im Einzelnen</li>
       <li>Lighthouse lief nur auf der Startseite, nicht auf Produkt- und Warenkorbseite</li>
       <li>Tastaturbedienung und Screenreader — automatisch nicht prüfbar</li>
@@ -182,7 +186,7 @@
   <section class="card">
     <h2>Was ein Mensch entscheiden muss</h2>
     <p>Ob die englischen Widget-Texte stören oder als international gelesen werden. Ob die Kollektionskacheln gestalterisch geändert werden oder nur ein <code>aria-label</code> dazukommt. Und die AGB-Klauseln im Detail — dafür braucht es anwaltliche Prüfung.</p>
-    <p class="hinweis">Dieser Bericht ist eine Ersteinschätzung mit benannter Rechtsgrundlage, <strong>keine Rechtsberatung</strong> und keine Freigabe. Geprüft wurde, was vorlag: Startseite, Produktseite, Warenkorb und die Rechtsseiten — nicht der gesamte Shop. Erstellt mit <code>shop-check</code> am 19.08.2026.</p>
+    <p class="hinweis">Dieser Bericht ist eine Ersteinschätzung mit benannter Rechtsgrundlage, <strong>keine Rechtsberatung</strong> und keine Freigabe. Geprüft wurde, was vorlag: Startseite, Produktseite, Warenkorb, Checkout und die Rechtsseiten — nicht der gesamte Shop. Erstellt mit <code>shop-check</code> am 19.08.2026.</p>
   </section>
 
 </main>

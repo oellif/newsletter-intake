@@ -63,31 +63,41 @@
     </select>
   </div>
 
-  <!-- Schritt 2: Artikel auswählen -->
-  <div class="card hidden" id="step2">
+  <!-- Schritt 2: Master-Vorlage -->
+  <div class="card hidden" id="stepMaster">
     <div class="step-label">Schritt 2</div>
-    <div class="step-title">Artikel auswählen <span class="tag" id="shopName"></span></div>
+    <div class="step-title">Masterartikel als Vorlage wählen <span class="tag" id="shopName"></span></div>
+    <p class="step-hint">Der Masterartikel ist die Norm: Alle ausgewählten Bestandsartikel werden auf seine Struktur normalisiert — gleicher Beschreibungs-Aufbau, gleiches Tag-Schema, gleiche Metafelder, einheitlicher Anbieter/Typ. Die Inhalte bleiben artikelspezifisch.</p>
+    <select id="masterSelect" onchange="onMasterChange()">
+      <option value="">– Masterartikel wählen (Tag „Master") –</option>
+    </select>
+  </div>
+
+  <!-- Schritt 3: Artikel auswählen -->
+  <div class="card hidden" id="step2">
+    <div class="step-label">Schritt 3</div>
+    <div class="step-title">Artikel auswählen</div>
     <input type="text" id="suchFeld" placeholder="Suchen …" oninput="renderListe()">
     <div class="artikel-list" id="artikelListe"></div>
     <p class="step-hint" style="margin-top:10px;margin-bottom:0;" id="auswahlInfo">0 Artikel ausgewählt</p>
   </div>
 
-  <!-- Schritt 3: Einlesen -->
+  <!-- Schritt 4: Einlesen -->
   <div class="card hidden" id="step3">
-    <div class="step-label">Schritt 3</div>
+    <div class="step-label">Schritt 4</div>
     <div class="step-title">Artikel einlesen</div>
-    <p class="step-hint">Liest die ausgewählten Artikel mit allen Feldern, Metafeldern und Bildern in eine Bestandstabelle ein. Dort kannst du vor der Optimierung auch manuell ändern.</p>
+    <p class="step-hint">Liest die ausgewählten Artikel mit allen Feldern, Metafeldern und Bildern in eine Bestandstabelle ein — inklusive aller Metafeld-Spalten der Master-Vorlage. Dort kannst du vor der Optimierung auch manuell ändern.</p>
     <button class="btn btn-primary" id="einlesenBtn" onclick="doEinlesen()" disabled>
       <span id="einlesenBtnText">Artikel einlesen</span>
     </button>
     <div id="einlesenResult" class="hidden" style="margin-top:14px;"></div>
   </div>
 
-  <!-- Schritt 4: Optimieren -->
+  <!-- Schritt 5: Optimieren -->
   <div class="card hidden" id="step4">
-    <div class="step-label">Schritt 4</div>
-    <div class="step-title">Optimieren &amp; zurückspielen</div>
-    <p class="step-hint">Die KI optimiert Texte, SEO, Tags, Metafelder und Bild-Alt-Texte nach dem Regelwerk (ca. 1–2 Minuten pro Artikel). Du siehst Vorher/Nachher, gibst frei — und erst „Zurückspielen" ändert den Artikel in Shopify. Vorher wird der alte Stand automatisch gesichert. <strong>Preise, Bestände, Varianten und URL bleiben immer unangetastet.</strong></p>
+    <div class="step-label">Schritt 5</div>
+    <div class="step-title">Normalisieren, optimieren &amp; zurückspielen</div>
+    <p class="step-hint">Die KI normalisiert jeden Artikel auf die Master-Vorlage und optimiert Texte, SEO, Tags, Metafelder und Bild-Alt-Texte nach dem Regelwerk (ca. 1–2 Minuten pro Artikel). Du siehst Vorher/Nachher, gibst frei — und erst „Zurückspielen" ändert den Artikel in Shopify. Vorher wird der alte Stand automatisch gesichert. <strong>Preise, Bestände, Varianten und URL bleiben immer unangetastet.</strong></p>
     <button class="btn btn-primary" id="optBtn" onclick="doOptimieren()">
       <span id="optBtnText">Artikel optimieren</span>
     </button>
@@ -102,6 +112,7 @@ const API = '/.netlify/functions/';
 let selectedKunde  = null;
 let alleArtikel    = [];
 let bestandSheetId = '';
+let masterHandle   = '';
 let optZaehler     = 0;
 
 async function init() {
@@ -125,12 +136,14 @@ async function init() {
 async function onShopChange() {
   const sel = document.getElementById('shopSelect');
   const opt = sel.options[sel.selectedIndex];
-  if (!opt || !opt.dataset.json) { ['step2','step3','step4'].forEach(hide); return; }
+  if (!opt || !opt.dataset.json) { ['stepMaster','step2','step3','step4'].forEach(hide); return; }
   selectedKunde  = JSON.parse(opt.dataset.json);
   bestandSheetId = '';
+  masterHandle   = '';
   document.getElementById('shopName').textContent = selectedKunde.name;
   document.getElementById('optResults').innerHTML = '';
   hide('step3'); hide('step4'); hide('einlesenResult');
+  show('stepMaster');
   show('step2');
 
   const liste = document.getElementById('artikelListe');
@@ -144,6 +157,20 @@ async function onShopChange() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Fehler');
     alleArtikel = data.artikel || [];
+
+    // Master-Dropdown mit allen "Master"-getaggten Artikeln befuellen
+    const mSel = document.getElementById('masterSelect');
+    mSel.innerHTML = '<option value="">– Masterartikel wählen (Tag „Master") –</option>';
+    alleArtikel.filter(a => a.ist_master).forEach(a => {
+      const o = document.createElement('option');
+      o.value = a.handle;
+      o.textContent = a.title + ' (' + a.handle + ')';
+      mSel.appendChild(o);
+    });
+    if (!alleArtikel.some(a => a.ist_master)) {
+      mSel.innerHTML = '<option value="">Kein Artikel mit Tag „Master" gefunden — in Shopify Tag setzen</option>';
+    }
+
     renderListe();
     show('step3');
   } catch(e) {
@@ -177,10 +204,16 @@ function gewaehlteHandles() {
   return [...document.querySelectorAll('#artikelListe input[type=checkbox]:checked')].map(b => b.value);
 }
 
+function onMasterChange() {
+  masterHandle = document.getElementById('masterSelect').value;
+  onCheck();
+}
+
 function onCheck() {
   const n = gewaehlteHandles().length;
-  document.getElementById('auswahlInfo').textContent = n + ' Artikel ausgewählt';
-  document.getElementById('einlesenBtn').disabled = n === 0;
+  const info = n + ' Artikel ausgewählt' + (masterHandle ? '' : ' — bitte zuerst Master-Vorlage wählen (Schritt 2)');
+  document.getElementById('auswahlInfo').textContent = info;
+  document.getElementById('einlesenBtn').disabled = n === 0 || !masterHandle;
 }
 
 async function doEinlesen() {
@@ -196,7 +229,7 @@ async function doEinlesen() {
     const res  = await fetch(API + 'shopify-bestand-einlesen', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kunden_id: selectedKunde.id, handles }),
+      body: JSON.stringify({ kunden_id: selectedKunde.id, handles, master_handle: masterHandle }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Unbekannter Fehler');
@@ -212,7 +245,7 @@ async function doEinlesen() {
     show('einlesenResult');
   }
   btnText.textContent = 'Artikel einlesen';
-  btn.disabled = gewaehlteHandles().length === 0;
+  onCheck();
 }
 
 async function doOptimieren() {
@@ -237,7 +270,7 @@ async function doOptimieren() {
       const r = await fetch(API + 'masterartikel-optimieren', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kunden_id: selectedKunde.id, handle, sheet_id: bestandSheetId, modus: 'bestand' }),
+        body: JSON.stringify({ kunden_id: selectedKunde.id, handle, sheet_id: bestandSheetId, modus: 'bestand', master_handle: masterHandle }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Optimierung fehlgeschlagen');

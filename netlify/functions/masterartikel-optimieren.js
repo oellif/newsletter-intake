@@ -76,7 +76,9 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body || '{}'); } catch(e) {}
   // sheet_id optional: Workflow 2 (Bestandsoptimierung) uebergibt die
   // Bestandstabelle explizit; ohne sheet_id gilt die Mastertabelle (Spalte G)
-  const { kunden_id, handle, sheet_id, modus } = body;
+  // master_handle: Masterartikel als NORM-Vorlage (Bestandsoptimierung) -
+  // Struktur, Tag-Schema und Metafeld-Set werden darauf normalisiert
+  const { kunden_id, handle, sheet_id, modus, master_handle } = body;
   if (!kunden_id || !handle) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'kunden_id und handle erforderlich' }) };
 
   try {
@@ -118,6 +120,42 @@ exports.handler = async (event) => {
     // im Bestand wuerde ein neuer Handle die Zuordnung zum bestehenden
     // Shopify-Artikel zerstoeren (Zurueckspielen findet ihn nicht mehr)
     const handleGeschuetzt = istLive || modus === 'bestand';
+
+    // Master-Vorlage laden (falls angegeben): Titel-/Beschreibungsaufbau,
+    // Tags, Vendor/Typ und Metafelder des Masters dienen als Norm
+    let vorlageText = '';
+    if (master_handle && master_handle !== handle) {
+      try {
+        const mRes  = await fetch(
+          `https://${domain}/admin/api/2024-01/products.json?handle=${encodeURIComponent(master_handle)}`,
+          { headers: { 'X-Shopify-Access-Token': token } }
+        );
+        const mData = await mRes.json();
+        const master = mRes.ok && (mData.products || [])[0];
+        if (master) {
+          const mfRes  = await fetch(`https://${domain}/admin/api/2024-01/products/${master.id}/metafields.json?limit=250`, {
+            headers: { 'X-Shopify-Access-Token': token },
+          });
+          const mfData = await mfRes.json();
+          const masterMfs = (mfRes.ok ? (mfData.metafields || []) : [])
+            .filter(m => !m.namespace.startsWith('shopify') && !m.namespace.includes('--'))
+            .map(m => `- ${m.namespace}.${m.key}: ${String(typeof m.value === 'object' ? JSON.stringify(m.value) : m.value).slice(0, 200)}`);
+          vorlageText = `\n=== NORM-VORLAGE (Masterartikel "${master.title}") ===
+Der zu optimierende Artikel MUSS auf diese Vorlage normalisiert werden:
+- Beschreibungs-AUFBAU exakt wie die Vorlage (gleiche Absatz-Struktur, gleicher Stil) - Inhalte artikelspezifisch
+- Tag-SCHEMA wie die Vorlage (gleiche Kategorien-Logik, artikelspezifische Werte)
+- Vendor und Typ exakt wie die Vorlage (ausser Typ ist ein Funktionskennzeichen)
+- ALLE Metafelder der Vorlage muessen am Artikel gefuellt werden (artikelspezifischer Wert; wenn nicht ableitbar -> "offen"-Liste, NICHT erfinden)
+Vorlage-Titel: ${master.title}
+Vorlage-Vendor: ${master.vendor || ''} | Vorlage-Typ: ${master.product_type || ''}
+Vorlage-Tags: ${String(master.tags || '').split(',').map(t => t.trim()).filter(t => t.toLowerCase() !== 'master').join(', ')}
+Vorlage-Beschreibung (Aufbau-Referenz):
+${String(master.body_html || '').slice(0, 2500)}
+Vorlage-Metafelder:
+${masterMfs.join('\n') || '(keine)'}\n`;
+        }
+      } catch(e) {}
+    }
 
     // Kundenprofil (Pflicht-Input - ohne Profil keine Textgenerierung)
     const kundenprofil = await ladeKundenprofil(tok, kundenName);
@@ -188,6 +226,7 @@ ${REGELWERK}
 
 === KUNDENPROFIL (Brand Voice, Tags, Metafelder - fliesst in JEDEN Text ein) ===
 ${kundenprofil}
+${vorlageText}
 
 === ARTIKEL (aktueller Stand aus der Mastertabelle) ===
 URL handle: ${handle}
@@ -199,7 +238,7 @@ Vorhandene Metafeld-Spalten: ${JSON.stringify(metafeldSpalten)}
 ${images.length ? `\n=== BILDER (oben angehaengt, fuer die Alt-Text-Analyse) ===\n${bildBeschreibung.join('\n')}` : '\nKeine Bilder verfuegbar - KEINE alt_texte erzeugen, stattdessen in "offen" vermerken.'}
 
 === AUFGABE ===
-Optimiere alle Text- und SEO-Felder nach dem Regelwerk. Erfinde NIE Fakten.
+${vorlageText ? 'Normalisiere den Artikel ZUERST auf die NORM-VORLAGE (Struktur, Tag-Schema, Vendor/Typ, Metafeld-Set), dann optimiere die Inhalte. ' : ''}Optimiere alle Text- und SEO-Felder nach dem Regelwerk. Erfinde NIE Fakten.
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown-Zaeune, exakt in dieser Form:
 {
   "felder": { "<Spaltenname wie im Artikel>": "<neuer Wert>", ... },

@@ -75,7 +75,7 @@
           id: 'ih-eydl',
           label: 'eydl',
           items: [
-            { label: 'Shop-Check eydl.at', seite: 'info-shop-check-eydl-2026.html', desc: 'Stand 19.08.2026 · 14 Befunde · Lighthouse + Recht AT' },
+            { label: 'Shop-Check eydl.at', seite: 'info-shop-check-eydl-2026.html', desc: 'Stand 19.08.2026 · 16 Befunde · Lighthouse + Recht AT' },
           ],
         },
 ],
