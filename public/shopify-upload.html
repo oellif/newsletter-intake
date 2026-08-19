@@ -721,7 +721,7 @@ async function doOptimieren() {
     return;
   }
 
-  if (handles.length > 10 && !confirm(handles.length + ' Artikel werden per KI optimiert (je 1 KI-Aufruf inkl. Bildanalyse, ca. 15–30 Sekunden pro Artikel). Fortfahren?')) {
+  if (handles.length > 10 && !confirm(handles.length + ' Artikel werden per KI optimiert (je 1 KI-Aufruf inkl. Bildanalyse, ca. 1–2 Minuten pro Artikel). Fortfahren?')) {
     btnText.textContent = 'Artikel optimieren';
     btn.disabled = false;
     return;
@@ -733,7 +733,7 @@ async function doOptimieren() {
   for (let i = 0; i < handles.length; i++) {
     const { handle, title } = handles[i];
     btnText.innerHTML = '<span class="spinner"></span> ' + (i + 1) + ' / ' + handles.length + ' …';
-    progress.textContent = 'Optimiere „' + (title || handle) + '" — die KI analysiert Texte und Bilder, das dauert 15–30 Sekunden …';
+    progress.textContent = 'Optimiere „' + (title || handle) + '" — die KI analysiert Texte und Bilder, das dauert 1–2 Minuten …';
     try {
       const r = await fetch(API + 'masterartikel-optimieren', {
         method: 'POST',

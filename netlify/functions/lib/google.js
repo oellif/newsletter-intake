@@ -370,7 +370,9 @@ async function callClaudeVision(prompt, images, maxTokens) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-5',
-      max_tokens: maxTokens || 6000,
+      // Grosszuegig: das Modell denkt intern nach (Extended Thinking) und
+      // verbraucht dabei Tokens aus demselben Budget wie die Antwort
+      max_tokens: maxTokens || 16000,
       messages: [{ role: 'user', content }],
     }),
   });
@@ -379,7 +381,11 @@ async function callClaudeVision(prompt, images, maxTokens) {
     throw new Error('Anthropic-Fehler: ' + JSON.stringify(data));
   }
   const textBlock = (data.content || []).find(function (b) { return b.type === 'text'; });
-  return textBlock && textBlock.text;
+  if (!textBlock || !textBlock.text) {
+    throw new Error('Claude-Antwort ohne Textblock (stop_reason: ' + data.stop_reason
+      + ', bloecke: ' + (data.content || []).map(function (b) { return b.type; }).join(',') + ')');
+  }
+  return textBlock.text;
 }
 
 async function callClaude(prompt) {
