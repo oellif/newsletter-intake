@@ -31,6 +31,7 @@
     { group: 'Shopify-Tool' },
     { label: 'Dashboard',                seite: 'shopify-dashboard.html', withKunde: false },
     { label: 'Produkt hochladen',        seite: 'shopify-upload.html',    withKunde: false },
+    { label: 'Bestandsartikel optimieren', seite: 'shopify-bestand.html',  withKunde: false },
     { label: 'Produkte synchronisieren', seite: 'shopify-sync.html',      withKunde: false },
     { group: 'Verwaltung' },
     { label: 'Kundendatenbank',           seite: 'kunden-datenbank.html', withKunde: false },
@@ -39,6 +40,7 @@
   var SHOPIFY_PAGES = {
     'shopify-dashboard.html': true,
     'shopify-upload.html':    true,
+    'shopify-bestand.html':   true,
     'shopify-sync.html':      true,
     'kunden-datenbank.html':  true,
     'kunden-bearbeiten.html': true,
