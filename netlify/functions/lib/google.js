@@ -343,6 +343,45 @@ function parseJsonFromModelText(text) {
   return JSON.parse(cleaned);
 }
 
+// Wie callClaude, aber mit Bildern (fuer die Alt-Text-Bildanalyse des
+// Masterartikel-Optimierers). images = [{ media_type, data }] mit data
+// als base64-String. Bilder werden als content-Bloecke VOR dem Text
+// uebergeben (Anthropic-Empfehlung fuer Vision-Prompts).
+async function callClaudeVision(prompt, images, maxTokens) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY ist nicht als Umgebungsvariable gesetzt.');
+  }
+  const content = [];
+  for (const img of images || []) {
+    content.push({
+      type: 'image',
+      source: { type: 'base64', media_type: img.media_type, data: img.data },
+    });
+  }
+  content.push({ type: 'text', text: prompt });
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-5',
+      max_tokens: maxTokens || 6000,
+      messages: [{ role: 'user', content }],
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error('Anthropic-Fehler: ' + JSON.stringify(data));
+  }
+  const textBlock = (data.content || []).find(function (b) { return b.type === 'text'; });
+  return textBlock && textBlock.text;
+}
+
 async function callClaude(prompt) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -396,4 +435,5 @@ module.exports = {
   archiveSnapshot,
   parseJsonFromModelText,
   callClaude,
+  callClaudeVision,
 };

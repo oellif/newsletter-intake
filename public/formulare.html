@@ -18,8 +18,8 @@
   /* Sektions-Header */
   .sektion { margin-bottom: 36px; }
   .sektion-kopf { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #F3F4F6; }
-  .sektion-icon { font-size: 17px; }
-  .sektion-titel { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #9CA3AF; }
+  .sektion-icon { font-size: 22px; }
+  .sektion-titel { font-size: 18px; font-weight: 700; color: #374151; letter-spacing: -.2px; }
 
   /* Ordner */
   .ordner { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
@@ -61,21 +61,19 @@
     box-shadow: 0 1px 4px rgba(25,25,25,0.06), 0 4px 20px rgba(25,25,25,0.06);
     display: flex; align-items: center; justify-content: center;
     min-width: 46px; flex-shrink: 0; cursor: pointer; border: 2px solid transparent;
-    font-size: 15px; color: #D1D5DB; opacity: 0;
-    transition: opacity 0.15s, border-color 0.15s, background 0.15s, color 0.15s;
+    font-size: 15px; color: #D1D5DB;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
   }
-  .form-row:hover .delete-card-btn { opacity: 1; }
   .delete-card-btn:hover, .delete-card-btn.confirming {
-    border-color: #FCA5A5; background: #FEF2F2; color: #EF4444; opacity: 1;
+    border-color: #FCA5A5; background: #FEF2F2; color: #EF4444;
   }
   .delete-card-btn.confirming { font-size: 11px; font-weight: 800; padding: 0 8px; min-width: 70px; }
   .delete-folder-btn {
     font-size: 13px; color: #D1D5DB; cursor: pointer; padding: 2px 7px; border-radius: 7px;
-    border: none; background: none; opacity: 0; transition: opacity 0.15s, color 0.15s, background 0.15s;
+    border: none; background: none; transition: color 0.15s, background 0.15s;
     flex-shrink: 0;
   }
-  .ordner-kopf:hover .delete-folder-btn { opacity: 1; }
-  .delete-folder-btn:hover, .delete-folder-btn.confirming { color: #EF4444; background: #FEF2F2; opacity: 1; }
+  .delete-folder-btn:hover, .delete-folder-btn.confirming { color: #EF4444; background: #FEF2F2; }
   .delete-folder-btn.confirming { font-size: 11px; font-weight: 800; padding: 2px 8px; }
 
   /* Info Hub leerer Zustand */
@@ -94,7 +92,7 @@
   <p class="hub-sub">Entscheidungen dokumentieren, Informationen ablegen und Kommentare festhalten — alles an einem Ort.</p>
 
   <!-- ═══ ENTSCHEIDUNGS-WORKFLOW ══════════════════════════════════════════ -->
-  <div class="sektion">
+  <div class="sektion" id="workflow">
     <div class="sektion-kopf">
       <span class="sektion-icon">⚖️</span>
       <span class="sektion-titel">Entscheidungs-Workflow</span>
@@ -224,6 +222,51 @@
             <button class="delete-card-btn" onclick="deleteCard(this,'mh-zukunftsstrategie-2026')">🗑</button>
           </div>
 
+          <div class="form-row" data-card-id="mh-gesamtanalyse-2026">
+            <div class="daniel-block" id="db-mh-gesamtanalyse-2026" data-formular="mh-gesamtanalyse-2026" data-typ="overview" onclick="toggleOverviewStatus(this)">
+              <input type="checkbox" id="chk-overview-mh-gesamtanalyse-2026" onclick="event.stopPropagation()">
+              <div class="daniel-label">Daniel<br>bearb.</div>
+            </div>
+            <a class="form-card" href="/entscheidung-mh-gesamtanalyse-2026.html">
+              <div class="form-icon">⭐</div>
+              <div class="form-body">
+                <div class="form-name">⭐ Gesamtanalyse — Entscheidung</div>
+                <div class="form-desc">Alle 5 Kapitel der Gesamtanalyse mit Kommentarfeldern: Konzept, Wettbewerb, Kundenstamm, ROI &amp; Nischen, Strategie &amp; Maßnahmen.</div>
+                <div class="form-meta">Stand 19.08.2026 · 41 Kunden · Runde 1</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'mh-gesamtanalyse-2026')">🗑</button>
+          </div>
+
+        </div>
+      </div>
+
+
+      <div class="ordner" data-ordner-id="claude-infinity">
+        <div class="ordner-kopf">
+          <div class="ordner-kopf-left">📁 Claude Infinity</div>
+          <button class="delete-folder-btn" onclick="deleteFolder(this,'claude-infinity')">🗑</button>
+        </div>
+        <div class="ordner-inhalt">
+
+          <div class="form-row" data-card-id="claude-infinity-roadmap-2026">
+            <div class="daniel-block" data-formular="claude-infinity-roadmap-2026" data-typ="overview" onclick="toggleOverviewStatus(this)">
+              <input type="checkbox" onclick="event.stopPropagation()">
+              <div class="daniel-label">Daniel<br>bearb.</div>
+            </div>
+            <a class="form-card" href="/entscheidung-claude-infinity-roadmap-2026.html">
+              <div class="form-icon">♾️</div>
+              <div class="form-body">
+                <div class="form-name">Claude Infinity — Cockpit Roadmap 2026</div>
+                <div class="form-desc">Offene Entscheidungen für das MH Cockpit &amp; ProjektHub System: Skills, Features, Integrationen und nächste Entwicklungsschritte.</div>
+                <div class="form-meta">Stand 18.08.2026 · Runde 1</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'claude-infinity-roadmap-2026')">🗑</button>
+          </div>
+
         </div>
       </div>
 
@@ -231,17 +274,103 @@
   </div>
 
   <!-- ═══ INFO HUB ════════════════════════════════════════════════════════ -->
-  <div class="sektion">
+  <div class="sektion" id="infohub">
     <div class="sektion-kopf">
       <span class="sektion-icon">📚</span>
       <span class="sektion-titel">Info Hub</span>
     </div>
     <div id="infohub-list">
-      <!-- Einträge vom /infohub-neu Skill hier einfügen -->
-      <div class="infohub-empty" id="infohub-empty">
-        <div class="empty-icon">📄</div>
-        <div class="empty-text">Noch keine Info-Seiten hinterlegt.<br>Mit dem <strong>/infohub-neu</strong> Skill einen Eintrag hinzufügen.</div>
+
+      <div class="ordner" data-ordner-id="ih-claude-infinity">
+        <div class="ordner-kopf">
+          <div class="ordner-kopf-left">📁 Claude Infinity</div>
+          <button class="delete-folder-btn" onclick="deleteFolder(this,'ih-claude-infinity')">🗑</button>
+        </div>
+        <div class="ordner-inhalt">
+          <div class="form-row" data-card-id="ih-claude-vps-usecases">
+            <a class="form-card" href="/info-claude-vps-usecases.html">
+              <div class="form-icon">🖥️</div>
+              <div class="form-body">
+                <div class="form-name">Claude Code & VPS — Anwendungsfälle</div>
+                <div class="form-desc">Alles was ein Hetzner VPS und Claude Code gemeinsam leisten können — von MCP-Servern über automatische Syncs bis zu Multi-Agent-Pipelines.</div>
+                <div class="form-meta">Stand 17.08.2026 · Claude Code</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'ih-claude-vps-usecases')">🗑</button>
+          </div>
+          <div class="form-row" data-card-id="ih-ahrefs-vs-seobility">
+            <a class="form-card" href="/info-ahrefs-vs-seobility.html">
+              <div class="form-icon">🔍</div>
+              <div class="form-body">
+                <div class="form-name">Ahrefs vs. Seobility</div>
+                <div class="form-desc">Gegenüberstellung beider SEO-Tools: Kernunterschiede, Vor- und Nachteile, alle Tarife, Preis-Realitätscheck und Entscheidungshilfe nach Anwendungsfall.</div>
+                <div class="form-meta">Stand 17.08.2026 · Preise netto</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'ih-ahrefs-vs-seobility')">🗑</button>
+          </div>
+        </div>
       </div>
+
+      <div class="ordner" data-ordner-id="ih-mh-zukunftsstrategie">
+        <div class="ordner-kopf">
+          <div class="ordner-kopf-left">📁 MH Zukunftsstrategie</div>
+          <button class="delete-folder-btn" onclick="deleteFolder(this,'ih-mh-zukunftsstrategie')">🗑</button>
+        </div>
+        <div class="ordner-inhalt">
+          <div class="form-row" data-card-id="ih-mh-gesamtanalyse-2026">
+            <a class="form-card" href="/info-mh-gesamtanalyse-2026.html">
+              <div class="form-icon">🔭</div>
+              <div class="form-body">
+                <div class="form-name">Gesamtanalyse — Alles auf einen Blick</div>
+                <div class="form-desc">Konzept + Wettbewerb + Kundenstamm in einer Seite: 41 Kunden, 4 Wettbewerber, ROI-Ranking, 5 Maßnahmen, Case Studies, Do/Don't und Deliverables.</div>
+                <div class="form-meta">Stand 19.08.2026 · Gesamtansicht · 5 Kapitel</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'ih-mh-gesamtanalyse-2026')">🗑</button>
+          </div>
+          <div class="form-row" data-card-id="ih-mh-zukunftsstrategie-konzept-2026">
+            <a class="form-card" href="/info-mh-zukunftsstrategie-konzept-2026.html">
+              <div class="form-icon">🗂️</div>
+              <div class="form-body">
+                <div class="form-name">Analyse-Konzept v1.0</div>
+                <div class="form-desc">Das ursprüngliche Konzept vor dem Start der Analyse: 6 Phasen, 4 Kernfragen, Do/Don't Filter, 7 Deliverables und 6 Ergänzungen zum Briefing.</div>
+                <div class="form-meta">Stand 17.08.2026 · Konzept v1.0</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'ih-mh-zukunftsstrategie-konzept-2026')">🗑</button>
+          </div>
+          <div class="form-row" data-card-id="ih-mh-zukunftsstrategie-analyse-2026">
+            <a class="form-card" href="/info-mh-zukunftsstrategie-analyse-2026.html">
+              <div class="form-icon">📊</div>
+              <div class="form-body">
+                <div class="form-name">MH Zukunftsstrategie — Vollständige Analyse</div>
+                <div class="form-desc">40 Kunden, 4 Wettbewerber, ROI-Ranking, Social Media Analyse, Weingut-Nische, KI-Automatisierung — vollständiger Analysebericht.</div>
+                <div class="form-meta">Stand 17.08.2026 · KI-Analyse</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'ih-mh-zukunftsstrategie-analyse-2026')">🗑</button>
+          </div>
+          <div class="form-row" data-card-id="ih-mh-kundenstamm-analyse-2026">
+            <a class="form-card" href="/info-mh-kundenstamm-analyse-2026.html">
+              <div class="form-icon">👥</div>
+              <div class="form-body">
+                <div class="form-name">Kundenstamm — Tiefenanalyse 2026</div>
+                <div class="form-desc">41 Kunden: Plattform-Split, Branchen-Cluster, Service-Bundles, Case Studies (Pilch, Seiligtum, Ferschinger, Röck), Wachstums-Ranking, Migrationen und geografische Verteilung.</div>
+                <div class="form-meta">Stand 19.08.2026 · KI-Analyse · Neuaufbereitung</div>
+              </div>
+              <div class="form-arrow">→</div>
+            </a>
+            <button class="delete-card-btn" onclick="deleteCard(this,'ih-mh-kundenstamm-analyse-2026')">🗑</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -320,6 +449,21 @@ function deleteFolder(btn, folderId) {
 }
 
 ladeStatus();
+
+// Umbenannte Ordner- und Kartennamen aus localStorage laden
+(function() {
+  try {
+    document.querySelectorAll('[data-ordner-id]').forEach(function(el) {
+      var name = localStorage.getItem('projekthub_folder_name_' + el.dataset.ordnerId);
+      if (name) { var l = el.querySelector('.ordner-kopf-left'); if (l) l.textContent = '📁 ' + name; }
+    });
+    document.querySelectorAll('a.form-card[href]').forEach(function(card) {
+      var seite = card.getAttribute('href').replace('/', '');
+      var name = localStorage.getItem('projekthub_item_name_' + seite);
+      if (name) { var n = card.querySelector('.form-name'); if (n) n.textContent = name; }
+    });
+  } catch(e) {}
+})();
 </script>
 <script src="formulare-nav.js"></script>
 </body>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<script src="/pw-gate.js"></script>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code & VPS — Info Hub</title>
+<link rel="stylesheet" href="/mh-ci.css">
+<style>
+  :root {
+    --paper:#F7F6F3;--card:#fff;--ink:#191919;--ink-soft:#6B7280;
+    --line:#E5E7EB;--accent:#3B82F6;--accent-soft:rgba(59,130,246,0.10);
+    --teal:#00B896;--teal-soft:rgba(0,184,150,0.10);
+    --blue-soft:rgba(59,130,246,0.10);
+    --purple-soft:rgba(130,90,250,0.12);
+    --orange-soft:rgba(249,115,22,0.10);
+    --red-soft:rgba(239,68,68,0.10);
+    --gold-soft:rgba(234,179,8,0.10);
+  }
+  body { background:var(--paper);color:var(--ink);font-family:'Manrope',Arial,sans-serif;line-height:1.6;margin:0;padding:0 1.25rem 4rem; }
+  main { max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:2rem; }
+  h1,h2,h3 { font-family:'Varela Round','Manrope',sans-serif;font-weight:400;margin:0; }
+  h1 { font-size:2rem;letter-spacing:-0.5px; }
+  h2 { font-size:1.2rem;border-bottom:2px solid var(--accent);padding-bottom:.4rem; }
+  h3 { font-size:1rem;font-weight:700; }
+  p { margin:.4rem 0; }
+  .eyebrow { text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;color:var(--accent);font-weight:600;margin-bottom:.5rem; }
+  .sub { color:var(--ink-soft);margin-top:.6rem;max-width:62ch;font-size:.95rem; }
+  .back-link { font-size:.85rem;color:var(--ink-soft);text-decoration:none; }
+  .back-link:hover { color:var(--ink); }
+  .toolbar { position:sticky;top:0;z-index:20;background:var(--paper);display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;padding:.7rem 0;margin-bottom:1.2rem;border-bottom:1px solid var(--line); }
+  .badge { display:inline-block;background:var(--accent-soft);color:var(--accent);font-size:.78rem;font-weight:700;padding:.2rem .7rem;border-radius:20px; }
+
+  /* Hero-Diagram-Karte */
+  .hero-card {
+    background:#0B1929;border-radius:16px;padding:2.5rem 2rem 1.5rem;
+    display:flex;flex-wrap:wrap;gap:2rem;align-items:center;
+    box-shadow:0 4px 24px rgba(0,0,0,0.12);
+  }
+  .hero-left { flex:1;min-width:240px; }
+  .hero-eyebrow { font-family:ui-monospace,monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#00C4A3;margin-bottom:.8rem; }
+  .hero-title { font-size:clamp(1.4rem,3vw,2.1rem);font-weight:700;color:#E8F0F8;line-height:1.2;margin-bottom:.8rem; }
+  .hero-title em { font-style:normal;color:#00C4A3; }
+  .hero-sub { font-size:.9rem;color:#6A8FAF;max-width:340px;line-height:1.6; }
+  .hero-diagram { flex:0 0 min(100%,420px);max-width:420px; }
+  .hero-diagram svg { width:100%;display:block; }
+
+  /* Use-case grid */
+  .uc-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem; }
+  .uc-card { background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:1.1rem 1.2rem;display:flex;flex-direction:column;gap:.8rem;transition:border-color .15s;box-shadow:0 1px 4px rgba(25,25,25,0.05); }
+  .uc-card:hover { border-color:var(--accent); }
+  .uc-head { display:flex;align-items:center;gap:.75rem; }
+  .uc-icon { width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
+  .uc-name { font-size:.92rem;font-weight:700;color:var(--ink);line-height:1.3; }
+  .uc-badge { display:inline-block;font-family:ui-monospace,monospace;font-size:.68rem;font-weight:600;letter-spacing:.06em;padding:.15rem .55rem;border-radius:4px;background:var(--teal-soft);color:#00836B;width:fit-content; }
+  .uc-items { list-style:none;display:flex;flex-direction:column;gap:.3rem;padding:0; }
+  .uc-items li { font-size:.84rem;color:var(--ink-soft);padding-left:1rem;position:relative;line-height:1.45; }
+  .uc-items li::before { content:'→';position:absolute;left:0;color:var(--teal);font-size:.75rem;top:1px; }
+
+  .c-teal   { background:rgba(0,196,163,0.12); }
+  .c-blue   { background:rgba(59,130,246,0.12); }
+  .c-purple { background:rgba(130,90,250,0.12); }
+  .c-orange { background:rgba(249,115,22,0.12); }
+  .c-red    { background:rgba(239,68,68,0.12); }
+  .c-gold   { background:rgba(234,179,8,0.12); }
+
+  .section-label { font-family:ui-monospace,monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:1rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="toolbar">
+    <a class="back-link" href="/formulare.html">← ProjektHub</a>
+    <span class="badge">📚 Info Hub</span>
+  </div>
+
+  <header>
+    <div class="eyebrow">Infrastruktur · August 2026</div>
+    <h1>Claude Code & VPS — Anwendungsfälle</h1>
+    <p class="sub">Alles was ein Hetzner VPS und Claude Code gemeinsam leisten können — von MCP-Servern über automatische Syncs bis zu Multi-Agent-Pipelines.</p>
+  </header>
+
+  <!-- Hero: Netzwerk-Diagramm -->
+  <div class="hero-card">
+    <div class="hero-left">
+      <p class="hero-eyebrow">Hetzner VPS × Claude Code</p>
+      <h2 class="hero-title" style="border:none;padding:0">Was du mit einem<br>eigenen Server<br><em>alles machen kannst</em></h2>
+      <p class="hero-sub">Der Server ist das Rückgrat. Claude Code ist das Gehirn. Zusammen ersetzen sie ein ganzes Entwicklerteam — rund um die Uhr.</p>
+    </div>
+    <div class="hero-diagram">
+      <svg viewBox="0 0 420 340" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#00C4A3" opacity="0.7"/>
+          </marker>
+          <marker id="arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#4A9EFF" opacity="0.7"/>
+          </marker>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <pattern id="dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="0.8" fill="#1E3A5F" opacity="0.5"/>
+        </pattern>
+        <rect width="420" height="340" fill="url(#dots)"/>
+        <line x1="70" y1="80" x2="180" y2="160" stroke="#00C4A3" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.5" marker-end="url(#arr)"/>
+        <line x1="350" y1="80" x2="240" y2="160" stroke="#00C4A3" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.5" marker-end="url(#arr)"/>
+        <line x1="50" y1="200" x2="175" y2="192" stroke="#4A9EFF" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.5" marker-end="url(#arr2)"/>
+        <line x1="370" y1="200" x2="245" y2="192" stroke="#4A9EFF" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.5" marker-end="url(#arr2)"/>
+        <line x1="100" y1="300" x2="185" y2="230" stroke="#A064FF" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.5" marker-end="url(#arr)"/>
+        <line x1="320" y1="300" x2="235" y2="230" stroke="#A064FF" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.5" marker-end="url(#arr)"/>
+        <rect x="148" y="148" width="124" height="64" rx="10" fill="#0F1E30" stroke="#00C4A3" stroke-width="1.5" filter="url(#glow)"/>
+        <text x="210" y="173" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#00C4A3" letter-spacing="0.1em">HETZNER VPS</text>
+        <text x="210" y="190" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#E8F0F8" font-weight="600">78.47.144.205</text>
+        <text x="210" y="204" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#4A6A8A">CPX12 · Ubuntu 26</text>
+        <rect x="18" y="50" width="100" height="46" rx="7" fill="#0F1E30" stroke="#1E3A5A" stroke-width="1"/>
+        <text x="68" y="70" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#00C4A3" letter-spacing="0.08em">MCP-SERVER</text>
+        <text x="68" y="84" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#8EB4D4">Odoo · Shopify · DB</text>
+        <rect x="302" y="50" width="100" height="46" rx="7" fill="#0F1E30" stroke="#1E3A5A" stroke-width="1"/>
+        <text x="352" y="70" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#00C4A3" letter-spacing="0.08em">SSH-ZUGRIFF</text>
+        <text x="352" y="84" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#8EB4D4">Scripts · Logs · Files</text>
+        <rect x="0" y="170" width="100" height="46" rx="7" fill="#0F1E30" stroke="#1E3A5A" stroke-width="1"/>
+        <text x="50" y="190" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#4A9EFF" letter-spacing="0.08em">WEBHOOKS</text>
+        <text x="50" y="204" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#8EB4D4">Events → Aktionen</text>
+        <rect x="320" y="170" width="100" height="46" rx="7" fill="#0F1E30" stroke="#1E3A5A" stroke-width="1"/>
+        <text x="370" y="190" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#4A9EFF" letter-spacing="0.08em">CRON AGENTS</text>
+        <text x="370" y="204" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#8EB4D4">Zeitgesteuert</text>
+        <rect x="40" y="280" width="110" height="46" rx="7" fill="#0F1E30" stroke="#1E3A5A" stroke-width="1"/>
+        <text x="95" y="300" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#A064FF" letter-spacing="0.08em">BATCH-JOBS</text>
+        <text x="95" y="314" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#8EB4D4">Bilder · PDFs · Reports</text>
+        <rect x="270" y="280" width="110" height="46" rx="7" fill="#0F1E30" stroke="#1E3A5A" stroke-width="1"/>
+        <text x="325" y="300" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#A064FF" letter-spacing="0.08em">MULTI-AGENT</text>
+        <text x="325" y="314" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#8EB4D4">Pipelines · Subagents</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 12 Use Cases -->
+  <section>
+    <p class="section-label">Alle Anwendungsfälle im Detail</p>
+    <div class="uc-grid">
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-teal">🔌</div>
+          <div class="uc-name">MCP-Server hosten</div>
+        </div>
+        <span class="uc-badge">aktiv auf deinem Server</span>
+        <ul class="uc-items">
+          <li>Odoo: Kunden, Aufträge, Produkte abfragen</li>
+          <li>Shopify: Bestellungen, Artikel, Kunden</li>
+          <li>Eigene Datenbank als Claude-Tool</li>
+          <li>Google Sheets live auslesen/schreiben</li>
+          <li>Jede eigene API als MCP-Endpunkt</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-teal">⌨️</div>
+          <div class="uc-name">SSH-Direktzugriff</div>
+        </div>
+        <span class="uc-badge">Claude Code → Server</span>
+        <ul class="uc-items">
+          <li>Python / Shell Scripts direkt ausführen</li>
+          <li>Server-Logs live lesen und analysieren</li>
+          <li>Dateien übertragen und verarbeiten</li>
+          <li>Services starten, stoppen, neu starten</li>
+          <li>Datenbanken direkt abfragen</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-blue">⚡</div>
+          <div class="uc-name">Webhook-Empfänger</div>
+        </div>
+        <span class="uc-badge">Event-getrieben</span>
+        <ul class="uc-items">
+          <li>Shopify-Bestellung → Claude verarbeitet sofort</li>
+          <li>Neuer Odoo-Kontakt → ins Cockpit + Mail</li>
+          <li>GitHub Push → automatischer Code-Review</li>
+          <li>Formular-Einsendung → KI antwortet</li>
+          <li>Beliebige externe Events abfangen</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-blue">🕐</div>
+          <div class="uc-name">Scheduled Cloud Agents</div>
+        </div>
+        <span class="uc-badge">Cron-gesteuert</span>
+        <ul class="uc-items">
+          <li>Stündlich: Odoo ↔ Cockpit synchronisieren</li>
+          <li>Täglich: Berichte generieren &amp; mailen</li>
+          <li>Wöchentlich: Newsletter-Entwurf erstellen</li>
+          <li>Nächtlich: Datenbank aufräumen, Bilder verarbeiten</li>
+          <li>Monatlich: Umsatz-Analyse &amp; Zusammenfassung</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-purple">🖼️</div>
+          <div class="uc-name">Batch-Verarbeitung</div>
+        </div>
+        <span class="uc-badge">Hintergrund, ohne Warten</span>
+        <ul class="uc-items">
+          <li>Produktbilder: Hintergrund entfernen (rembg)</li>
+          <li>Bilder für Kanäle zuschneiden (Shopify, Etsy)</li>
+          <li>PDFs &amp; Rechnungen automatisch generieren</li>
+          <li>Excel-Reports aus Rohdaten erzeugen</li>
+          <li>E-Mail-Kampagnen vorbereiten &amp; versenden</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-purple">🤖</div>
+          <div class="uc-name">Multi-Agent-Pipelines</div>
+        </div>
+        <span class="uc-badge">Agenten koordinieren</span>
+        <ul class="uc-items">
+          <li>Agent A sucht Leads → B recherchiert → C schreibt</li>
+          <li>Subagenten parallel starten &amp; zusammenführen</li>
+          <li>Morgen-Briefing fasst alle offenen Punkte zusammen</li>
+          <li>Fehler-Monitor überwacht alle anderen Agents</li>
+          <li>Komplexe mehrstufige Workflows automatisieren</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-gold">💾</div>
+          <div class="uc-name">Persistente Datenspeicherung</div>
+        </div>
+        <span class="uc-badge">Sessions-übergreifend</span>
+        <ul class="uc-items">
+          <li>Wissensbasis aufbauen die wächst</li>
+          <li>Aufgabenstatus über Sessions hinweg tracken</li>
+          <li>Ergebnisse dauerhaft speichern &amp; abrufbar halten</li>
+          <li>Kontext-Datenbank für Agents</li>
+          <li>Eigene Vektordatenbank für Suche &amp; RAG</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-gold">🛠️</div>
+          <div class="uc-name">Eigene APIs entwickeln &amp; hosten</div>
+        </div>
+        <span class="uc-badge">Claude baut, Server hostet</span>
+        <ul class="uc-items">
+          <li>Claude schreibt die API, Server läuft sie permanent</li>
+          <li>Cockpit-Features als eigene Endpunkte</li>
+          <li>Shopify → Odoo Bridge-API</li>
+          <li>Interne Tools ohne externe Abhängigkeit</li>
+          <li>Claude pflegt und erweitert den Code</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-orange">🚀</div>
+          <div class="uc-name">Deployment &amp; CI/CD</div>
+        </div>
+        <span class="uc-badge">Code → Live</span>
+        <ul class="uc-items">
+          <li>Claude schreibt Code → direkt auf Server deployen</li>
+          <li>Tests in echter Serverumgebung ausführen</li>
+          <li>Staging &amp; Production trennen</li>
+          <li>Automatische Updates bei Git-Push</li>
+          <li>Rollback bei Fehlern automatisieren</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-red">📡</div>
+          <div class="uc-name">Monitoring &amp; Alerting</div>
+        </div>
+        <span class="uc-badge">Nie wieder selbst checken</span>
+        <ul class="uc-items">
+          <li>Shopify-Shop: Fehler &amp; Ausfälle sofort melden</li>
+          <li>Lagerbestand unter Schwelle → Alarm</li>
+          <li>Umsatz-Ausreißer erkennen &amp; erklären</li>
+          <li>API-Fehler loggen und zusammenfassen</li>
+          <li>Wettbewerber-Preise täglich prüfen</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-teal">📊</div>
+          <div class="uc-name">Daten-Sync &amp; Integration</div>
+        </div>
+        <span class="uc-badge">Systeme verbinden</span>
+        <ul class="uc-items">
+          <li>Odoo ↔ MH-Cockpit: Kunden immer aktuell</li>
+          <li>Shopify ↔ Odoo: Bestellungen automatisch</li>
+          <li>Alle Systeme → Google Sheets als Übersicht</li>
+          <li>Webhook-Hub: empfängt von allen, verteilt an alle</li>
+          <li>Single Source of Truth für euer gesamtes Business</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <div class="uc-head">
+          <div class="uc-icon c-blue">📄</div>
+          <div class="uc-name">Dokument-Automation</div>
+        </div>
+        <span class="uc-badge">Ohne manuellen Aufwand</span>
+        <ul class="uc-items">
+          <li>Angebote &amp; Rechnungen automatisch generieren</li>
+          <li>Produktbeschreibungen über Nacht neu schreiben</li>
+          <li>Lieferscheine, Zertifikate aus Templates befüllen</li>
+          <li>Meetings transkribieren → Aufgaben extrahieren</li>
+          <li>Verträge aus Kundendaten befüllen</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+<script src="formulare-nav.js"></script>
+</body>
+</html>

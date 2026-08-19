@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<script src="/pw-gate.js"></script>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MH Zukunftsstrategie — Vollständige Analyse — Info Hub</title>
+<link rel="stylesheet" href="/mh-ci.css">
+<style>
+  :root {
+    --paper:#F7F6F3;--card:#fff;--ink:#191919;--ink-soft:#6B7280;
+    --line:#E5E7EB;--accent:#3B82F6;--accent-soft:rgba(59,130,246,0.10);
+    --green:#059669;--red:#DC2626;--orange:#EA580C;
+  }
+  body { background:var(--paper);color:var(--ink);font-family:'Manrope',Arial,sans-serif;line-height:1.6;margin:0;padding:0 1.25rem 4rem; }
+  main { max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:2rem; }
+  h1,h2,h3 { font-family:'Varela Round','Manrope',sans-serif;font-weight:400;margin:0; }
+  h1 { font-size:2rem;letter-spacing:-0.5px; }
+  h2 { font-size:1.2rem;border-bottom:2px solid var(--accent);padding-bottom:.4rem; }
+  h3 { font-size:1rem;font-weight:700;margin-bottom:.4rem; }
+  p { margin:.4rem 0; }
+  ul,ol { margin:.4rem 0;padding-left:1.4rem; }
+  li { margin:.25rem 0; }
+  table { width:100%;border-collapse:collapse;font-size:.88rem; }
+  th { background:var(--accent-soft);color:var(--ink);font-weight:700;padding:.5rem .7rem;text-align:left;border-bottom:2px solid var(--accent); }
+  td { padding:.45rem .7rem;border-bottom:1px solid var(--line);vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  .card { background:var(--card);border-radius:14px;padding:1.2rem 1.3rem;box-shadow:0 1px 4px rgba(25,25,25,0.06),0 4px 16px rgba(25,25,25,0.04); }
+  .eyebrow { text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;color:var(--accent);font-weight:600;margin-bottom:.5rem; }
+  .sub { color:var(--ink-soft);margin-top:.6rem;max-width:62ch;font-size:.95rem; }
+  .back-link { font-size:.85rem;color:var(--ink-soft);text-decoration:none; }
+  .back-link:hover { color:var(--ink); }
+  .toolbar { position:sticky;top:0;z-index:20;background:var(--paper);display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;padding:.7rem 0;margin-bottom:1.2rem;border-bottom:1px solid var(--line); }
+  .badge { display:inline-block;background:var(--accent-soft);color:var(--accent);font-size:.78rem;font-weight:700;padding:.2rem .7rem;border-radius:20px; }
+
+  /* KPI-Karten */
+  .kpi-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.8rem; }
+  .kpi-card { background:var(--card);border-radius:12px;padding:.9rem 1rem;box-shadow:0 1px 4px rgba(25,25,25,0.06);text-align:center; }
+  .kpi-zahl { font-size:2rem;font-weight:800;color:var(--accent);line-height:1; }
+  .kpi-label { font-size:.78rem;color:var(--ink-soft);margin-top:.3rem; }
+
+  /* Rang-Badges */
+  .rang { display:inline-block;width:24px;height:24px;border-radius:50%;text-align:center;line-height:24px;font-size:.78rem;font-weight:800;flex-shrink:0; }
+  .rang-1 { background:#FEF3C7;color:#92400E; }
+  .rang-2 { background:#F0F9FF;color:#0369A1; }
+  .rang-3 { background:#F0FDF4;color:#166534; }
+  .rang-4 { background:#FFF7ED;color:#9A3412; }
+  .rang-x { background:#F3F4F6;color:#6B7280; }
+  .rang-row { display:flex;align-items:flex-start;gap:.8rem;padding:.6rem 0;border-bottom:1px solid var(--line); }
+  .rang-row:last-child { border-bottom:none; }
+  .rang-text { flex:1; }
+  .rang-name { font-weight:700;font-size:.95rem; }
+  .rang-desc { font-size:.84rem;color:var(--ink-soft);margin-top:.1rem; }
+
+  /* Wettbewerber-Stärke-Balken */
+  .staerke-bar { height:6px;border-radius:3px;background:var(--accent);margin-top:.3rem; }
+
+  /* Alert-Box */
+  .alert { padding:.7rem 1rem;border-radius:8px;font-size:.88rem;margin-top:.4rem; }
+  .alert-red { background:#FEF2F2;border-left:3px solid var(--red);color:#7F1D1D; }
+  .alert-green { background:#F0FDF4;border-left:3px solid var(--green);color:#14532D; }
+  .alert-orange { background:#FFF7ED;border-left:3px solid var(--orange);color:#7C2D12; }
+
+  /* Chip-Tags */
+  .tag { display:inline-block;background:var(--accent-soft);color:var(--accent);font-size:.74rem;font-weight:700;padding:.15rem .55rem;border-radius:20px;margin:.1rem .1rem; }
+  .tag-green { background:rgba(5,150,105,0.08);color:var(--green); }
+  .tag-orange { background:rgba(234,88,12,0.08);color:var(--orange); }
+</style>
+</head>
+<body>
+<main>
+  <div class="toolbar">
+    <a class="back-link" href="/formulare.html">← ProjektHub</a>
+    <span class="badge">📚 Info Hub</span>
+  </div>
+
+  <header>
+    <div class="eyebrow">Analyse · August 2026</div>
+    <h1>MH Zukunftsstrategie — Vollständige Analyse</h1>
+    <p class="sub">KI-gestützte Sales- &amp; Wettbewerbsanalyse für Marktplatzhelden: 40 Kunden, 4 Wettbewerber, Social Media, ROI-Ranking und Automatisierungsplan. Stand 17.08.2026.</p>
+  </header>
+
+  <!-- KPI-Übersicht -->
+  <section class="card">
+    <h2>Auf einen Blick</h2>
+    <div class="kpi-grid" style="margin-top:.8rem;">
+      <div class="kpi-card"><div class="kpi-zahl">40</div><div class="kpi-label">Kunden analysiert</div></div>
+      <div class="kpi-card"><div class="kpi-zahl">75%</div><div class="kpi-label">Shopify-Kunden</div></div>
+      <div class="kpi-card"><div class="kpi-zahl">17,5%</div><div class="kpi-label">Etsy-Kunden</div></div>
+      <div class="kpi-card"><div class="kpi-zahl">4</div><div class="kpi-label">Wettbewerber gefunden</div></div>
+      <div class="kpi-card"><div class="kpi-zahl">0</div><div class="kpi-label">Etsy-Konkurrenten</div></div>
+      <div class="kpi-card"><div class="kpi-zahl">5</div><div class="kpi-label">Weingut-Kunden</div></div>
+    </div>
+    <div class="alert alert-red" style="margin-top:1rem;">🚨 <strong>Kritisch:</strong> marktplatzhelden.de (ohne Bindestrich) leitet zu Tentary weiter — fremdes Produkt fängt MPH-Anfragen ab.</div>
+    <div class="alert alert-green" style="margin-top:.5rem;">✅ <strong>Moat:</strong> MPH ist die einzige identifizierbare Etsy-Agentur im DACH-Raum. Kein Wettbewerber hat diese Nische.</div>
+  </section>
+
+  <!-- Kundenstamm -->
+  <section class="card">
+    <h2>Kundenstamm — 40 Kunden analysiert</h2>
+    <table style="margin-top:.7rem;">
+      <thead>
+        <tr><th>Plattform</th><th>Anzahl</th><th>Anteil</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>🛒 Shopify</td><td>30</td><td>75%</td></tr>
+        <tr><td>🧵 Etsy</td><td>7</td><td>17,5%</td></tr>
+        <tr><td>⚙️ Plentymarkets</td><td>1</td><td>2,5%</td></tr>
+        <tr><td>🌐 Sonstiges / Unbekannt</td><td>2</td><td>5%</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:1.2rem;">Top-Branchen im Kundenstamm</h3>
+    <table>
+      <thead>
+        <tr><th>Branche</th><th>Kunden</th><th>Beispiele</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>🍷 Wein &amp; Alkohol</td><td>5</td><td>Pilch, Gallunder, Wieser, Huber, Pugl</td></tr>
+        <tr><td>🪵 Holz &amp; Handwerk</td><td>5</td><td>diverse Handwerksbetriebe AT</td></tr>
+        <tr><td>🌿 Natur &amp; Wellness</td><td>5</td><td>Kräuter, Naturkosmetik, Bio</td></tr>
+        <tr><td>💎 Schmuck</td><td>4</td><td>Goldschmiede, Designerschmuck AT</td></tr>
+        <tr><td>🏠 Wohnen &amp; Deko</td><td>4</td><td>Designmöbel, Keramik</td></tr>
+        <tr><td>📦 Sonstige</td><td>17</td><td>Lebensmittel, Mode, Kosmetik, uvm.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:1.2rem;">Ideal Customer Profile (ICP)</h3>
+    <ul>
+      <li>🇦🇹 Österreichisches Kleinunternehmen oder Einzelperson</li>
+      <li>Handgefertigte / regionale / traditionelle Produkte, B2C</li>
+      <li>Budget: <strong>1.000–3.000 €</strong> pro Projekt</li>
+      <li>Ersteinstieg in Online-Handel — sucht persönliche Begleitung</li>
+      <li>Geografie: AT dominant, vereinzelt DE/CH</li>
+    </ul>
+  </section>
+
+  <!-- Wettbewerber -->
+  <section class="card">
+    <h2>Wettbewerber-Matrix</h2>
+    <table style="margin-top:.7rem;">
+      <thead>
+        <tr><th>Anbieter</th><th>Stärken</th><th>Positionierung</th><th>Etsy?</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Hanno Fäßler</strong><br><span style="font-size:.8rem;color:var(--ink-soft)">AT · Solo</span></td>
+          <td>TÜV-zertifiziert, starkes LinkedIn-Personal-Brand, Premium-Marke</td>
+          <td>Hochpreis, Vertrauen durch Zertifikat</td>
+          <td style="text-align:center">❌</td>
+        </tr>
+        <tr>
+          <td><strong>Sharobella Wien</strong><br><span style="font-size:.8rem;color:var(--ink-soft)">AT · Agentur</span></td>
+          <td>6 Social-Kanäle, Full-Service, KI Agentur Wien, stärkster Social-Media-Player</td>
+          <td>Full-Service Shopify + KI, Wien</td>
+          <td style="text-align:center">❌</td>
+        </tr>
+        <tr>
+          <td><strong>Shopwert</strong><br><span style="font-size:.8rem;color:var(--ink-soft)">AT · Agentur</span></td>
+          <td>Günstiger Einstieg, technisch fokussiert</td>
+          <td>Budget-Segment, technische Umsetzung</td>
+          <td style="text-align:center">❌</td>
+        </tr>
+        <tr>
+          <td><strong>IT-KS Tirol</strong><br><span style="font-size:.8rem;color:var(--ink-soft)">AT · Solo</span></td>
+          <td>Stundenbasis, Tirol-lokal, persönlicher Service</td>
+          <td>Regional, flexibel, kein Premium</td>
+          <td style="text-align:center">❌</td>
+        </tr>
+        <tr style="background:rgba(5,150,105,0.04);">
+          <td><strong>Marktplatzhelden</strong><br><span style="font-size:.8rem;color:var(--green)">MPH · Solo</span></td>
+          <td>Einzige Etsy-Agentur DACH, Weinbranche, persönlich, AT-fokussiert</td>
+          <td>Etsy + Shopify Spezialist, KMU AT</td>
+          <td style="text-align:center;color:var(--green);font-weight:800">✅ ALLEIN</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:1.2rem;">Social Media Stärken-Vergleich</h3>
+    <table>
+      <thead>
+        <tr><th>Anbieter</th><th>Kanäle</th><th>Stärke</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Sharobella</strong></td><td>Instagram, LinkedIn, YouTube, Facebook, Dribbble, Behance</td><td><div class="staerke-bar" style="width:95%"></div></td></tr>
+        <tr><td><strong>Hanno Fäßler</strong></td><td>LinkedIn (stark), Website</td><td><div class="staerke-bar" style="width:60%"></div></td></tr>
+        <tr><td><strong>Shopwert</strong></td><td>Website, kaum Social</td><td><div class="staerke-bar" style="width:20%"></div></td></tr>
+        <tr><td><strong>IT-KS</strong></td><td>Nur Website</td><td><div class="staerke-bar" style="width:10%"></div></td></tr>
+        <tr><td><strong>MPH</strong></td><td>Instagram (@marktplatzhelden)</td><td><div class="staerke-bar" style="width:30%"></div></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ROI-Ranking -->
+  <section class="card">
+    <h2>Services — Wirtschaftlichkeits-Ranking</h2>
+    <div style="margin-top:.8rem;">
+      <div class="rang-row">
+        <div class="rang rang-1">1</div>
+        <div class="rang-text">
+          <div class="rang-name">🧵 Etsy Coaching</div>
+          <div class="rang-desc">Alleinstellung im DACH-Markt. Skalierbar als Online-Kurs (297 € Lite / 697 € Pro). Kein Wettbewerber — freie Preisgestaltung möglich. Niedrige Lieferkosten, hohe Marge.</div>
+          <span class="tag tag-green">Alleinstellung</span><span class="tag tag-green">Skalierbar</span><span class="tag tag-green">Hohe Marge</span>
+        </div>
+      </div>
+      <div class="rang-row">
+        <div class="rang rang-2">2</div>
+        <div class="rang-text">
+          <div class="rang-name">🛒 Shopify Gesamtpaket</div>
+          <div class="rang-desc">75% der Kunden — Hauptumsatzbringer. Klarer Prozess, wiederholbar. Kombination Setup + SEO + Texte als Bundle erhöht Ticket-Size auf 2.000–5.000 €.</div>
+          <span class="tag">Hauptumsatz</span><span class="tag">75% Kunden</span>
+        </div>
+      </div>
+      <div class="rang-row">
+        <div class="rang rang-3">3</div>
+        <div class="rang-text">
+          <div class="rang-name">🤖 KI-Automatisierung</div>
+          <div class="rang-desc">Marktlücke: kein Wettbewerber bietet das gezielt für KMU in AT an. Premium-Pricing 500–2.000 € Einmalsetup. Frühzeitige Positionierung sichert Preisführerschaft.</div>
+          <span class="tag tag-orange">Marktlücke</span><span class="tag tag-orange">Premium</span>
+        </div>
+      </div>
+      <div class="rang-row">
+        <div class="rang rang-4">4</div>
+        <div class="rang-text">
+          <div class="rang-name">🔍 SEO Coaching</div>
+          <div class="rang-desc">Wiederholbarer Prozess, gut bundlebar mit Shopify-Paket. Wettbewerb (Ahrefs-Tools) wächst, aber persönliches Coaching behält Wert.</div>
+        </div>
+      </div>
+      <div class="rang-row">
+        <div class="rang rang-x">5</div>
+        <div class="rang-text">
+          <div class="rang-name">📧 E-Mail Marketing</div>
+          <div class="rang-desc">Guter Upsell nach Shopify-Setup. Abhängig von Kundenbereitschaft.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-red" style="margin-top:1rem;">
+      ⛔ <strong>Niedrig-ROI / nicht priorisieren:</strong> Plentymarkets (nur 1 von 40 Kunden), Google/Meta Ads via Partner (geteilte Marge, Abhängigkeit), Website-Erstellung allein (zu wenig Synergie ohne E-Commerce).
+    </div>
+  </section>
+
+  <!-- Nischen -->
+  <section class="card">
+    <h2>Nischen-Chancen</h2>
+
+    <h3>🍷 Weingüter — 12,5% des Kundenstamms</h3>
+    <p>5 von 40 Kunden sind Weingüter (Pilch, Gallunder, Wieser, Huber, Pugl). Kein Wettbewerber hat diese Nische. Weinbranche ist kaufkräftig und stark vernetzt — Winzer kennen Winzer (Mundpropaganda-Effekt).</p>
+    <div class="alert alert-green">Empfehlung: „Shopify für Weingüter" als dedizierte Landing Page mit bestehenden Case Studies — günstige SEO-Strategie für ein Premium-Segment.</div>
+
+    <h3 style="margin-top:1.2rem;">🌿 Natur &amp; Wellness — 5 Kunden</h3>
+    <p>Kräuter, Naturkosmetik, Bio-Produkte — ebenfalls stark auf Etsy. Synergie mit Etsy-Coaching ideal.</p>
+  </section>
+
+  <!-- Social Media Plan -->
+  <section class="card">
+    <h2>Social Media — Empfehlung für MPH</h2>
+    <table style="margin-top:.7rem;">
+      <thead>
+        <tr><th>Was</th><th>Detail</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>🎯 Format</td><td>Reels &amp; TikToks: Etsy-Tipps, Shopify-Fehler, KI-Demo</td></tr>
+        <tr><td>👤 Gesicht</td><td>Daniel als Personal Brand (wie Hanno Fäßler auf LinkedIn)</td></tr>
+        <tr><td>📅 Frequenz</td><td>2–3 Videos/Woche, sofort startbar</td></tr>
+        <tr><td>⏱ Aufwand</td><td>~2h/Woche mit KI-Unterstützung (Claude → Script → CapCut → Post)</td></tr>
+        <tr><td>📱 Kanäle</td><td>Instagram (aktiv) + TikTok (neu), LinkedIn optional für B2B</td></tr>
+        <tr><td>📈 Erwartung</td><td>Messbares Wachstum nach 3 Monaten Kontinuität</td></tr>
+      </tbody>
+    </table>
+    <div class="alert alert-orange" style="margin-top:.8rem;">⚠️ Stärkster Wettbewerber im Social: <strong>Sharobella Wien</strong> (6 Kanäle). Differenzierung über Etsy-Nische und persönlichen Stil, nicht über Kanalanzahl.</div>
+  </section>
+
+  <!-- Maßnahmen -->
+  <section class="card">
+    <h2>Empfohlene Maßnahmen — Priorität</h2>
+    <ol>
+      <li><strong>🚨 Domain-Problem lösen</strong> — marktplatzhelden.de kaufen oder Weiterleitung auf marktplatz-helden.at erwirken. Sofort.</li>
+      <li><strong>🧵 Etsy-Kurs entwickeln</strong> — 1 Gruppenformat, 2 Preisstufen (297 €/697 €), mit bestehendem Wissen aus Kunden-Coaching.</li>
+      <li><strong>📱 Social Media starten</strong> — 2-3 Reels/Woche, Daniel als Gesicht, KI-assistiert, Thema Etsy/Shopify-Tipps.</li>
+      <li><strong>🍷 Weingut-Landing-Page</strong> — „Shopify für Weingüter" mit 3–4 Case Studies (Pilch, Gallunder, …) als SEO-Seite.</li>
+      <li><strong>🤖 KI-Produkt definieren</strong> — 3 konkrete Use Cases, Preisblatt, als eigenständiges Angebot vermarkten.</li>
+    </ol>
+    <div class="alert alert-orange" style="margin-top:.8rem;">⏸ Zurückgestellt (kein Fokus): Google/Meta Ads, Plentymarkets-Akquise, LinkedIn-Aufbau (Phase 2 wenn Etsy-Kurs läuft).</div>
+  </section>
+
+</main>
+<script src="formulare-nav.js"></script>
+</body>
+</html>

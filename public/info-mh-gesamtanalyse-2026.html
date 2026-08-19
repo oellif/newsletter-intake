@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<script src="/pw-gate.js"></script>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MH Zukunftsstrategie — Gesamtanalyse 2026 — Info Hub</title>
+<link rel="stylesheet" href="/mh-ci.css">
+<style>
+  :root {
+    --navy:#162040;--navy-mid:#243060;--gold:#F0A500;--gold-light:#FFC93C;
+    --coral:#C9402E;--green:#2A7A45;--blue:#3A80D0;--orange:#D97706;
+    --bg:#F5F2EA;--bg-card:#FDFAF3;--text:#162040;--text-muted:#5A6070;
+    --border:#DDD9CC;--surface2:#EDE9DE;
+  }
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --navy:#A8B8D8;--navy-mid:#7A90B8;--gold:#F5B81A;--gold-light:#FFC93C;
+    --coral:#E05540;--green:#3DAA5A;--blue:#5A9EE8;--orange:#E8A020;
+    --bg:#0D1525;--bg-card:#141F35;--text:#E0DDD5;--text-muted:#8090A8;
+    --border:#2A3550;--surface2:#1A2840;
+  }}
+  :root[data-theme="dark"]{
+    --navy:#A8B8D8;--navy-mid:#7A90B8;--gold:#F5B81A;--gold-light:#FFC93C;
+    --coral:#E05540;--green:#3DAA5A;--blue:#5A9EE8;--orange:#E8A020;
+    --bg:#0D1525;--bg-card:#141F35;--text:#E0DDD5;--text-muted:#8090A8;
+    --border:#2A3550;--surface2:#1A2840;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:15px;line-height:1.6;}
+
+  /* ── HERO ── */
+  .hero{background:#162040;color:#fff;padding:56px 48px 52px;position:relative;overflow:hidden;}
+  .hero::before{content:'';position:absolute;top:-60px;right:-80px;width:380px;height:380px;border-radius:50%;background:#F0A500;opacity:.07;}
+  .hero::after{content:'';position:absolute;bottom:-100px;left:35%;width:560px;height:560px;border-radius:50%;background:#F0A500;opacity:.04;}
+  .hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#F0A500;margin-bottom:16px;}
+  .hero-title{font-size:clamp(26px,4vw,46px);font-weight:900;line-height:1.05;letter-spacing:-.025em;margin-bottom:18px;max-width:700px;}
+  .hero-title span{color:#F0A500;}
+  .hero-sub{font-size:15px;color:rgba(255,255,255,.6);max-width:580px;line-height:1.65;margin-bottom:36px;}
+  .hero-stats{display:flex;flex-wrap:wrap;gap:28px;}
+  .hero-stat{border-left:2px solid #F0A500;padding-left:14px;}
+  .hero-stat-num{font-size:22px;font-weight:800;color:#fff;display:block;line-height:1.2;}
+  .hero-stat-label{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:.05em;}
+  .back-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.65);font-size:12px;padding:5px 12px;border-radius:20px;text-decoration:none;margin-bottom:26px;border:1px solid rgba(255,255,255,.15);}
+  .back-pill:hover{background:rgba(255,255,255,.16);color:#fff;}
+
+  /* ── CHAPTER NAV ── */
+  .chapter-nav{background:var(--bg-card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding:0 32px;}
+  .chapter-nav-inner{max-width:1080px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding:10px 0;}
+  .chapter-nav-inner::-webkit-scrollbar{height:0;}
+  .ch-pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;text-decoration:none;color:var(--text-muted);border:1px solid var(--border);white-space:nowrap;transition:all .15s;}
+  .ch-pill:hover{color:var(--text);border-color:var(--navy);background:var(--surface2);}
+  .ch-pill.active{background:#162040;color:#fff;border-color:#162040;}
+  .ch-letter{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--gold);color:#162040;font-size:9px;font-weight:900;}
+
+  /* ── WRAPPER ── */
+  .wrapper{max-width:1080px;margin:0 auto;padding:0 32px;}
+  @media(max-width:640px){.wrapper{padding:0 18px;}.hero{padding:36px 18px 32px;}}
+
+  /* ── SECTION HEADER ── */
+  .section{padding:52px 0 0;}
+  .section-label{font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .section-title{font-size:25px;font-weight:800;letter-spacing:-.02em;color:var(--text);margin-bottom:22px;}
+  .chapter-anchor{display:block;height:80px;margin-top:-80px;visibility:hidden;}
+
+  /* ── ALERT BOXES ── */
+  .alert-box{border-radius:10px;padding:14px 18px;font-size:13.5px;line-height:1.55;margin-bottom:14px;}
+  .alert-red{background:rgba(201,64,46,.08);border-left:3px solid var(--coral);color:var(--text);}
+  .alert-green{background:rgba(42,122,69,.08);border-left:3px solid var(--green);color:var(--text);}
+  .alert-gold{background:rgba(240,165,0,.08);border-left:3px solid var(--gold);color:var(--text);}
+  .alert-blue{background:rgba(58,128,208,.08);border-left:3px solid var(--blue);color:var(--text);}
+
+  /* ── GRID CARDS ── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
+  .kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px 16px;text-align:center;}
+  .kpi-num{font-size:30px;font-weight:900;color:#162040;line-height:1;}
+  [data-theme="dark"] .kpi-num,.dark .kpi-num{color:var(--gold);}
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .kpi-num{color:var(--gold);}}
+  .kpi-label{font-size:11.5px;color:var(--text-muted);margin-top:5px;}
+
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
+  .card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+  .card h3{font-size:14px;font-weight:800;margin-bottom:6px;}
+  .card p{font-size:13px;color:var(--text-muted);line-height:1.55;}
+  .card-icon{font-size:22px;margin-bottom:8px;}
+
+  /* ── PHASE TIMELINE ── */
+  .phase-list{display:flex;flex-direction:column;gap:10px;}
+  .phase-row{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:flex-start;}
+  .phase-dot{width:44px;height:44px;border-radius:50%;background:#162040;color:#F0A500;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .phase-body{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .phase-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .phase-title{font-size:14px;font-weight:800;}
+  .phase-time{font-size:11px;color:var(--text-muted);font-weight:700;}
+  .phase-desc{font-size:12.5px;color:var(--text-muted);margin:.5rem 0;}
+  .tag-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(58,128,208,.1);color:var(--blue);}
+  .tag-gold{background:rgba(240,165,0,.1);color:var(--orange);}
+  .tag-green{background:rgba(42,122,69,.1);color:var(--green);}
+  .tag-coral{background:rgba(201,64,46,.1);color:var(--coral);}
+
+  /* ── QUELLEN ── */
+  .quellen-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .quelle-chip{background:var(--bg-card);border:1px solid var(--border);border-radius:7px;padding:5px 12px;font-size:12.5px;display:flex;align-items:center;gap:7px;}
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .dot-gold{background:var(--gold);}
+  .dot-green{background:var(--green);}
+  .dot-blue{background:var(--blue);}
+
+  /* ── COMPETITOR TABLE ── */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{background:rgba(22,32,64,.07);color:var(--text);font-weight:700;padding:10px 14px;text-align:left;border-bottom:2px solid var(--border);}
+  [data-theme="dark"] th{background:rgba(255,255,255,.05);}
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) th{background:rgba(255,255,255,.05);}}
+  td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;}
+  tr:last-child td{border-bottom:none;}
+  .tr-highlight{background:rgba(42,122,69,.06);}
+
+  /* ── STAERKE-BALKEN ── */
+  .staerke-wrap{background:var(--surface2);height:6px;border-radius:3px;margin-top:6px;overflow:hidden;}
+  .staerke-bar{height:100%;border-radius:3px;background:var(--blue);}
+
+  /* ── ROI RANKING ── */
+  .rang-list{display:flex;flex-direction:column;gap:0;}
+  .rang-row{display:flex;align-items:flex-start;gap:14px;padding:16px 0;border-bottom:1px solid var(--border);}
+  .rang-row:last-child{border-bottom:none;}
+  .rang-badge{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;}
+  .rang-1{background:#FEF3C7;color:#92400E;}
+  .rang-2{background:rgba(58,128,208,.12);color:#1D5095;}
+  .rang-3{background:rgba(42,122,69,.12);color:#1A5530;}
+  .rang-4{background:rgba(240,165,0,.1);color:var(--orange);}
+  .rang-x{background:var(--surface2);color:var(--text-muted);}
+  .rang-name{font-size:14px;font-weight:800;margin-bottom:4px;}
+  .rang-desc{font-size:12.5px;color:var(--text-muted);line-height:1.55;}
+
+  /* ── PLATFORM / BUNDLE BARS ── */
+  .platform-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+  .platform-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;}
+  .platform-card::after{content:'';position:absolute;bottom:0;left:0;height:3px;width:var(--pct);background:var(--clr);}
+  .platform-num{font-size:32px;font-weight:900;line-height:1;margin-bottom:4px;}
+  .platform-name{font-size:13px;font-weight:700;}
+  .platform-pct{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .platform-note{font-size:11.5px;color:var(--text-muted);margin-top:8px;line-height:1.55;}
+
+  .bundle-list{display:flex;flex-direction:column;gap:8px;}
+  .bundle-row{display:flex;align-items:center;gap:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:9px;padding:12px 16px;}
+  .bundle-name{font-size:13px;font-weight:700;min-width:210px;}
+  .bundle-bar-wrap{flex:1;background:var(--surface2);height:7px;border-radius:4px;overflow:hidden;}
+  .bundle-bar{height:100%;border-radius:4px;background:var(--gold);}
+  .bundle-n{font-size:12px;font-weight:800;color:var(--gold);min-width:28px;text-align:right;}
+
+  /* ── BRANCHE ── */
+  .branchen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;}
+  .branche-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+  .branche-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .branche-icon{font-size:20px;}
+  .branche-title{font-size:13px;font-weight:700;}
+  .branche-count{font-size:11px;font-weight:700;background:rgba(240,165,0,.12);color:var(--gold);padding:2px 8px;border-radius:20px;margin-left:auto;}
+  .branche-names{font-size:11.5px;color:var(--text-muted);line-height:1.6;}
+
+  /* ── CASE STUDIES ── */
+  .cases-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;}
+  .case-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+  .case-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:20px;margin-bottom:10px;}
+  .cb-wine{background:rgba(100,30,100,.1);color:#7A2580;}
+  .cb-mode{background:rgba(58,128,208,.1);color:var(--blue);}
+  .cb-green{background:rgba(42,122,69,.1);color:var(--green);}
+  .cb-high{background:rgba(201,64,46,.08);color:var(--coral);}
+  .case-card h3{font-size:15px;font-weight:800;margin-bottom:5px;}
+  .case-problem{font-size:12.5px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;}
+  .case-result{background:rgba(42,122,69,.07);border-left:3px solid var(--green);border-radius:0 6px 6px 0;padding:8px 12px;font-size:12px;line-height:1.55;}
+
+  /* ── WACHSTUM ── */
+  .wachstum-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:9px;}
+  .w-item{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 13px;}
+  .w-name{font-size:12px;font-weight:700;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .w-bar-wrap{background:var(--surface2);height:5px;border-radius:3px;overflow:hidden;margin-bottom:3px;}
+  .w-bar{height:100%;border-radius:3px;}
+  .w-num{font-size:10.5px;color:var(--text-muted);}
+
+  /* ── MIG ── */
+  .mig-list{display:flex;flex-direction:column;gap:7px;}
+  .mig-row{display:flex;align-items:center;gap:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:11px 15px;font-size:13px;}
+  .mig-name{font-weight:700;min-width:150px;}
+  .mig-from{color:var(--coral);font-size:12px;}
+  .mig-arrow{color:var(--text-muted);font-size:16px;}
+  .mig-to{color:var(--green);font-size:12px;font-weight:700;}
+
+  /* ── GEO ── */
+  .geo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;}
+  .geo-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+  .geo-flag{font-size:26px;margin-bottom:5px;}
+  .geo-num{font-size:20px;font-weight:800;}
+  .geo-label{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .geo-names{font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.6;}
+
+  /* ── INSIGHTS / DO-DONT ── */
+  .insights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:13px;}
+  .insight-card{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:8px;padding:16px 18px;}
+  .insight-card h4{font-size:14px;font-weight:700;margin-bottom:5px;}
+  .insight-card p{font-size:12.5px;color:var(--text-muted);line-height:1.55;}
+
+  .split-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:600px){.split-grid{grid-template-columns:1fr;}}
+  .split-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .split-head{padding:12px 18px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;}
+  .split-head.gold{background:rgba(240,165,0,.1);color:var(--orange);}
+  .split-head.green{background:rgba(42,122,69,.1);color:var(--green);}
+  .split-head.red{background:rgba(201,64,46,.08);color:var(--coral);}
+  .split-list{list-style:none;padding:0 0 8px;}
+  .split-list li{padding:8px 18px;font-size:12.5px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start;line-height:1.45;}
+  .split-list li:last-child{border-bottom:none;}
+  .m{flex-shrink:0;font-weight:800;color:var(--text-muted);}
+
+  /* ── MASSNAHMEN ── */
+  .massnahmen-list{display:flex;flex-direction:column;gap:10px;}
+  .mn-row{display:flex;align-items:flex-start;gap:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;}
+  .mn-num{width:28px;height:28px;border-radius:50%;background:#162040;color:#F0A500;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .mn-title{font-size:14px;font-weight:800;margin-bottom:4px;}
+  .mn-desc{font-size:12.5px;color:var(--text-muted);line-height:1.55;}
+
+  /* ── DIVIDER ── */
+  .chapter-divider{height:1px;background:var(--border);margin:48px 0 0;}
+  .footer{padding:24px 0 40px;font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+
+  /* ── HIGHLIGHT ── */
+  .highlight-box{background:rgba(240,165,0,.07);border:1px solid rgba(240,165,0,.22);border-radius:10px;padding:14px 18px;font-size:13.5px;line-height:1.6;margin-bottom:18px;}
+  .highlight-box strong{color:var(--orange);}
+
+  /* ── ERGAENZ ── */
+  .ergaenz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+  .ergaenz-card{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:8px;padding:14px 16px;}
+  .ergaenz-badge{display:inline-block;background:rgba(240,165,0,.1);color:var(--orange);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:6px;letter-spacing:.05em;}
+  .ergaenz-card h4{font-size:13px;font-weight:800;margin-bottom:5px;}
+  .ergaenz-card p{font-size:12px;color:var(--text-muted);line-height:1.55;}
+
+  /* ── OUTPUT GRID ── */
+  .output-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;}
+  .output-card{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:8px;padding:14px 16px;}
+  .output-icon{font-size:18px;margin-bottom:6px;}
+  .output-card h4{font-size:13px;font-weight:800;margin-bottom:4px;}
+  .output-card p{font-size:12px;color:var(--text-muted);line-height:1.5;}
+</style>
+</head>
+<body>
+
+<!-- ══ HERO ══ -->
+<div class="hero">
+  <div class="wrapper" style="position:relative;z-index:1;">
+    <a class="back-pill" href="/formulare.html">← ProjektHub</a>
+    <div class="hero-eyebrow">Marktplatzhelden · Gesamtanalyse 2026</div>
+    <h1 class="hero-title">Alles auf einen Blick —<br><span>Strategie, Markt, Kunden.</span></h1>
+    <p class="hero-sub">Konzept + Wettbewerbs-Analyse + Kundenstamm-Tiefenanalyse zusammengefasst. Alle Erkenntnisse, Daten und Handlungsempfehlungen in einer Seite.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><span class="hero-stat-num">41</span><span class="hero-stat-label">Kunden analysiert</span></div>
+      <div class="hero-stat"><span class="hero-stat-num">4</span><span class="hero-stat-label">Wettbewerber</span></div>
+      <div class="hero-stat"><span class="hero-stat-num">0</span><span class="hero-stat-label">Etsy-Konkurrenten</span></div>
+      <div class="hero-stat"><span class="hero-stat-num">5</span><span class="hero-stat-label">Weingüter</span></div>
+      <div class="hero-stat"><span class="hero-stat-num">8</span><span class="hero-stat-label">Migrationen</span></div>
+      <div class="hero-stat"><span class="hero-stat-num">5</span><span class="hero-stat-label">Prioritäts-Maßnahmen</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CHAPTER NAV ══ -->
+<nav class="chapter-nav">
+  <div class="chapter-nav-inner">
+    <a class="ch-pill" href="#konzept"><span class="ch-letter">A</span> Konzept &amp; Methode</a>
+    <a class="ch-pill" href="#wettbewerb"><span class="ch-letter">B</span> Wettbewerb</a>
+    <a class="ch-pill" href="#kunden"><span class="ch-letter">C</span> Kundenstamm</a>
+    <a class="ch-pill" href="#roi"><span class="ch-letter">D</span> ROI &amp; Nischen</a>
+    <a class="ch-pill" href="#strategie"><span class="ch-letter">E</span> Strategie &amp; Maßnahmen</a>
+  </div>
+</nav>
+
+<div class="wrapper">
+
+  <!-- ══════════════════════════════════════
+       A — KONZEPT & METHODE
+  ══════════════════════════════════════ -->
+  <a class="chapter-anchor" id="konzept"></a>
+  <div class="section">
+    <div class="section-label">Kapitel A</div>
+    <div class="section-title">Konzept &amp; Methode</div>
+
+    <!-- Kernfragen -->
+    <div class="card-grid" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="card-icon">🎯</div>
+        <h3>Wer sind unsere Marktbegleiter?</h3>
+        <p>Welche Agenturen bedienen dieselbe Nische — Shopify, Etsy, Plentymarkets, E-Commerce-Beratung — in DACH?</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📣</div>
+        <h3>Wer ist Social Media stark?</h3>
+        <p>Welche Wettbewerber haben eine sichtbare, funktionierende Präsenz — und was machen sie konkret?</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">👥</div>
+        <h3>Wo überschneiden sich Kunden?</h3>
+        <p>Welche Bestandskunden bedient auch der Wettbewerb — und welche Segmente sind unbesetzte Chancen?</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">💶</div>
+        <h3>Was bringt am meisten Geld?</h3>
+        <p>Welche Dienstleistungen haben den höchsten ROI, die kürzeste Sales-Cycle und das beste Skalierungspotenzial?</p>
+      </div>
+    </div>
+
+    <!-- Datenquellen -->
+    <div class="section-label" style="margin-bottom:8px;">8 Datenquellen</div>
+    <div class="quellen-row" style="margin-bottom:28px;">
+      <div class="quelle-chip"><span class="dot dot-gold"></span>marktplatzhelden.at</div>
+      <div class="quelle-chip"><span class="dot dot-gold"></span>Instagram / TikTok / LinkedIn MPH</div>
+      <div class="quelle-chip"><span class="dot dot-green"></span>Kundenliste (Google Sheets — 41 Kunden)</div>
+      <div class="quelle-chip"><span class="dot dot-blue"></span>Wettbewerber-Websites (Firecrawl)</div>
+      <div class="quelle-chip"><span class="dot dot-blue"></span>Social Media Wettbewerber</div>
+      <div class="quelle-chip"><span class="dot dot-gold"></span>Google Business Reviews</div>
+      <div class="quelle-chip"><span class="dot dot-gold"></span>Trustpilot / ProvenExpert</div>
+      <div class="quelle-chip"><span class="dot dot-blue"></span>Exa / Firecrawl Webrecherche</div>
+    </div>
+
+    <!-- 6 Phasen -->
+    <div class="section-label" style="margin-bottom:12px;">6 Analysephasen</div>
+    <div class="phase-list">
+      <div class="phase-row">
+        <div class="phase-dot">1</div>
+        <div class="phase-body">
+          <div class="phase-head"><div class="phase-title">Eigenprofil Marktplatzhelden</div><div class="phase-time">~1h</div></div>
+          <p class="phase-desc">Website screenen, alle Dienstleistungen, Preismodelle, USPs und aktuelle Social Media Kanäle erfassen. Dienstleistungsmatrix aufbauen.</p>
+          <div class="tag-row"><span class="tag">Website-Scan</span><span class="tag">Social Media Audit</span><span class="tag">Dienstleistungsmatrix</span></div>
+        </div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-dot">2</div>
+        <div class="phase-body">
+          <div class="phase-head"><div class="phase-title">Marktbegleiter identifizieren</div><div class="phase-time">~1h</div></div>
+          <p class="phase-desc">Systematische Suche nach Agenturen mit Fokus auf Shopify, Etsy, Plentymarkets. Shortlist von 8–12 relevanten Playern → 4 gefunden.</p>
+          <div class="tag-row"><span class="tag">Google-Suche</span><span class="tag">Exa-Recherche</span><span class="tag">Shortlist erstellen</span></div>
+        </div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-dot">3</div>
+        <div class="phase-body">
+          <div class="phase-head"><div class="phase-title">Wettbewerber-Tiefenscan</div><div class="phase-time">~2–3h</div></div>
+          <p class="phase-desc">Jede Wettbewerber-Website scrapen: Dienstleistungen, Preise, Zielgruppen, USPs, Testimonials, Kundennamen. Bewertungen auslesen.</p>
+          <div class="tag-row"><span class="tag">Firecrawl Scraping</span><span class="tag">Reviews analysieren</span><span class="tag tag-gold">Preisrecherche</span></div>
+        </div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-dot">4</div>
+        <div class="phase-body">
+          <div class="phase-head"><div class="phase-title">Social Media Analyse Top-Performer</div><div class="phase-time">~1–2h</div></div>
+          <p class="phase-desc">Die Social-stärksten Wettbewerber identifizieren. Content-Formate, Frequenz, Follower, Engagement, Themen. Playbook ableiten.</p>
+          <div class="tag-row"><span class="tag">Instagram</span><span class="tag">TikTok</span><span class="tag">LinkedIn</span><span class="tag tag-gold">KI-Automatisierungsplan</span></div>
+        </div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-dot">5</div>
+        <div class="phase-body">
+          <div class="phase-head"><div class="phase-title">Kunden-Matching &amp; Segmentierung</div><div class="phase-time">~1h</div></div>
+          <p class="phase-desc">41 Kunden aus Google Sheet auswerten. Branchen, Unternehmensgrößen, Plattformen clustern. Overlap mit Wettbewerb identifizieren.</p>
+          <div class="tag-row"><span class="tag">Sheets-Auswertung</span><span class="tag">Branchen-Clustering</span><span class="tag">Overlap-Analyse</span></div>
+        </div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-dot">6</div>
+        <div class="phase-body">
+          <div class="phase-head"><div class="phase-title">Wirtschaftlichkeits-Ranking &amp; Handlungsplan</div><div class="phase-time">~1h</div></div>
+          <p class="phase-desc">Alle Dienstleistungen nach Marge, Skalierbarkeit, Aufwand und Marktpotenzial bewerten. Top-5 definieren. Handlungsempfehlungen ableiten.</p>
+          <div class="tag-row"><span class="tag">ROI-Matrix</span><span class="tag">Pricing-Empfehlungen</span><span class="tag tag-gold">KI-Geschäftsfeld</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chapter-divider"></div>
+
+  <!-- ══════════════════════════════════════
+       B — WETTBEWERB
+  ══════════════════════════════════════ -->
+  <a class="chapter-anchor" id="wettbewerb"></a>
+  <div class="section">
+    <div class="section-label">Kapitel B</div>
+    <div class="section-title">Wettbewerbs-Analyse</div>
+
+    <div class="alert-box alert-red" style="margin-bottom:12px;">🚨 <strong>Domain-Problem:</strong> marktplatzhelden.de (ohne Bindestrich) leitet zu Tentary weiter — ein fremdes Produkt fängt MPH-Anfragen ab. Sofort handeln.</div>
+    <div class="alert-box alert-green" style="margin-bottom:24px;">✅ <strong>Alleinstellung:</strong> MPH ist die einzige identifizierbare Etsy-Agentur im DACH-Raum. Keiner der 4 Wettbewerber hat diese Nische.</div>
+
+    <!-- Wettbewerber-Tabelle -->
+    <div class="table-wrap" style="margin-bottom:24px;">
+      <table>
+        <thead>
+          <tr><th>Anbieter</th><th>Stärken</th><th>Positionierung</th><th style="text-align:center;">Etsy?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Hanno Fäßler</strong><br><span style="font-size:11px;color:var(--text-muted);">AT · Solo</span></td>
+            <td>TÜV-zertifiziert, starkes LinkedIn-Personal-Brand, Premium-Marke</td>
+            <td>Hochpreis, Vertrauen durch Zertifikat</td>
+            <td style="text-align:center;">❌</td>
+          </tr>
+          <tr>
+            <td><strong>Sharobella Wien</strong><br><span style="font-size:11px;color:var(--text-muted);">AT · Agentur</span></td>
+            <td>6 Social-Kanäle, Full-Service, KI-Agentur Wien — stärkster Social-Media-Player</td>
+            <td>Full-Service Shopify + KI, Wien</td>
+            <td style="text-align:center;">❌</td>
+          </tr>
+          <tr>
+            <td><strong>Shopwert</strong><br><span style="font-size:11px;color:var(--text-muted);">AT · Agentur</span></td>
+            <td>Günstiger Einstieg, technisch fokussiert</td>
+            <td>Budget-Segment, technische Umsetzung</td>
+            <td style="text-align:center;">❌</td>
+          </tr>
+          <tr>
+            <td><strong>IT-KS Tirol</strong><br><span style="font-size:11px;color:var(--text-muted);">AT · Solo</span></td>
+            <td>Stundenbasis, Tirol-lokal, persönlicher Service</td>
+            <td>Regional, flexibel, kein Premium</td>
+            <td style="text-align:center;">❌</td>
+          </tr>
+          <tr class="tr-highlight">
+            <td><strong>Marktplatzhelden</strong><br><span style="font-size:11px;color:var(--green);">MPH · Solo</span></td>
+            <td>Einzige Etsy-Agentur DACH, Weinbranche, persönlich, AT-fokussiert</td>
+            <td>Etsy + Shopify Spezialist, KMU AT</td>
+            <td style="text-align:center;font-weight:800;color:var(--green);">✅ ALLEIN</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Social Media Stärken -->
+    <div class="section-label" style="margin-bottom:12px;">Social Media — Stärkenvergleich</div>
+    <div class="table-wrap" style="margin-bottom:18px;">
+      <table>
+        <thead>
+          <tr><th>Anbieter</th><th>Kanäle</th><th>Stärke (visuell)</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Sharobella</strong></td>
+            <td>Instagram, LinkedIn, YouTube, Facebook, Dribbble, Behance</td>
+            <td><div class="staerke-wrap"><div class="staerke-bar" style="width:95%;"></div></div></td>
+          </tr>
+          <tr>
+            <td><strong>Hanno Fäßler</strong></td>
+            <td>LinkedIn (stark), Website</td>
+            <td><div class="staerke-wrap"><div class="staerke-bar" style="width:60%;"></div></div></td>
+          </tr>
+          <tr>
+            <td><strong>Shopwert</strong></td>
+            <td>Website, kaum Social</td>
+            <td><div class="staerke-wrap"><div class="staerke-bar" style="width:20%;"></div></div></td>
+          </tr>
+          <tr>
+            <td><strong>IT-KS</strong></td>
+            <td>Nur Website</td>
+            <td><div class="staerke-wrap"><div class="staerke-bar" style="width:10%;"></div></div></td>
+          </tr>
+          <tr class="tr-highlight">
+            <td><strong>MPH</strong></td>
+            <td>Instagram (@marktplatzhelden) — Potenzial ungenutzt</td>
+            <td><div class="staerke-wrap"><div class="staerke-bar" style="width:30%;background:var(--gold);"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert-box alert-gold">⚠️ Stärkster Social-Wettbewerber: <strong>Sharobella Wien</strong> mit 6 Kanälen. Differenzierung für MPH: über Etsy-Nische und persönlichen Stil von Daniel — nicht über Kanalanzahl.</div>
+  </div>
+
+  <div class="chapter-divider"></div>
+
+  <!-- ══════════════════════════════════════
+       C — KUNDENSTAMM
+  ══════════════════════════════════════ -->
+  <a class="chapter-anchor" id="kunden"></a>
+  <div class="section">
+    <div class="section-label">Kapitel C</div>
+    <div class="section-title">Kundenstamm — 41 Kunden</div>
+
+    <div class="highlight-box"><strong>Hinweis:</strong> Schneider Korbwaren ist im Sheet als „Shopify" geführt, war aber ein Plentymarkets-Projekt (50.000+ Artikel, B2B+B2C). <strong>eydl Wood Jewelry</strong> = eigener MPH-Shop, kein externer Kunde.</div>
+
+    <!-- Plattform-Split -->
+    <div class="platform-row" style="margin-bottom:28px;">
+      <div class="platform-card" style="--pct:68%;--clr:#F0A500;">
+        <div class="platform-num" style="color:#F0A500;">28</div>
+        <div class="platform-name">Shopify</div>
+        <div class="platform-pct">68% · Kerngeschäft</div>
+        <div class="platform-note">Setup, Relaunch, Betreuung, Coaching — alle Leistungsarten</div>
+      </div>
+      <div class="platform-card" style="--pct:17%;--clr:#3A80D0;">
+        <div class="platform-num" style="color:#3A80D0;">7</div>
+        <div class="platform-name">Etsy</div>
+        <div class="platform-pct">17% · Alleinstellung</div>
+        <div class="platform-note">Kein Wettbewerber in DACH besetzt diese Nische</div>
+      </div>
+      <div class="platform-card" style="--pct:10%;--clr:#2A7A45;">
+        <div class="platform-num" style="color:#2A7A45;">4</div>
+        <div class="platform-name">Website</div>
+        <div class="platform-pct">10% · Randsegment</div>
+        <div class="platform-note">Pea Nut, SMV, Kathrin Schlener, Fairmoney</div>
+      </div>
+      <div class="platform-card" style="--pct:5%;--clr:#C9402E;">
+        <div class="platform-num" style="color:#C9402E;">2</div>
+        <div class="platform-name">SEO Coaching</div>
+        <div class="platform-pct">5% · Ergänzung</div>
+        <div class="platform-note">Landhaus Kainz, Urleben</div>
+      </div>
+    </div>
+
+    <!-- Branchen -->
+    <div class="section-label" style="margin-bottom:12px;">Branchen-Cluster</div>
+    <div class="branchen-grid" style="margin-bottom:28px;">
+      <div class="branche-card">
+        <div class="branche-head"><div class="branche-icon">🍷</div><div class="branche-title">Wein &amp; Weingüter</div><div class="branche-count">5</div></div>
+        <div class="branche-names">Pilch · Gallunder · Weingut Wieser · Weinbau Huber · Weingut Pugl<br><em style="font-size:11px;">→ stärkster Nischen-Cluster, kein Wettbewerber</em></div>
+      </div>
+      <div class="branche-card">
+        <div class="branche-head"><div class="branche-icon">💎</div><div class="branche-title">Schmuck &amp; Accessoires</div><div class="branche-count">3</div></div>
+        <div class="branche-names">Schmuckfach · Moana · eydl (Eigenshop)<br><em style="font-size:11px;">→ visuell anspruchsvoll, hoher Foto-Anteil</em></div>
+      </div>
+      <div class="branche-card">
+        <div class="branche-head"><div class="branche-icon">🪵</div><div class="branche-title">Holz, Handwerk &amp; Natur-Design</div><div class="branche-count">5+</div></div>
+        <div class="branche-names">Woodprinz · Zirmladal · Zirbelzauber Kissen · Klenk design · Seiligtum</div>
+      </div>
+      <div class="branche-card">
+        <div class="branche-head"><div class="branche-icon">🌿</div><div class="branche-title">Natur, Kräuter &amp; Wellness</div><div class="branche-count">4</div></div>
+        <div class="branche-names">Röck Naturprodukte · Ekosi · KRÄUTerLEBEN · Waldkraft Wildnisschule</div>
+      </div>
+      <div class="branche-card">
+        <div class="branche-head"><div class="branche-icon">💇</div><div class="branche-title">Haare, Mode &amp; Textil</div><div class="branche-count">4</div></div>
+        <div class="branche-names">Löwenmähne · Big Hair Shop · Ferschinger · It´sew possible<br><em style="font-size:11px;">→ Löwenmähne: höchster Kundeneinsatz 10h</em></div>
+      </div>
+      <div class="branche-card">
+        <div class="branche-head"><div class="branche-icon">🌸</div><div class="branche-title">Blumen, Deko &amp; Heimat</div><div class="branche-count">4</div></div>
+        <div class="branche-names">Die Meisterfloristin · Geburtstagsdeko · Hoamat Gfui · Girnerhof</div>
+      </div>
+      <div class="branche-card">
+        <div class="branche-head"><div class="branche-icon">🥘</div><div class="branche-title">Feinkost &amp; Lebensmittel</div><div class="branche-count">3</div></div>
+        <div class="branche-names">Gaumengut · Girnerhof · Sardineum</div>
+      </div>
+      <div class="branche-card">
+        <div class="branche-head"><div class="branche-icon">🏋️</div><div class="branche-title">Sport, Outdoor &amp; Adventure</div><div class="branche-count">3</div></div>
+        <div class="branche-names">SN Sports · Bushcraft Playground · Waldkraft Wildnisschule</div>
+      </div>
+    </div>
+
+    <!-- Service Bundles -->
+    <div class="section-label" style="margin-bottom:12px;">Gebuchte Services nach Häufigkeit</div>
+    <div class="bundle-list" style="margin-bottom:28px;">
+      <div class="bundle-row"><div class="bundle-name">🛒 Shopify Onlineshop Setup (komplett)</div><div class="bundle-bar-wrap"><div class="bundle-bar" style="width:78%"></div></div><div class="bundle-n">22</div></div>
+      <div class="bundle-row"><div class="bundle-name">📸 Produktfotos &amp; Moodboard</div><div class="bundle-bar-wrap"><div class="bundle-bar" style="width:58%"></div></div><div class="bundle-n">16</div></div>
+      <div class="bundle-row"><div class="bundle-name">📧 E-Mail Marketing / Newsletter</div><div class="bundle-bar-wrap"><div class="bundle-bar" style="width:40%"></div></div><div class="bundle-n">11</div></div>
+      <div class="bundle-row"><div class="bundle-name">🔄 Relaunch / Plattform-Migration</div><div class="bundle-bar-wrap"><div class="bundle-bar" style="width:30%"></div></div><div class="bundle-n">8</div></div>
+      <div class="bundle-row"><div class="bundle-name">🔍 SEO Coaching oder Umsetzung</div><div class="bundle-bar-wrap"><div class="bundle-bar" style="width:22%"></div></div><div class="bundle-n">6</div></div>
+      <div class="bundle-row"><div class="bundle-name">🧵 Etsy Coaching / Aufbau</div><div class="bundle-bar-wrap"><div class="bundle-bar" style="width:24%;background:var(--blue);"></div></div><div class="bundle-n" style="color:var(--blue);">7</div></div>
+    </div>
+
+    <!-- Migrationen -->
+    <div class="section-label" style="margin-bottom:12px;">8 Plattform-Migrationen → alle zu Shopify</div>
+    <div class="mig-list" style="margin-bottom:28px;">
+      <div class="mig-row"><div class="mig-name">Geburtstagsdeko</div><div class="mig-from">Shopware 6</div><div class="mig-arrow">→</div><div class="mig-to">Shopify</div><div style="font-size:11px;color:var(--text-muted);margin-left:auto;">Budget 3 · komplex</div></div>
+      <div class="mig-row"><div class="mig-name">Gaumengut</div><div class="mig-from">WooCommerce</div><div class="mig-arrow">→</div><div class="mig-to">Shopify</div></div>
+      <div class="mig-row"><div class="mig-name">Weingut Wieser</div><div class="mig-from">WooCommerce</div><div class="mig-arrow">→</div><div class="mig-to">Shopify</div></div>
+      <div class="mig-row"><div class="mig-name">Kindermotorräder Galler</div><div class="mig-from">Gambio</div><div class="mig-arrow">→</div><div class="mig-to">Shopify</div></div>
+      <div class="mig-row"><div class="mig-name">Gallunder</div><div class="mig-from">alte Website</div><div class="mig-arrow">→</div><div class="mig-to">Shopify + NL</div></div>
+      <div class="mig-row"><div class="mig-name">Hoamat Gfui</div><div class="mig-from">Shopify (alt)</div><div class="mig-arrow">→</div><div class="mig-to">Shopify Relaunch</div></div>
+      <div class="mig-row"><div class="mig-name">Weinbau Huber</div><div class="mig-from">alte Website</div><div class="mig-arrow">→</div><div class="mig-to">Relaunch mit Shopify</div></div>
+      <div class="mig-row"><div class="mig-name">Pilch</div><div class="mig-from">besteh. Website</div><div class="mig-arrow">→</div><div class="mig-to">+ Shopify Shop</div></div>
+    </div>
+    <div class="alert-box alert-gold" style="margin-bottom:28px;"><strong>Erkenntnis:</strong> 100 % der Migrations-Kunden wechseln zu Shopify — nie weg von Shopify. Das ist ein starkes Verkaufsargument: <em>„Wir holen dich weg von Shopware / WooCommerce / Gambio."</em></div>
+
+    <!-- Case Studies -->
+    <div class="section-label" style="margin-bottom:12px;">Beste Case Studies</div>
+    <div class="cases-grid" style="margin-bottom:28px;">
+      <div class="case-card">
+        <div class="case-badge cb-wine">🍷 Weingut · Stärkster Case</div>
+        <h3>Weingut Pilch</h3>
+        <p class="case-problem">Vorhandener Shop brachte kaum Umsätze. Niedriger Durchschnittsbestellwert. NL-Adressen ungenutzt. Familienbetrieb 3. Generation.</p>
+        <div class="case-result">✓ Markante Erhöhung der Onlineshop-Umsätze<br>✓ Erhöhung der SEO Sichtbarkeit<br>✓ Konstanter NL-Versand → mehr Traffic</div>
+      </div>
+      <div class="case-card">
+        <div class="case-badge cb-high">⚡ High-End · Storytelling</div>
+        <h3>Seiligtum</h3>
+        <p class="case-problem">Produkt noch nicht fertig bei Projektstart, Termindruck, Wunsch eines conversion-starken Shops mit Storytelling.</p>
+        <div class="case-result">✓ Conversion-starker Onlineshop mit Storytelling<br>✓ High-End Produktverkauf erfolgreich lanciert</div>
+      </div>
+      <div class="case-card">
+        <div class="case-badge cb-mode">👗 Mode · Influencer</div>
+        <h3>Ferschinger</h3>
+        <p class="case-problem">Hohe Warenkorb-Abbruchrate. Marke mit strikten Design-Vorgaben. Langfristige Partnerschaft gesucht.</p>
+        <div class="case-result">✓ Shop im vorgegebenen Design<br>✓ Erfolgreiche Influencer-Strategie<br>✓ Sortimenterweiterung umgesetzt</div>
+      </div>
+      <div class="case-card">
+        <div class="case-badge cb-green">🌿 Full-Service · Größtes Paket</div>
+        <h3>Röck Naturprodukte</h3>
+        <p class="case-problem">Gesamte Marketingstrategie gesucht. Budget 2, 8h Kundeneinsatz — aufwändigstes Shopify-Projekt.</p>
+        <div class="case-result">✓ Shop + Fotos + E-Mail + Social Media<br>✓ SEO + Conversion-Optimierung</div>
+      </div>
+    </div>
+
+    <!-- Wachstum -->
+    <div class="section-label" style="margin-bottom:12px;">Wachstums-Score (aus Sheet)</div>
+    <div class="wachstum-grid" style="margin-bottom:16px;">
+      <div class="w-item"><div class="w-name">Girnerhof</div><div class="w-bar-wrap"><div class="w-bar" style="width:100%;background:var(--green);"></div></div><div class="w-num">100</div></div>
+      <div class="w-item"><div class="w-name">Pea Nut</div><div class="w-bar-wrap"><div class="w-bar" style="width:100%;background:var(--green);"></div></div><div class="w-num">100</div></div>
+      <div class="w-item"><div class="w-name">SMV Packaging</div><div class="w-bar-wrap"><div class="w-bar" style="width:91%;background:var(--green);"></div></div><div class="w-num">91</div></div>
+      <div class="w-item"><div class="w-name">Seiligtum</div><div class="w-bar-wrap"><div class="w-bar" style="width:90%;background:var(--green);"></div></div><div class="w-num">90</div></div>
+      <div class="w-item"><div class="w-name">Die Meisterfloristin</div><div class="w-bar-wrap"><div class="w-bar" style="width:89%;background:var(--green);"></div></div><div class="w-num">89</div></div>
+      <div class="w-item"><div class="w-name">Löwenmähne</div><div class="w-bar-wrap"><div class="w-bar" style="width:89%;background:var(--green);"></div></div><div class="w-num">89</div></div>
+      <div class="w-item"><div class="w-name">eydl (Eigenshop)</div><div class="w-bar-wrap"><div class="w-bar" style="width:87%;background:var(--gold);"></div></div><div class="w-num">87</div></div>
+      <div class="w-item"><div class="w-name">Kästenburg</div><div class="w-bar-wrap"><div class="w-bar" style="width:85%;background:var(--gold);"></div></div><div class="w-num">85</div></div>
+      <div class="w-item"><div class="w-name">Hoamat Gfui</div><div class="w-bar-wrap"><div class="w-bar" style="width:77%;background:var(--gold);"></div></div><div class="w-num">77</div></div>
+      <div class="w-item"><div class="w-name">Waldkraft</div><div class="w-bar-wrap"><div class="w-bar" style="width:76%;background:var(--gold);"></div></div><div class="w-num">76</div></div>
+      <div class="w-item"><div class="w-name">Pilch</div><div class="w-bar-wrap"><div class="w-bar" style="width:65%;background:var(--gold);"></div></div><div class="w-num">65</div></div>
+      <div class="w-item"><div class="w-name">Weingut Wieser</div><div class="w-bar-wrap"><div class="w-bar" style="width:49%;background:var(--coral);"></div></div><div class="w-num">49</div></div>
+      <div class="w-item"><div class="w-name">Ekosi</div><div class="w-bar-wrap"><div class="w-bar" style="width:49%;background:var(--coral);"></div></div><div class="w-num">49</div></div>
+      <div class="w-item"><div class="w-name">Schmuckfach</div><div class="w-bar-wrap"><div class="w-bar" style="width:39%;background:var(--coral);"></div></div><div class="w-num">39</div></div>
+    </div>
+    <div class="alert-box alert-red" style="margin-bottom:28px;">⚠️ <strong>3 Kunden mit niedrigem Wachstum:</strong> Schmuckfach (39), Ekosi (49), Weingut Wieser (49) — alle hatten Shopify-Gesamtpakete. Was lief hier anders? Rückfrage empfohlen.</div>
+
+    <!-- Geografie -->
+    <div class="section-label" style="margin-bottom:12px;">Geografie</div>
+    <div class="geo-grid">
+      <div class="geo-card"><div class="geo-flag">🇦🇹</div><div class="geo-num">34</div><div class="geo-label">Österreich · dominant</div><div class="geo-names">Pilch, Gallunder, Weingut Pugl, Löwenmähne, Seiligtum, Girnerhof, u.v.m.</div></div>
+      <div class="geo-card"><div class="geo-flag">🇩🇪</div><div class="geo-num">4</div><div class="geo-label">Deutschland</div><div class="geo-names">Moana · Hoamat Gfui · Geburtstagsdeko · Klenk design</div></div>
+      <div class="geo-card"><div class="geo-flag">🇨🇭</div><div class="geo-num">3</div><div class="geo-label">Schweiz · strategisch interessant</div><div class="geo-names">Pea Nut · Schneider Korbwaren · Share Swiss — höheres Budget-Niveau</div></div>
+    </div>
+  </div>
+
+  <div class="chapter-divider"></div>
+
+  <!-- ══════════════════════════════════════
+       D — ROI & NISCHEN
+  ══════════════════════════════════════ -->
+  <a class="chapter-anchor" id="roi"></a>
+  <div class="section">
+    <div class="section-label">Kapitel D</div>
+    <div class="section-title">ROI-Ranking &amp; Nischen-Chancen</div>
+
+    <div class="rang-list" style="margin-bottom:24px;">
+      <div class="rang-row">
+        <div class="rang-badge rang-1">1</div>
+        <div>
+          <div class="rang-name">🧵 Etsy Coaching</div>
+          <div class="rang-desc">Alleinstellung im DACH-Markt. Skalierbar als Online-Kurs (297 € Lite / 697 € Pro). Kein Wettbewerber — freie Preisgestaltung möglich. Niedrige Lieferkosten, hohe Marge.</div>
+          <div class="tag-row"><span class="tag tag-green">Alleinstellung</span><span class="tag tag-green">Skalierbar</span><span class="tag tag-green">Hohe Marge</span></div>
+        </div>
+      </div>
+      <div class="rang-row">
+        <div class="rang-badge rang-2">2</div>
+        <div>
+          <div class="rang-name">🛒 Shopify Gesamtpaket</div>
+          <div class="rang-desc">68% der Kunden — Hauptumsatzbringer. Klarer Prozess, wiederholbar. Kombination Setup + SEO + Texte als Bundle erhöht Ticket-Size auf 2.000–5.000 €.</div>
+          <div class="tag-row"><span class="tag">Hauptumsatz</span><span class="tag">68% Kunden</span></div>
+        </div>
+      </div>
+      <div class="rang-row">
+        <div class="rang-badge rang-3">3</div>
+        <div>
+          <div class="rang-name">🤖 KI-Automatisierung</div>
+          <div class="rang-desc">Marktlücke: kein Wettbewerber bietet das gezielt für KMU in AT an. Premium-Pricing 500–2.000 € Einmalsetup. Frühzeitige Positionierung sichert Preisführerschaft.</div>
+          <div class="tag-row"><span class="tag tag-coral">Marktlücke</span><span class="tag tag-coral">Premium</span></div>
+        </div>
+      </div>
+      <div class="rang-row">
+        <div class="rang-badge rang-4">4</div>
+        <div>
+          <div class="rang-name">🔍 SEO Coaching</div>
+          <div class="rang-desc">Wiederholbarer Prozess, gut bundlebar mit Shopify-Paket. Persönliches Coaching behält Wert gegenüber KI-Tools.</div>
+        </div>
+      </div>
+      <div class="rang-row">
+        <div class="rang-badge rang-x">5</div>
+        <div>
+          <div class="rang-name">📧 E-Mail Marketing</div>
+          <div class="rang-desc">Guter Upsell nach Shopify-Setup. Hohe Akzeptanz bei Kunden (11 von 28 Shopify-Kunden). Abhängig von Kundenbereitschaft.</div>
+        </div>
+      </div>
+    </div>
+    <div class="alert-box alert-red" style="margin-bottom:28px;">⛔ <strong>Niedrig-ROI / nicht priorisieren:</strong> Plentymarkets (1 von 41 Kunden), Google/Meta Ads via Partner (geteilte Marge, Abhängigkeit), Website-Erstellung allein ohne E-Commerce.</div>
+
+    <!-- Nischen -->
+    <div class="section-label" style="margin-bottom:12px;">Nischen-Chancen</div>
+    <div class="card-grid" style="margin-bottom:18px;">
+      <div class="card" style="border-left:3px solid #7A2580;">
+        <div class="card-icon">🍷</div>
+        <h3>Weingüter — 12% des Kundenstamms</h3>
+        <p>5 von 41 Kunden sind Weingüter. Kein Wettbewerber hat diese Nische. Weinbranche ist kaufkräftig und stark vernetzt (Winzer kennen Winzer). Empfehlung: <strong>„Shopify für Weingüter"</strong> als dedizierte Landing Page mit Case Studies — günstige SEO-Strategie für ein Premium-Segment.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--blue);">
+        <div class="card-icon">🧵</div>
+        <h3>Etsy — Alleinstellung in DACH</h3>
+        <p>7 Etsy-Kunden, 0 Wettbewerber. Etsy-Kunden sind Kleinstunternehmer auf einer Plattform — MPH kann sie dort abholen oder als natürlichen Nächsten-Schritt zu Shopify führen. <strong>Natürlicher Upsell-Pfad: Etsy → Shopify.</strong></p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green);">
+        <div class="card-icon">🌿</div>
+        <h3>Natur &amp; Wellness</h3>
+        <p>Überschneidung zwischen Etsy-Kunden und Natur-/Kräuter-Branche. Bio-Regionaltypische Produkte stark auf Etsy präsent. Synergie mit Etsy-Coaching ideal — Kunden in dieser Nische kennen sich.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="chapter-divider"></div>
+
+  <!-- ══════════════════════════════════════
+       E — STRATEGIE & MASSNAHMEN
+  ══════════════════════════════════════ -->
+  <a class="chapter-anchor" id="strategie"></a>
+  <div class="section">
+    <div class="section-label">Kapitel E</div>
+    <div class="section-title">Strategie &amp; Maßnahmen</div>
+
+    <!-- Maßnahmen -->
+    <div class="massnahmen-list" style="margin-bottom:28px;">
+      <div class="mn-row">
+        <div class="mn-num">1</div>
+        <div><div class="mn-title">🚨 Domain-Problem lösen</div><div class="mn-desc">marktplatzhelden.de (ohne Bindestrich) kaufen oder Weiterleitung auf marktplatz-helden.at erwirken. Sofortige Umsatzverluste durch fremde Domain stoppen. <strong>Höchste Priorität.</strong></div></div>
+      </div>
+      <div class="mn-row">
+        <div class="mn-num">2</div>
+        <div><div class="mn-title">🧵 Etsy-Kurs entwickeln</div><div class="mn-desc">1 Gruppenformat, 2 Preisstufen (297 € Lite / 697 € Pro), mit bestehendem Wissen aus 7 Kunden-Coachings. Kein Wettbewerber — freie Preisgestaltung. Skalierbarster Service im Portfolio.</div></div>
+      </div>
+      <div class="mn-row">
+        <div class="mn-num">3</div>
+        <div><div class="mn-title">📱 Social Media starten</div><div class="mn-desc">2–3 Reels/Woche, Daniel als Gesicht (wie Hanno Fäßler auf LinkedIn). KI-assistiert: Claude → Script → CapCut → Post. Themen: Etsy-Tipps, Shopify-Fehler, KI-Demos. Kanäle: Instagram (aktiv) + TikTok (neu).</div></div>
+      </div>
+      <div class="mn-row">
+        <div class="mn-num">4</div>
+        <div><div class="mn-title">🍷 Weingut-Landing-Page</div><div class="mn-desc">„Shopify für Weingüter" mit 3–4 Case Studies (Pilch, Gallunder, Wieser, Huber). Günstige SEO-Seite für ein Premium-Segment das sich gegenseitig weiterempfiehlt. Kein Wettbewerber in dieser Nische.</div></div>
+      </div>
+      <div class="mn-row">
+        <div class="mn-num">5</div>
+        <div><div class="mn-title">🤖 KI-Produkt definieren</div><div class="mn-desc">3 konkrete Use Cases, Preisblatt, als eigenständiges Angebot vermarkten. 500–2.000 € Einmalsetup. Frühzeitige Positionierung vor dem Wettbewerb. Sharobella macht KI-Marketing — MPH muss KI-E-Commerce machen.</div></div>
+      </div>
+    </div>
+    <div class="alert-box alert-blue" style="margin-bottom:28px;">⏸ <strong>Zurückgestellt:</strong> Google/Meta Ads, Plentymarkets-Akquise, LinkedIn-Aufbau (Phase 2 nach Etsy-Kurs), Amazon (intern bereits abgelehnt).</div>
+
+    <!-- Ergänzungen -->
+    <div class="section-label" style="margin-bottom:12px;">6 Ergänzungen zum Briefing (KI-Erweiterungen)</div>
+    <div class="ergaenz-grid" style="margin-bottom:28px;">
+      <div class="ergaenz-card">
+        <div class="ergaenz-badge">Ergänzung</div>
+        <h4>Preispositionierung Wettbewerber</h4>
+        <p>Ohne Preisvergleich ist kein Pricing möglich. Wo Preise nicht öffentlich, lässt sich aus Paketen, Case Studies und Reviews schließen.</p>
+      </div>
+      <div class="ergaenz-card">
+        <div class="ergaenz-badge">Ergänzung</div>
+        <h4>Kundenzufriedenheit als Differenzierung</h4>
+        <p>Google Reviews und ProvenExpert der Wettbewerber zeigen, was Kunden stört — und wo MPH punkten kann.</p>
+      </div>
+      <div class="ergaenz-card">
+        <div class="ergaenz-badge">Ergänzung</div>
+        <h4>USP: KI als konkretes Angebot schärfen</h4>
+        <p>„KI-Lösungen" ist zu vage. Was genau? Welche Prozesse? Welcher Preis? Welches Ergebnis für den Kunden?</p>
+      </div>
+      <div class="ergaenz-card">
+        <div class="ergaenz-badge">Ergänzung</div>
+        <h4>Saisonalität der Anfragen</h4>
+        <p>Shopify-Setups häufen sich vor Q4. Etsy-Coaching vor Weihnachten. Kapazitäten vorausplanen.</p>
+      </div>
+      <div class="ergaenz-card">
+        <div class="ergaenz-badge">Ergänzung</div>
+        <h4>Exit-Kriterien für schwache Services</h4>
+        <p>Nicht nur was am meisten bringt — auch definieren, welche Dienstleistungen bei Untergrenzen gestrichen werden.</p>
+      </div>
+      <div class="ergaenz-card">
+        <div class="ergaenz-badge">Ergänzung</div>
+        <h4>Ideal Customer Profile (ICP)</h4>
+        <p>AT-Kleinunternehmen, handgefertigte/regionale Produkte, Budget 1.000–3.000 €, B2C-Ersteinstieg in Onlinehandel.</p>
+      </div>
+    </div>
+
+    <!-- Do / Don't -->
+    <div class="section-label" style="margin-bottom:12px;">Strategischer Filter</div>
+    <div class="split-grid" style="margin-bottom:28px;">
+      <div class="split-card">
+        <div class="split-head gold">✓ Das machen</div>
+        <ul class="split-list">
+          <li><span class="m">→</span> KI-gestützte Social Media Automatisierung mit festen Templates &amp; Themen-Rotation</li>
+          <li><span class="m">→</span> Fokus auf 3–4 Kerndienstleistungen mit klaren Paketen und Preisen statt Alles-für-alle</li>
+          <li><span class="m">→</span> Etsy-Coaching als skalierbaren Kurs ausbauen (digitales Produkt, kein 1:1-Aufwand)</li>
+          <li><span class="m">→</span> KI-Automatisierung als eigenes Produkt mit konkreten Use Cases vermarkten</li>
+          <li><span class="m">→</span> Weingut-Nische aktiv als Spezialisierung kommunizieren</li>
+          <li><span class="m">→</span> Migrations-Expertise sichtbar machen: „Von WooCommerce / Shopware zu Shopify"</li>
+        </ul>
+      </div>
+      <div class="split-card">
+        <div class="split-head red">✕ Das NICHT machen</div>
+        <ul class="split-list">
+          <li><span class="m">—</span> Manuelles Social Media ohne festen Prozess — zu zeitintensiv, zu inkonsistent</li>
+          <li><span class="m">—</span> Neue Dienstleistungen ohne vorherige Wirtschaftlichkeitsprüfung</li>
+          <li><span class="m">—</span> 1:1-Kopie von Wettbewerber-Strategien (bes. Sharobella)</li>
+          <li><span class="m">—</span> Amazon als Kanal — intern zurückgestellt, gute Entscheidung</li>
+          <li><span class="m">—</span> Zu viele Social-Kanäle gleichzeitig — lieber 1–2 dominant</li>
+          <li><span class="m">—</span> KI-Automatisierung versprechen ohne eigene dokumentierte Prozesse</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 7 Deliverables -->
+    <div class="section-label" style="margin-bottom:12px;">7 Deliverables der Analyse</div>
+    <div class="output-grid">
+      <div class="output-card"><div class="output-icon">🗂️</div><h4>Wettbewerbs-Matrix</h4><p>Alle 4 Marktbegleiter im Vergleich: Services, Preise, Zielgruppen, Stärken, Schwächen</p></div>
+      <div class="output-card"><div class="output-icon">📱</div><h4>Social Media Playbook</h4><p>Formate, Frequenz, Themen und KI-Tools für automatisierten Content-Output</p></div>
+      <div class="output-card"><div class="output-icon">💶</div><h4>ROI-Ranking der Services</h4><p>Top-5 Dienstleistungen nach Marge &amp; Skalierbarkeit mit Handlungsempfehlung</p></div>
+      <div class="output-card"><div class="output-icon">🎯</div><h4>Ideal Customer Profile</h4><p>AT-Kleinunternehmen, regional/handgefertigt, Budget 1.000–3.000 €, B2C</p></div>
+      <div class="output-card"><div class="output-icon">🤖</div><h4>KI-Automatisierungsplan</h4><p>Konkrete Prozesse die sofort automatisierbar sind — intern &amp; als Kundenangebot</p></div>
+      <div class="output-card"><div class="output-icon">📊</div><h4>Kunden-Segmentanalyse</h4><p>41 Kunden geclustert nach Plattform, Branche, Wachstum, Geografie, Service</p></div>
+      <div class="output-card"><div class="output-icon">📋</div><h4>Pricing-Empfehlung</h4><p>Auf Basis der Wettbewerberpreise: wo ist MPH zu günstig, wo richtig positioniert?</p></div>
+    </div>
+  </div>
+
+  <div class="chapter-divider"></div>
+  <div class="footer">
+    <div><strong>Marktplatzhelden</strong> · Gesamtanalyse 2026 · 41 Kunden · 4 Wettbewerber · Stand 19.08.2026</div>
+    <div>Quellen: Google Sheet · Web-Recherche · Claude Code KI-Analyse</div>
+  </div>
+
+</div>
+
+<script src="formulare-nav.js"></script>
+</body>
+</html>

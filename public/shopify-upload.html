@@ -130,6 +130,18 @@
     <div id="bilderResult" class="hidden" style="margin-top:14px;"></div>
   </div>
 
+  <!-- Optional: Artikel per KI optimieren -->
+  <div class="card hidden" id="stepOpt">
+    <div class="step-label">Optional · KI</div>
+    <div class="step-title">Artikel optimieren</div>
+    <p class="step-hint">Befüllt alle Text- und SEO-Felder nach festem Regelwerk (Title, Beschreibung, SEO-Titel, Tags, Kategorien, Metafelder, Bild-Alt-Texte mit echter Bildanalyse). Es wird <strong>nichts automatisch überschrieben</strong> — du siehst Vorher/Nachher und gibst jedes Feld einzeln frei. Am besten nach „Bilder zuordnen" ausführen, damit die Bildanalyse greift.</p>
+    <button class="btn btn-primary" id="optBtn" onclick="doOptimieren()">
+      <span id="optBtnText">Artikel optimieren</span>
+    </button>
+    <div id="optProgress" class="hidden" style="margin-top:12px;font-size:13px;color:#6B7280;"></div>
+    <div id="optResults" style="margin-top:14px;"></div>
+  </div>
+
   <!-- Schritt 5: In Shopify anlegen -->
   <div class="card hidden" id="step5">
     <div class="step-label">Schritt 5</div>
@@ -244,7 +256,7 @@ function onShopChange() {
   const sel = document.getElementById('shopSelect');
   const opt = sel.options[sel.selectedIndex];
   if (!opt || !opt.dataset.json) {
-    ['step2','step4','step45','step5'].forEach(hide);
+    ['step2','step4','step45','stepOpt','step5'].forEach(hide);
     return;
   }
   selectedKunde   = JSON.parse(opt.dataset.json);
@@ -257,9 +269,12 @@ function onShopChange() {
   document.getElementById('folderInput').value = '';
   document.getElementById('folderHint').classList.add('hidden');
   hide('step45');
+  hide('stepOpt');
   hide('step5');
   hide('uploadResult');
   hide('generierenStatus');
+  const optResults = document.getElementById('optResults');
+  if (optResults) optResults.innerHTML = '';
 
   loadArtikel(selectedKunde.id);
   prefetchEntwuerfe();
@@ -367,7 +382,7 @@ function updateUploadBtn() {
   const hasMT = !!mastertabelleId;
   if (uploadBtn) uploadBtn.disabled = !hasMT;
   if (csvBtn)    csvBtn.disabled    = !hasMT;
-  if (hasMT) { show('step45'); show('step5'); }
+  if (hasMT) { show('step45'); show('stepOpt'); show('step5'); }
 }
 
 // ── Mastertabelle generieren ───────────────────────────────────────
@@ -669,6 +684,168 @@ async function doUploadAuto() {
 
   btnText.textContent = 'Alle Artikel hochladen';
   btn.disabled = false;
+}
+
+// ── Artikel optimieren (KI, mit Freigabe) ──────────────────────────
+let optZaehler = 0;
+
+async function doOptimieren() {
+  const btn      = document.getElementById('optBtn');
+  const btnText  = document.getElementById('optBtnText');
+  const progress = document.getElementById('optProgress');
+  const results  = document.getElementById('optResults');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> Lade Artikel …';
+
+  let handles = [];
+  try {
+    const r = await fetch(API + 'shopify-mastertabelle-handles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kunden_id: selectedKunde.id }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Fehler beim Laden der Artikel');
+    handles = d.handles || [];
+  } catch(e) {
+    results.innerHTML = '<div class="result-box result-err">✗ ' + esc(e.message) + '</div>';
+    btnText.textContent = 'Artikel optimieren';
+    btn.disabled = false;
+    return;
+  }
+
+  if (!handles.length) {
+    results.innerHTML = '<div class="result-box result-err">✗ Keine Artikel in der Mastertabelle gefunden.</div>';
+    btnText.textContent = 'Artikel optimieren';
+    btn.disabled = false;
+    return;
+  }
+
+  if (handles.length > 10 && !confirm(handles.length + ' Artikel werden per KI optimiert (je 1 KI-Aufruf inkl. Bildanalyse, ca. 15–30 Sekunden pro Artikel). Fortfahren?')) {
+    btnText.textContent = 'Artikel optimieren';
+    btn.disabled = false;
+    return;
+  }
+
+  results.innerHTML = '';
+  show('optProgress');
+
+  for (let i = 0; i < handles.length; i++) {
+    const { handle, title } = handles[i];
+    btnText.innerHTML = '<span class="spinner"></span> ' + (i + 1) + ' / ' + handles.length + ' …';
+    progress.textContent = 'Optimiere „' + (title || handle) + '" — die KI analysiert Texte und Bilder, das dauert 15–30 Sekunden …';
+    try {
+      const r = await fetch(API + 'masterartikel-optimieren', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kunden_id: selectedKunde.id, handle }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Optimierung fehlgeschlagen');
+      renderOptErgebnis(d);
+    } catch(e) {
+      results.innerHTML += '<div class="result-box result-err" style="margin-bottom:12px;">✗ ' + esc(title || handle) + ': ' + esc(e.message) + '</div>';
+    }
+  }
+
+  hide('optProgress');
+  btnText.textContent = 'Artikel optimieren';
+  btn.disabled = false;
+}
+
+function renderOptErgebnis(d) {
+  const results = document.getElementById('optResults');
+  const oid = 'opt' + (++optZaehler);
+  const badge = d.ist_live
+    ? '<span style="background:#FEF3C7;color:#92400E;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;margin-left:8px;">LIVE · Handle geschützt</span>'
+    : '<span class="tag">Neuer Artikel</span>';
+  const unsicherByFeld = {};
+  (d.unsicher || []).forEach(u => { if (u && u.feld) unsicherByFeld[u.feld] = u.grund || 'unsicher'; });
+
+  let html = '<div style="border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;" id="' + oid + '">';
+  html += '<div style="font-size:14px;font-weight:700;margin-bottom:2px;">' + esc(d.titel) + badge + '</div>';
+  html += '<div style="font-size:11px;color:#6B7280;font-family:monospace;margin-bottom:10px;">' + esc(d.handle) + ' · ' + d.bilder_analysiert + ' Bild(er) analysiert</div>';
+
+  const felderKeys = Object.keys(d.felder || {});
+  if (!felderKeys.length && !(d.alt_texte || []).length) {
+    html += '<div style="font-size:13px;color:#6B7280;">Keine Verbesserungen vorgeschlagen.</div></div>';
+    results.innerHTML += html;
+    return;
+  }
+
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+  html += '<tr style="text-align:left;color:#6B7280;"><th style="padding:4px;width:24px;"></th><th style="padding:4px;width:160px;">Feld</th><th style="padding:4px;">Vorher</th><th style="padding:4px;">Nachher (bearbeitbar)</th></tr>';
+
+  felderKeys.forEach((k, fi) => {
+    const unsicherGrund = unsicherByFeld[k];
+    const rowStyle = unsicherGrund ? 'background:#FFFBEB;' : '';
+    const feldLabel = esc(k) + (unsicherGrund ? '<div style="color:#B45309;font-size:11px;font-weight:400;">⚠ ' + esc(unsicherGrund) + '</div>' : '');
+    html += '<tr style="border-top:1px solid var(--border);' + rowStyle + '" data-feld="' + esc(k) + '">'
+      + '<td style="padding:6px 4px;vertical-align:top;"><input type="checkbox" checked data-opt-check style="accent-color:var(--green);"></td>'
+      + '<td style="padding:6px 4px;vertical-align:top;font-weight:700;">' + feldLabel + '</td>'
+      + '<td style="padding:6px 4px;vertical-align:top;color:#6B7280;max-width:200px;overflow-wrap:anywhere;">' + esc((d.vorher && d.vorher[k]) || '—').slice(0, 400) + '</td>'
+      + '<td style="padding:6px 4px;vertical-align:top;"><textarea data-opt-wert rows="' + (String(d.felder[k]).length > 120 ? 5 : 2) + '" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:12px;font-family:inherit;">' + esc(d.felder[k]) + '</textarea></td></tr>';
+  });
+
+  (d.alt_texte || []).forEach(a => {
+    const vorher = (d.alt_vorher || []).find(v => v.position === a.position);
+    html += '<tr style="border-top:1px solid var(--border);" data-alt-pos="' + a.position + '">'
+      + '<td style="padding:6px 4px;vertical-align:top;"><input type="checkbox" checked data-opt-check style="accent-color:var(--green);"></td>'
+      + '<td style="padding:6px 4px;vertical-align:top;font-weight:700;">Alt-Text Bild ' + a.position + '</td>'
+      + '<td style="padding:6px 4px;vertical-align:top;color:#6B7280;">' + esc((vorher && vorher.alt) || '—') + '</td>'
+      + '<td style="padding:6px 4px;vertical-align:top;"><textarea data-opt-wert rows="2" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:12px;font-family:inherit;">' + esc(a.alt) + '</textarea></td></tr>';
+  });
+
+  html += '</table>';
+
+  if ((d.offen || []).length) {
+    html += '<div style="margin-top:10px;background:#f3f4f6;border-radius:8px;padding:10px 12px;font-size:12px;color:#374151;"><strong>Offen (bitte selbst nachtragen):</strong><br>'
+      + d.offen.map(o => '· ' + esc(o)).join('<br>') + '</div>';
+  }
+
+  html += '<div style="margin-top:12px;display:flex;align-items:center;gap:12px;">'
+    + '<button class="btn btn-primary btn-sm" onclick="doOptUebernehmen(\'' + oid + '\', \'' + esc(d.handle) + '\')">Optimierung übernehmen</button>'
+    + '<span id="' + oid + 'Status" style="font-size:12px;color:#6B7280;"></span></div>';
+  html += '</div>';
+
+  results.innerHTML += html;
+}
+
+async function doOptUebernehmen(oid, handle) {
+  const box    = document.getElementById(oid);
+  const status = document.getElementById(oid + 'Status');
+  const btn    = box.querySelector('button');
+  btn.disabled = true;
+  status.textContent = 'Wird in die Mastertabelle geschrieben …';
+
+  const felder = {};
+  const alt_texte = [];
+  box.querySelectorAll('tr[data-feld]').forEach(tr => {
+    if (tr.querySelector('[data-opt-check]').checked) {
+      felder[tr.dataset.feld] = tr.querySelector('[data-opt-wert]').value;
+    }
+  });
+  box.querySelectorAll('tr[data-alt-pos]').forEach(tr => {
+    if (tr.querySelector('[data-opt-check]').checked) {
+      alt_texte.push({ position: parseInt(tr.dataset.altPos), alt: tr.querySelector('[data-opt-wert]').value });
+    }
+  });
+
+  try {
+    const r = await fetch(API + 'masterartikel-optimierung-uebernehmen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kunden_id: selectedKunde.id, handle, felder, alt_texte }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Übernahme fehlgeschlagen');
+    status.innerHTML = '<span style="color:#3d6b0d;font-weight:700;">✓ ' + d.felder_uebernommen + ' Feld(er) + ' + d.alt_texte_uebernommen + ' Alt-Text(e) übernommen'
+      + (d.neuer_handle ? ' · neuer Handle: ' + esc(d.neuer_handle) : '') + '</span> — <a href="https://docs.google.com/spreadsheets/d/' + mastertabelleId + '/edit" target="_blank" class="sheet-link">Tabelle prüfen ↗</a>';
+    btn.textContent = 'Übernommen';
+  } catch(e) {
+    status.innerHTML = '<span style="color:#B91C1C;">✗ ' + esc(e.message) + '</span>';
+    btn.disabled = false;
+  }
 }
 
 // ── Entwürfe für "Hinzufügen"-Modal ───────────────────────────────
