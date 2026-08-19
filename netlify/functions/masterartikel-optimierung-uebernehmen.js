@@ -29,7 +29,8 @@ exports.handler = async (event) => {
 
   let body = {};
   try { body = JSON.parse(event.body || '{}'); } catch(e) {}
-  const { kunden_id, handle, felder, alt_texte } = body;
+  // sheet_id optional: Workflow 2 (Bestand) schreibt in die Bestandstabelle
+  const { kunden_id, handle, felder, alt_texte, sheet_id, modus } = body;
   if (!kunden_id || !handle) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'kunden_id und handle erforderlich' }) };
 
   try {
@@ -40,7 +41,7 @@ exports.handler = async (event) => {
     if (!kundeRow) return { statusCode: 404, headers: h, body: JSON.stringify({ error: 'Kunde nicht gefunden' }) };
     const domain          = kundeRow[2];
     const token           = kundeRow[3];
-    const mastertabelleId = kundeRow[6];
+    const mastertabelleId = sheet_id || kundeRow[6];
     if (!mastertabelleId) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Keine Mastertabelle vorhanden.' }) };
 
     const allRows = await sheetsReadValues(tok, mastertabelleId, 'A1:CZ2000');
@@ -82,7 +83,7 @@ exports.handler = async (event) => {
     for (const [k, v] of Object.entries(felder || {})) {
       if (!istErlaubtesFeld(k)) continue;
       if (k === 'URL handle') {
-        if (istLive) continue; // Live-Artikel: Handle einfrieren
+        if (istLive || modus === 'bestand') continue; // Handle einfrieren
         neuerHandle = String(v).trim();
         continue; // wird unten fuer ALLE Zeilen der Gruppe gesetzt
       }

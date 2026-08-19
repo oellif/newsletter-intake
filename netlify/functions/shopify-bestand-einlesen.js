@@ -1,17 +1,20 @@
 const { requireAuth } = require('./lib/auth');
+// Workflow 2 (Bestandsoptimierung), Schritt 2: liest die ausgewaehlten
+// Shop-Artikel in eine neue Bestandstabelle ein (gleiche Struktur wie die
+// Mastertabelle, inkl. Metafeld-Spalten und bestehender Shopify-Bilder).
+// Die Tabellen-ID wird in Spalte I der Kundentabelle gespeichert -
+// getrennt von Spalte G (Mastertabelle des Neuanlage-Workflows).
 const { getAccessToken, sheetsReadValues, sheetsWriteValues, driveCreateFile } = require('./lib/google');
 const { HEADERS, buildProductRows, ladeProduktMetafelder } = require('./lib/mastertabelle-build');
 
 const SHOPIFY_KUNDEN_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
-// Ablageort der generierten Mastertabellen: Drive-Ordner
-// "Claude Code > Shopify > Master Tabellen"
 const MASTERTABELLEN_FOLDER_ID = '1JsT09BPz8VVrBQx8NsahaEt0iuDIYS2O';
 
 exports.handler = async (event) => {
   const authErr = requireAuth(event); if (authErr) return authErr;
   const h = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Cockpit-Pw',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: h, body: '' };
@@ -19,10 +22,9 @@ exports.handler = async (event) => {
 
   let body = {};
   try { body = JSON.parse(event.body || '{}'); } catch(e) {}
-
-  const { kunden_id, handles, folder_id } = body;
+  const { kunden_id, handles } = body;
   if (!kunden_id) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'kunden_id erforderlich' }) };
-  if (!handles || !handles.length) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Mindestens ein Masterartikel erforderlich' }) };
+  if (!handles || !handles.length) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Mindestens ein Artikel erforderlich' }) };
 
   try {
     const tok = await getAccessToken();
@@ -31,19 +33,14 @@ exports.handler = async (event) => {
     const rowIdx     = (kundenRows || []).findIndex(r => r[0] === kunden_id);
     if (rowIdx < 0) return { statusCode: 404, headers: h, body: JSON.stringify({ error: 'Kunde nicht gefunden' }) };
     const kundeRow = kundenRows[rowIdx];
-
     const domain   = kundeRow[2];
     const token    = kundeRow[3];
     const shopName = kundeRow[1] || 'Shop';
 
-    // Fetch each masterartikel and build rows.
-    // Metafelder werden als dynamische Zusatzspalten angehaengt, Format:
-    // "Metafield: namespace.key [type]" - so kann der Upload sie ohne
-    // weitere API-Abfragen korrekt zurueckschreiben.
     const allDataRows   = [];
-    const metafieldCols = []; // geordnete Spaltennamen
-    const mfColIndex    = new Map(); // Spaltenname → Index in metafieldCols
-    const mfAssignments = []; // { row: erste Zeile des Produkts, values: Map }
+    const metafieldCols = [];
+    const mfColIndex    = new Map();
+    const mfAssignments = [];
 
     for (const handle of handles) {
       const shopRes  = await fetch(
@@ -54,7 +51,8 @@ exports.handler = async (event) => {
       if (!shopData.products || !shopData.products.length) continue;
 
       const product  = shopData.products[0];
-      // Images werden beim Upload mit dem echten Handle gematcht, nicht hier
+      // Keine Drive-Bilder: buildProductRows uebernimmt automatisch die
+      // bestehenden Shopify-Bilder (CDN-URLs) inkl. Positionen/Alt-Texten
       const prodRows = buildProductRows(product, [], new Map());
 
       const metafields = await ladeProduktMetafelder(domain, token, product.id);
@@ -74,13 +72,12 @@ exports.handler = async (event) => {
     }
 
     if (!allDataRows.length) {
-      return { statusCode: 404, headers: h, body: JSON.stringify({ error: 'Keine Shopify-Produkte gefunden. Sind die Masterartikel vorhanden?' }) };
+      return { statusCode: 404, headers: h, body: JSON.stringify({ error: 'Keine der ausgewaehlten Artikel in Shopify gefunden.' }) };
     }
 
-    // Create new Google Sheet in "Master Tabellen" folder
     const datum        = new Date().toISOString().slice(0, 10);
     const safeShopName = shopName.replace(/[^a-zA-Z0-9]/g, '');
-    const sheetTitle   = `Mastertabelle_${safeShopName}_${datum}`;
+    const sheetTitle   = `Bestandstabelle_${safeShopName}_${datum}`;
 
     const created = await driveCreateFile(tok, {
       name: sheetTitle,
@@ -88,7 +85,6 @@ exports.handler = async (event) => {
       parents: [MASTERTABELLEN_FOLDER_ID],
     });
 
-    // Write header + data rows (inkl. dynamischer Metafeld-Spalten)
     const fullHeaders = [...HEADERS, ...metafieldCols];
     if (metafieldCols.length) {
       for (const r of allDataRows) { while (r.length < fullHeaders.length) r.push(''); }
@@ -100,21 +96,15 @@ exports.handler = async (event) => {
     }
     await sheetsWriteValues(tok, created.id, [fullHeaders, ...allDataRows], 'A1');
 
-    // Save sheet ID (G); folder_id (H) nur schreiben wenn uebergeben,
-    // sonst bleibt der beim "Bilder zuordnen" gespeicherte Wert erhalten
-    const sheetRow = rowIdx + 2;
-    if (folder_id) {
-      await sheetsWriteValues(tok, SHOPIFY_KUNDEN_ID, [[created.id, folder_id]], `G${sheetRow}`);
-    } else {
-      await sheetsWriteValues(tok, SHOPIFY_KUNDEN_ID, [[created.id]], `G${sheetRow}`);
-    }
+    // Bestandstabellen-ID in Spalte I speichern (G = Mastertabelle bleibt unberuehrt)
+    await sheetsWriteValues(tok, SHOPIFY_KUNDEN_ID, [[created.id]], `I${rowIdx + 2}`);
 
     const sheetUrl = created.webViewLink || `https://docs.google.com/spreadsheets/d/${created.id}/edit`;
 
     return {
       statusCode: 200,
       headers: h,
-      body: JSON.stringify({ success: true, sheet_id: created.id, sheet_url: sheetUrl, rows: allDataRows.length }),
+      body: JSON.stringify({ success: true, sheet_id: created.id, sheet_url: sheetUrl, rows: allDataRows.length, artikel: handles.length }),
     };
 
   } catch(err) {

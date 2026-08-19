@@ -74,7 +74,9 @@ exports.handler = async (event) => {
 
   let body = {};
   try { body = JSON.parse(event.body || '{}'); } catch(e) {}
-  const { kunden_id, handle } = body;
+  // sheet_id optional: Workflow 2 (Bestandsoptimierung) uebergibt die
+  // Bestandstabelle explizit; ohne sheet_id gilt die Mastertabelle (Spalte G)
+  const { kunden_id, handle, sheet_id, modus } = body;
   if (!kunden_id || !handle) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'kunden_id und handle erforderlich' }) };
 
   try {
@@ -86,7 +88,7 @@ exports.handler = async (event) => {
     const kundenName      = kundeRow[1] || '';
     const domain          = kundeRow[2];
     const token           = kundeRow[3];
-    const mastertabelleId = kundeRow[6];
+    const mastertabelleId = sheet_id || kundeRow[6];
     if (!mastertabelleId) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Keine Mastertabelle vorhanden.' }) };
 
     // Mastertabelle lesen, Zeilen des Handles finden
@@ -112,31 +114,36 @@ exports.handler = async (event) => {
       istLive = !!(liveRes.ok && (liveData.products || []).some(p => p.status === 'active'));
     } catch(e) {}
 
+    // Handle-Schutz: bei Live-Artikeln UND im Bestandsmodus einfrieren -
+    // im Bestand wuerde ein neuer Handle die Zuordnung zum bestehenden
+    // Shopify-Artikel zerstoeren (Zurueckspielen findet ihn nicht mehr)
+    const handleGeschuetzt = istLive || modus === 'bestand';
+
     // Kundenprofil (Pflicht-Input - ohne Profil keine Textgenerierung)
     const kundenprofil = await ladeKundenprofil(tok, kundenName);
     if (!kundenprofil) {
       return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'Kein Kundenprofil gefunden (Kundenprofil_Masterartikel_*.md in Drive). Ohne Profil keine Textgenerierung.' }) };
     }
 
-    // Bilder sammeln (authentifiziert von Drive, base64 - Ordner muss NICHT
-    // oeffentlich sein) fuer die Alt-Text-Bildanalyse
-    const bildInfos = []; // { position, quelle }
-    const seenIds = new Set();
+    // Bilder sammeln fuer die Alt-Text-Bildanalyse. Zwei Quellen:
+    // - Drive-Links (Workflow 1, Neuanlage): authentifiziert laden, Ordner
+    //   muss nicht oeffentlich sein
+    // - Shopify-CDN-Links (Workflow 2, Bestand): direkt laden, oeffentlich
+    const bildInfos = []; // { url, position, art, ... }
+    const seenUrls = new Set();
     for (const r of rows) {
       const url = get(r, 'Product image URL');
-      const fid = extractDriveFileId(url);
-      if (fid && !seenIds.has(fid)) {
-        seenIds.add(fid);
-        bildInfos.push({ file_id: fid, position: parseInt(get(r, 'Image position')) || bildInfos.length + 1, art: 'produkt', alt_bisher: get(r, 'Image alt text') });
+      if (url && !seenUrls.has(url)) {
+        seenUrls.add(url);
+        bildInfos.push({ url, position: parseInt(get(r, 'Image position')) || bildInfos.length + 1, art: 'produkt', alt_bisher: get(r, 'Image alt text') });
       }
     }
     for (const r of rows) {
       const url = get(r, 'Variant image URL');
-      const fid = extractDriveFileId(url);
-      if (fid && !seenIds.has(fid)) {
-        seenIds.add(fid);
+      if (url && !seenUrls.has(url)) {
+        seenUrls.add(url);
         const opts = [get(r, 'Option1 value'), get(r, 'Option2 value'), get(r, 'Option3 value')].filter(Boolean);
-        bildInfos.push({ file_id: fid, position: 0, art: 'variante', optionswerte: opts });
+        bildInfos.push({ url, position: 0, art: 'variante', optionswerte: opts });
       }
     }
 
@@ -144,9 +151,12 @@ exports.handler = async (event) => {
     const bildBeschreibung = [];
     for (const info of bildInfos.slice(0, MAX_BILDER)) {
       try {
-        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${info.file_id}?alt=media&supportsAllDrives=true`, {
-          headers: { Authorization: 'Bearer ' + tok },
-        });
+        const fid = extractDriveFileId(info.url);
+        const res = fid
+          ? await fetch(`https://www.googleapis.com/drive/v3/files/${fid}?alt=media&supportsAllDrives=true`, {
+              headers: { Authorization: 'Bearer ' + tok },
+            })
+          : await fetch(info.url); // Shopify-CDN oder andere oeffentliche URL
         if (!res.ok) continue;
         const mime = (res.headers.get('content-type') || 'image/jpeg').split(';')[0];
         const buf  = Buffer.from(await res.arrayBuffer());
@@ -181,7 +191,7 @@ ${kundenprofil}
 
 === ARTIKEL (aktueller Stand aus der Mastertabelle) ===
 URL handle: ${handle}
-ist_live: ${istLive} ${istLive ? '(AKTIVES Shopify-Produkt: Feld "URL handle" KOMPLETT WEGLASSEN!)' : '(neuer Artikel: SEO-Handle darf vorgeschlagen werden)'}
+ist_live: ${istLive}${handleGeschuetzt ? ' — HANDLE GESCHUETZT: Feld "URL handle" KOMPLETT WEGLASSEN!' : ' (neuer Artikel: SEO-Handle darf vorgeschlagen werden)'}
 Optionsnamen: ${JSON.stringify(optionNamen)}
 Felder: ${JSON.stringify(artikelFelder, null, 1)}
 Varianten: ${JSON.stringify(varianten)}
@@ -197,7 +207,7 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown-Zaeune, exakt in d
   "unsicher": [ { "feld": "<Spaltenname>", "grund": "<warum unsicher>" } ],
   "offen": [ "<fehlende Info, die ein Mensch nachtragen muss>" ]
 }
-Regeln fuer "felder": nur Spaltennamen aus dem Artikel verwenden; nur Felder aufnehmen, die du wirklich verbesserst; gesperrte Felder (SKU, Preise, Bestaende, Status, Optionen ...) NIEMALS aufnehmen.${istLive ? ' "URL handle" NICHT aufnehmen (Artikel ist live).' : ''}
+Regeln fuer "felder": nur Spaltennamen aus dem Artikel verwenden; nur Felder aufnehmen, die du wirklich verbesserst; gesperrte Felder (SKU, Preise, Bestaende, Status, Optionen ...) NIEMALS aufnehmen.${handleGeschuetzt ? ' "URL handle" NICHT aufnehmen (Handle ist geschuetzt).' : ''}
 Regeln fuer "alt_texte": nur wenn Bilder angehaengt sind; Position = die Image position des jeweiligen Produktbildes; Variantenbilder bekommen KEINEN Eintrag in alt_texte.`;
 
     const antwort = await callClaudeVision(prompt, images, 16000);
@@ -212,7 +222,7 @@ Regeln fuer "alt_texte": nur wenn Bilder angehaengt sind; Position = die Image p
     const felder = {};
     for (const [k, v] of Object.entries(ergebnis.felder || {})) {
       if (!istErlaubtesFeld(k)) continue;
-      if (k === 'URL handle' && istLive) continue;
+      if (k === 'URL handle' && handleGeschuetzt) continue;
       if (CI[k] === undefined) continue; // Spalte existiert nicht in dieser Tabelle
       felder[k] = String(v);
     }
