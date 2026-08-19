@@ -1,7 +1,8 @@
 # MH Cockpit — Plattform-Dokumentation
 
 Internes Agentur-Tool für Marktplatz Helden. Kein öffentliches Storefront.
-Live-URL: **https://mh-cockpit.netlify.app**
+Live-URL: **https://cockpit.marktplatz-helden.at**
+(Netlify wurde abgelöst — läuft jetzt auf Hetzner VPS 78.47.144.205)
 
 ---
 
@@ -16,47 +17,51 @@ Künftig können beliebig viele weitere Tools ergänzt werden.
 
 ## Repository & Deployment
 
-**GitHub:** `oellif/newsletter-intake` (Branch: `main`)
-**Netlify:** Auto-Deploy bei jedem Push auf `main` (~20 Sekunden)
+**GitHub:** `oellif/newsletter-intake` (Branch: `main`) — Versionskontrolle, kein Auto-Deploy mehr
+**Live-Server:** Hetzner VPS — IP `78.47.144.205`, Domain `cockpit.marktplatz-helden.at`
+**Netlify wurde abgelöst** — nicht mehr verwenden
 
-**Quelldateien (bearbeiten hier):**
+**Server-Struktur:**
 ```
-C:\Users\offic\AppData\Roaming\Claude\local-agent-mode-sessions\
-b1e18483-...\33da01d0-...\local_1934d231-...\outputs\newsletter-intake\
-```
-
-**Git-Repo — zwei Pfad-Varianten (dasselbe Verzeichnis):**
-```
-Bash-Tool (Git Bash):   /tmp/ni
-Read/Edit/Write-Tools:  C:\Users\offic\AppData\Local\Temp\ni
+/opt/cockpit/public/    ← statische Dateien (HTML, CSS, JS) — nginx
+/opt/cockpit/           ← Express-Server (API-Functions) — PM2, Port 3001
+/opt/cockpit/.env       ← Umgebungsvariablen (API-Keys etc.)
 ```
 
-**WICHTIG — Werkzeug-Wahl:**
-- Dateien lesen/schreiben/bearbeiten → `Read`, `Edit`, `Write`-Tools mit Windows-Pfad `C:\Users\offic\AppData\Local\Temp\ni\...`
-- git add / commit / push → Bash-Tool mit `/tmp/ni`
-- **Niemals PowerShell** für Dateiinhalte in `/tmp/ni` verwenden — PowerShell überschreibt mit BOM/null-Content
-
-**Deploy-Workflow (immer so):**
-```
-1. Neue Datei schreiben:
-   Write-Tool → C:\Users\offic\AppData\Local\Temp\ni\public\dateiname.html
-
-2. Bestehende Datei bearbeiten:
-   Read-Tool  → C:\Users\offic\AppData\Local\Temp\ni\public\dateiname.html
-   Edit-Tool  → C:\Users\offic\AppData\Local\Temp\ni\public\dateiname.html
-
-3. Deployen (Bash-Tool):
-   cd /tmp/ni && git add public/dateiname.html && git commit -m "..." && git push origin master:main
-
-4. Netlify deployed automatisch (~20 Sekunden)
+**SSH-Zugang:**
+```bash
+ssh -i ~/.ssh/hetzner_mh root@78.47.144.205
 ```
 
-**nav.js bearbeiten (Sonderfall — große Datei):**
+**Deploy-Workflow — statische Dateien (HTML/CSS/JS):**
+```powershell
+# PowerShell — einzelne Datei deployen:
+scp -i "$HOME\.ssh\hetzner_mh" public\dateiname.html root@78.47.144.205:/opt/cockpit/public/
+
+# Mehrere Dateien auf einmal:
+scp -i "$HOME\.ssh\hetzner_mh" public\datei1.html public\datei2.html root@78.47.144.205:/opt/cockpit/public/
 ```
-Read-Tool  → C:\Users\offic\AppData\Local\Temp\ni\public\nav.js   (erst lesen!)
-Edit-Tool  → C:\Users\offic\AppData\Local\Temp\ni\public\nav.js   (dann gezielt editieren)
-Bash-Tool  → cd /tmp/ni && git add public/nav.js && git commit -m "..." && git push origin master:main
+
+**Deploy-Workflow — API-Functions (nach Änderungen):**
+```bash
+# 1. Datei per scp hochladen (wie oben)
+# 2. PM2 neu starten:
+ssh -i ~/.ssh/hetzner_mh root@78.47.144.205 "pm2 restart cockpit-functions"
 ```
+
+**WICHTIG — /.netlify/functions/ Pfade in HTML:**
+Die HTML-Dateien rufen noch `/.netlify/functions/...` auf — das bleibt so.
+nginx leitet diese Pfade intern an den Express-Server weiter. Nichts ändern.
+
+**Umgebungsvariablen:**
+Nicht mehr im Netlify-Dashboard — liegen in `/opt/cockpit/.env` auf dem Server.
+Änderungen via SSH: `nano /opt/cockpit/.env` → dann `pm2 restart cockpit-functions`
+
+**Werkzeug-Wahl beim Bearbeiten:**
+- Dateien lesen/schreiben/bearbeiten → `Read`, `Edit`, `Write`-Tools (lokaler Windows-Pfad)
+- scp deploy → PowerShell-Tool
+- SSH-Befehle → Bash-Tool
+- **Niemals PowerShell** für direkte Dateimanipulation über SSH verwenden
 
 ---
 
