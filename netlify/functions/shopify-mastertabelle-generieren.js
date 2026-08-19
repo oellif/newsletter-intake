@@ -110,7 +110,12 @@ function buildProductRows(product, generalImages, variantMap) {
       row[C['Description']]               = product.body_html || '';
       row[C['Vendor']]                    = product.vendor || '';
       row[C['Type']]                      = product.product_type || '';
-      row[C['Tags']]                      = product.tags || '';
+      // Funktions-Tag "Master" nicht uebernehmen - es kennzeichnet nur den
+      // Masterartikel selbst und gehoert nicht auf die neuen Produkte
+      row[C['Tags']]                      = String(product.tags || '')
+        .split(',').map(t => t.trim())
+        .filter(t => t && t.toLowerCase() !== 'master')
+        .join(', ');
       row[C['Published on online store']] = product.published_at ? 'TRUE' : 'FALSE';
       row[C['Status']]                    = product.status || '';
       if (product.options[0]) row[C['Option1 name']] = product.options[0].name;
