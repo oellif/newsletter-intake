@@ -64,6 +64,18 @@
       <div class="tool-arrow">→</div>
     </a>
 
+    <a class="tool-card shopify" href="/shopify-bestand.html" id="btn-shopify-bestand">
+      <div class="tool-icon">✨</div>
+      <div class="tool-name">Bestandsoptimierung</div>
+      <div class="tool-desc">Bestehende Shop-Artikel einlesen, per KI optimieren und zurückspielen.</div>
+      <div class="tool-pills">
+        <span class="tool-pill pill-sh">SEO</span>
+        <span class="tool-pill pill-sh">Texte</span>
+        <span class="tool-pill pill-sh">Alt-Texte</span>
+      </div>
+      <div class="tool-arrow">→</div>
+    </a>
+
     <a class="tool-card formulare" href="/formulare.html" id="btn-formulare">
       <div class="tool-icon">📋</div>
       <div class="tool-name">ProjektHub</div>
@@ -83,6 +95,9 @@ document.getElementById('btn-newsletter').addEventListener('click', function () 
   localStorage.setItem('kios_modus', 'newsletter');
 });
 document.getElementById('btn-shopify').addEventListener('click', function () {
+  localStorage.setItem('kios_modus', 'shopify');
+});
+document.getElementById('btn-shopify-bestand').addEventListener('click', function () {
   localStorage.setItem('kios_modus', 'shopify');
 });
 </script>
