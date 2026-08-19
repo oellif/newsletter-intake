@@ -161,9 +161,10 @@ function renderListe() {
     .forEach(a => {
       const row = document.createElement('label');
       row.className = 'artikel-row';
-      const badge = a.status === 'active'
+      const badge = (a.status === 'active'
         ? '<span class="badge badge-active">Aktiv</span>'
-        : '<span class="badge badge-draft">' + esc(a.status) + '</span>';
+        : '<span class="badge badge-draft">' + esc(a.status) + '</span>')
+        + (a.ist_master ? '<span class="badge" style="background:rgba(250,135,0,0.12);color:#FA8700;">Master</span>' : '');
       row.innerHTML = '<input type="checkbox" value="' + esc(a.handle) + '"' + (checked.has(a.handle) ? ' checked' : '') + ' onchange="onCheck()">'
         + '<div><span class="ak-title">' + esc(a.title) + '</span>' + badge
         + '<div class="ak-handle">' + esc(a.handle) + ' · ' + a.bilder + ' Bild(er)</div></div>';

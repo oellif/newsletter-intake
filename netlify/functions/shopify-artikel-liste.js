@@ -29,7 +29,7 @@ exports.handler = async (event) => {
     const domain = kundeRow[2];
     const token  = kundeRow[3];
 
-    const res  = await fetch(`https://${domain}/admin/api/2024-01/products.json?limit=250&fields=id,title,handle,status,images`, {
+    const res  = await fetch(`https://${domain}/admin/api/2024-01/products.json?limit=250&fields=id,title,handle,status,images,tags`, {
       headers: { 'X-Shopify-Access-Token': token },
     });
     const data = await res.json();
@@ -41,6 +41,7 @@ exports.handler = async (event) => {
       handle: p.handle,
       status: p.status,
       bilder: (p.images || []).length,
+      ist_master: String(p.tags || '').split(',').some(t => t.trim().toLowerCase() === 'master'),
     }));
 
     return { statusCode: 200, headers: h, body: JSON.stringify({ artikel, total: artikel.length }) };
