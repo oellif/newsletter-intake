@@ -203,7 +203,7 @@ exports.handler = async (event) => {
     const mfAssignments   = []; // { row: erste Zeile des Produkts, values: Map }
     for (const handle of handles) {
       const shopRes  = await fetch(
-        `https://${domain}/admin/api/2024-01/products.json?handle=${encodeURIComponent(handle)}&status=draft`,
+        `https://${domain}/admin/api/2024-01/products.json?handle=${encodeURIComponent(handle)}`,
         { headers: { 'X-Shopify-Access-Token': token } }
       );
       const shopData = await shopRes.json();

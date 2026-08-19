@@ -126,7 +126,7 @@ exports.handler = async (event) => {
 
     const dataRows = [];
     for (const handle of handles) {
-      const res  = await fetch(`https://${domain}/admin/api/2024-01/products.json?handle=${handle}&status=draft`, {
+      const res  = await fetch(`https://${domain}/admin/api/2024-01/products.json?handle=${handle}`, {
         headers: { 'X-Shopify-Access-Token': token }
       });
       const data = await res.json();

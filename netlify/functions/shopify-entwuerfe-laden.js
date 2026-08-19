@@ -24,7 +24,9 @@ exports.handler = async (event) => {
     if (!kundeRow) return { statusCode: 404, headers: h, body: JSON.stringify({ error: 'Kunde nicht gefunden' }) };
     const domain = kundeRow[2];
     const token  = kundeRow[3];
-    const res = await fetch(`https://${domain}/admin/api/2024-01/products.json?status=draft&limit=250&fields=id,title,handle`, {
+    // Masterartikel = Produkttyp "Master" (egal welcher Status) - nicht mehr
+    // an den Entwurfsstatus gebunden
+    const res = await fetch(`https://${domain}/admin/api/2024-01/products.json?product_type=Master&limit=250&fields=id,title,handle`, {
       headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
     });
     if (!res.ok) throw new Error(`Shopify ${res.status}: ${await res.text()}`);

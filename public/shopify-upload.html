@@ -183,9 +183,9 @@
 <div class="modal-bg hidden" id="addModal">
   <div class="modal">
     <h2>Masterartikel hinzufügen</h2>
-    <p>Alle Artikel im Entwurfsstatus des Shops.</p>
+    <p>Alle Artikel des Shops mit Produkttyp „Master" (unabhängig vom Status).</p>
     <select id="entwurfSelect" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Manrope',sans-serif;font-size:14px;outline:none;">
-      <option value="">– Entwurf auswählen –</option>
+      <option value="">– Masterartikel auswählen –</option>
     </select>
     <div id="addErr" class="err-msg hidden"></div>
     <div class="modal-btns">
@@ -865,10 +865,10 @@ function fillEntwurfDropdown(sel) {
   const vorhanden  = new Set(alleProdukte.map(a => a.handle));
   const verfuegbar = (entwuerfeCache || []).filter(p => !vorhanden.has(p.handle));
   if (!verfuegbar.length) {
-    sel.innerHTML = '<option value="">Alle Entwürfe sind bereits Masterartikel</option>';
+    sel.innerHTML = '<option value="">Alle „Master"-Artikel sind bereits hinzugefügt</option>';
     return;
   }
-  sel.innerHTML = '<option value="">– Entwurf auswählen –</option>';
+  sel.innerHTML = '<option value="">– Masterartikel auswählen –</option>';
   verfuegbar.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p.handle;
