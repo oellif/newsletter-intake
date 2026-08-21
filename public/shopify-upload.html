@@ -76,6 +76,10 @@
     <select id="shopSelect" onchange="onShopChange()">
       <option value="">– Shop wird geladen …</option>
     </select>
+    <label id="ssOption" class="hidden" style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;cursor:pointer;user-select:none;">
+      <input type="checkbox" id="ssCheck" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
+      <span>Kein scharfes ß verwenden <strong>(Schweiz)</strong> — alle Texte mit „ss" statt „ß"</span>
+    </label>
   </div>
 
   <!-- Schritt 2: Masterartikel -->
@@ -259,7 +263,9 @@ function onShopChange() {
     ['step2','step4','step45','stepOpt','step5'].forEach(hide);
     return;
   }
-  selectedKunde   = JSON.parse(opt.dataset.json);
+  selectedKunde  = JSON.parse(opt.dataset.json);
+  document.getElementById('ssCheck').checked = !!selectedKunde.kein_scharfes_s;
+  show('ssOption');
   selectedArtikel = [];
   entwuerfeCache  = null;
   entwuerfePromise = null;
@@ -738,7 +744,7 @@ async function doOptimieren() {
       const r = await fetch(API + 'masterartikel-optimieren', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kunden_id: selectedKunde.id, handle }),
+        body: JSON.stringify({ kunden_id: selectedKunde.id, handle, kein_scharfes_s: document.getElementById('ssCheck').checked }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Optimierung fehlgeschlagen');

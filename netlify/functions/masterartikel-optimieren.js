@@ -78,7 +78,9 @@ exports.handler = async (event) => {
   // Bestandstabelle explizit; ohne sheet_id gilt die Mastertabelle (Spalte G)
   // master_handle: Masterartikel als NORM-Vorlage (Bestandsoptimierung) -
   // Struktur, Tag-Schema und Metafeld-Set werden darauf normalisiert
-  const { kunden_id, handle, sheet_id, modus, master_handle } = body;
+  // kein_scharfes_s: Schweizer Rechtschreibung - ss statt scharfem s,
+  // doppelt abgesichert (KI-Anweisung + maschinelle Ersetzung unten)
+  const { kunden_id, handle, sheet_id, modus, master_handle, kein_scharfes_s } = body;
   if (!kunden_id || !handle) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'kunden_id und handle erforderlich' }) };
 
   try {
@@ -238,7 +240,7 @@ Vorhandene Metafeld-Spalten: ${JSON.stringify(metafeldSpalten)}
 ${images.length ? `\n=== BILDER (oben angehaengt, fuer die Alt-Text-Analyse) ===\n${bildBeschreibung.join('\n')}` : '\nKeine Bilder verfuegbar - KEINE alt_texte erzeugen, stattdessen in "offen" vermerken.'}
 
 === AUFGABE ===
-${vorlageText ? 'Normalisiere den Artikel ZUERST auf die NORM-VORLAGE (Struktur, Tag-Schema, Vendor/Typ, Metafeld-Set), dann optimiere die Inhalte. ' : ''}Optimiere alle Text- und SEO-Felder nach dem Regelwerk. Erfinde NIE Fakten.
+${vorlageText ? 'Normalisiere den Artikel ZUERST auf die NORM-VORLAGE (Struktur, Tag-Schema, Vendor/Typ, Metafeld-Set), dann optimiere die Inhalte. ' : ''}${kein_scharfes_s ? 'SCHWEIZER RECHTSCHREIBUNG: Das Zeichen "ß" darf in KEINEM Text vorkommen - schreibe stattdessen immer "ss" (z. B. "Grösse" statt "Größe", "geniessen" statt "genießen"). ' : ''}Optimiere alle Text- und SEO-Felder nach dem Regelwerk. Erfinde NIE Fakten.
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown-Zaeune, exakt in dieser Form:
 {
   "felder": { "<Spaltenname wie im Artikel>": "<neuer Wert>", ... },
@@ -257,13 +259,14 @@ Regeln fuer "alt_texte": nur wenn Bilder angehaengt sind; Position = die Image p
       return { statusCode: 502, headers: h, body: JSON.stringify({ error: 'Claude-Antwort war kein gueltiges JSON: ' + String(antwort).slice(0, 300) }) };
     }
 
-    // Server-seitige Absicherung: Whitelist + Handle-Schutz
+    // Server-seitige Absicherung: Whitelist + Handle-Schutz + ss-Garantie
+    const entschaerfen = (s) => kein_scharfes_s ? String(s).replace(/ß/g, 'ss') : String(s);
     const felder = {};
     for (const [k, v] of Object.entries(ergebnis.felder || {})) {
       if (!istErlaubtesFeld(k)) continue;
       if (k === 'URL handle' && handleGeschuetzt) continue;
       if (CI[k] === undefined) continue; // Spalte existiert nicht in dieser Tabelle
-      felder[k] = String(v);
+      felder[k] = entschaerfen(v);
     }
 
     // Vorher-Werte fuer die Vorher/Nachher-Ansicht
@@ -283,7 +286,7 @@ Regeln fuer "alt_texte": nur wenn Bilder angehaengt sind; Position = die Image p
         titel: get(mainRow, 'Title') || handle,
         felder,
         vorher,
-        alt_texte: (ergebnis.alt_texte || []).map(a => ({ position: parseInt(a.position) || 0, alt: String(a.alt || '') })),
+        alt_texte: (ergebnis.alt_texte || []).map(a => ({ position: parseInt(a.position) || 0, alt: entschaerfen(a.alt || '') })),
         alt_vorher,
         unsicher: ergebnis.unsicher || [],
         offen: ergebnis.offen || [],

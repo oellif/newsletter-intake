@@ -34,12 +34,25 @@ exports.handler = async (event) => {
       await sheetsAppendValues(tok, MH_SHEET_ID, [[kundenId, name, '', '', '', '', '', domain, '', '', heute]]);
     }
 
+    // Shop-Land aus Shopify lesen: Schweizer Shops bekommen automatisch
+    // "kein scharfes ss" (Spalte J) gesetzt - visuell sichtbar in den Tools
+    let keinScharfesS = 'FALSE';
+    try {
+      const shopRes  = await fetch(`https://${domain}/admin/api/2024-01/shop.json`, {
+        headers: { 'X-Shopify-Access-Token': access_token },
+      });
+      const shopData = await shopRes.json();
+      if (shopRes.ok && shopData.shop && shopData.shop.country_code === 'CH') keinScharfesS = 'TRUE';
+    } catch(e) {}
+
     // Shopify-Kunden Sheet
     const shopifyRows = await sheetsReadValues(tok, SHOPIFY_SHEET_ID, 'A2:G500');
     const shopifyExists = (shopifyRows || []).find(r => r[2] === domain);
     if (!shopifyExists) {
       const heute = new Date().toISOString().slice(0, 10);
-      await sheetsAppendValues(tok, SHOPIFY_SHEET_ID, [[kundenId, name, domain, access_token, masterartikel || '', claid_key || '', heute]]);
+      // Spalten: A id, B name, C domain, D token, E masterartikel, F claid,
+      // G mastertabelle (spaeter), H bildordner, I bestandstabelle, J kein_scharfes_s
+      await sheetsAppendValues(tok, SHOPIFY_SHEET_ID, [[kundenId, name, domain, access_token, masterartikel || '', claid_key || '', '', '', '', keinScharfesS]]);
     }
 
     return { statusCode: 200, headers: h, body: JSON.stringify({ success: true, kunden_id: kundenId }) };
