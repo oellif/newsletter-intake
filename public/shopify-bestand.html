@@ -318,7 +318,7 @@ function renderOptErgebnis(d) {
   }
 
   html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
-  html += '<tr style="text-align:left;color:#6B7280;"><th style="padding:4px;width:24px;"></th><th style="padding:4px;width:150px;">Feld</th><th style="padding:4px;">Vorher</th><th style="padding:4px;">Nachher (bearbeitbar)</th></tr>';
+  html += '<tr style="text-align:left;color:#6B7280;"><th style="padding:4px;width:24px;"></th><th style="padding:4px;width:130px;">Feld</th><th style="padding:4px;width:18%;">Vorher</th><th style="padding:4px;">Nachher (bearbeitbar)</th></tr>';
 
   felderKeys.forEach(k => {
     const unsicherGrund = unsicherByFeld[k];
@@ -327,8 +327,8 @@ function renderOptErgebnis(d) {
     html += '<tr style="border-top:1px solid var(--border);' + rowStyle + '" data-feld="' + esc(k) + '">'
       + '<td style="padding:6px 4px;vertical-align:top;"><input type="checkbox" checked data-opt-check style="accent-color:var(--green);"></td>'
       + '<td style="padding:6px 4px;vertical-align:top;font-weight:700;">' + feldLabel + '</td>'
-      + '<td style="padding:6px 4px;vertical-align:top;color:#6B7280;max-width:200px;overflow-wrap:anywhere;">' + esc((d.vorher && d.vorher[k]) || '—').slice(0, 400) + '</td>'
-      + '<td style="padding:6px 4px;vertical-align:top;"><textarea data-opt-wert rows="' + (String(d.felder[k]).length > 120 ? 5 : 2) + '" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:12px;font-family:inherit;">' + esc(d.felder[k]) + '</textarea></td></tr>';
+      + '<td style="padding:6px 4px;vertical-align:top;color:#6B7280;max-width:150px;overflow-wrap:anywhere;font-size:11px;">' + esc((d.vorher && d.vorher[k]) || '—').slice(0, 400) + '</td>'
+      + '<td style="padding:6px 4px;vertical-align:top;"><textarea data-opt-wert rows="' + (String(d.felder[k]).length > 120 ? 7 : 3) + '" style="width:100%;min-height:64px;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;font-family:inherit;line-height:1.5;">' + esc(d.felder[k]) + '</textarea></td></tr>';
   });
 
   (d.alt_texte || []).forEach(a => {
@@ -337,7 +337,7 @@ function renderOptErgebnis(d) {
       + '<td style="padding:6px 4px;vertical-align:top;"><input type="checkbox" checked data-opt-check style="accent-color:var(--green);"></td>'
       + '<td style="padding:6px 4px;vertical-align:top;font-weight:700;">Alt-Text Bild ' + a.position + '</td>'
       + '<td style="padding:6px 4px;vertical-align:top;color:#6B7280;">' + esc((vorher && vorher.alt) || '—') + '</td>'
-      + '<td style="padding:6px 4px;vertical-align:top;"><textarea data-opt-wert rows="2" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:12px;font-family:inherit;">' + esc(a.alt) + '</textarea></td></tr>';
+      + '<td style="padding:6px 4px;vertical-align:top;"><textarea data-opt-wert rows="3" style="width:100%;min-height:64px;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;font-family:inherit;line-height:1.5;">' + esc(a.alt) + '</textarea></td></tr>';
   });
 
   html += '</table>';
