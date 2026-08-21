@@ -251,7 +251,7 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown-Zaeune, exakt in d
 Regeln fuer "felder": nur Spaltennamen aus dem Artikel verwenden; nur Felder aufnehmen, die du wirklich verbesserst; gesperrte Felder (SKU, Preise, Bestaende, Status, Optionen ...) NIEMALS aufnehmen.${handleGeschuetzt ? ' "URL handle" NICHT aufnehmen (Handle ist geschuetzt).' : ''}
 Regeln fuer "alt_texte": nur wenn Bilder angehaengt sind; Position = die Image position des jeweiligen Produktbildes; Variantenbilder bekommen KEINEN Eintrag in alt_texte.`;
 
-    const antwort = await callClaudeVision(prompt, images, 16000);
+    const antwort = await callClaudeVision(prompt, images);
     let ergebnis;
     try {
       ergebnis = parseJsonFromModelText(antwort);

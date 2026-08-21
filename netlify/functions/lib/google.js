@@ -361,31 +361,40 @@ async function callClaudeVision(prompt, images, maxTokens) {
   }
   content.push({ type: 'text', text: prompt });
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-5',
-      // Grosszuegig: das Modell denkt intern nach (Extended Thinking) und
-      // verbraucht dabei Tokens aus demselben Budget wie die Antwort
-      max_tokens: maxTokens || 16000,
-      messages: [{ role: 'user', content }],
-    }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error('Anthropic-Fehler: ' + JSON.stringify(data));
+  // Das Modell denkt intern nach (Extended Thinking) und verbraucht dabei
+  // Tokens aus demselben Budget wie die Antwort. effort begrenzt den
+  // Denk-Aufwand; bei Budget-Ueberlauf ein zweiter Versuch mit mehr
+  // Tokens und noch knapperem Denken.
+  const versuche = [
+    { max_tokens: maxTokens || 24000, effort: 'medium' },
+    { max_tokens: 48000, effort: 'low' },
+  ];
+  let letzterFehler = '';
+  for (const v of versuche) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-5',
+        max_tokens: v.max_tokens,
+        output_config: { effort: v.effort },
+        messages: [{ role: 'user', content }],
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error('Anthropic-Fehler: ' + JSON.stringify(data));
+    }
+    const textBlock = (data.content || []).find(function (b) { return b.type === 'text'; });
+    if (textBlock && textBlock.text) return textBlock.text;
+    letzterFehler = 'Claude-Antwort ohne Textblock (stop_reason: ' + data.stop_reason
+      + ', bloecke: ' + (data.content || []).map(function (b) { return b.type; }).join(',') + ')';
   }
-  const textBlock = (data.content || []).find(function (b) { return b.type === 'text'; });
-  if (!textBlock || !textBlock.text) {
-    throw new Error('Claude-Antwort ohne Textblock (stop_reason: ' + data.stop_reason
-      + ', bloecke: ' + (data.content || []).map(function (b) { return b.type; }).join(',') + ')');
-  }
-  return textBlock.text;
+  throw new Error(letzterFehler + ' - auch im zweiten Versuch');
 }
 
 async function callClaude(prompt) {
