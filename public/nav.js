@@ -31,7 +31,7 @@
     { group: 'Shopify-Tool' },
     { label: 'Dashboard',                seite: 'shopify-dashboard.html', withKunde: false },
     { label: 'Produkt hochladen',        seite: 'shopify-upload.html',    withKunde: false },
-    { label: 'Bestandsartikel optimieren', seite: 'shopify-bestand.html',  withKunde: false },
+    { label: 'Artikeloptimierer', seite: 'shopify-bestand.html',  withKunde: false },
     { label: 'Produkte synchronisieren', seite: 'shopify-sync.html',      withKunde: false },
     { group: 'Verwaltung' },
     { label: 'Kundendatenbank',           seite: 'kunden-datenbank.html', withKunde: false },
@@ -237,6 +237,10 @@
         + '<div class="kios-tool-icon">🛍</div>'
         + '<div><div class="kios-tool-name">Shopify-Tool</div><div class="kios-tool-desc">Produkte · Upload · Sync</div></div>'
         + '</a>';
+      html += '<a class="kios-nav-tool-btn" href="#" id="kios-tool-artikeloptimierer">'
+        + '<div class="kios-tool-icon">✨</div>'
+        + '<div><div class="kios-tool-name">Artikeloptimierer</div><div class="kios-tool-desc">SEO · Texte · Alt-Texte</div></div>'
+        + '</a>';
       html += '<a class="kios-nav-tool-btn" href="#" id="kios-tool-formulare">'
         + '<div class="kios-tool-icon">📋</div>'
         + '<div><div class="kios-tool-name">ProjektHub</div><div class="kios-tool-desc">Entscheidungen · Infos · Kommentare</div></div>'
@@ -320,6 +324,10 @@
       });
       if (shBtn) shBtn.addEventListener('click', function (ev) {
         ev.preventDefault(); setModus('shopify'); window.location.href = '/shopify-dashboard.html';
+      });
+      var aoBtn = nav.querySelector('#kios-tool-artikeloptimierer');
+      if (aoBtn) aoBtn.addEventListener('click', function (ev) {
+        ev.preventDefault(); setModus('shopify'); window.location.href = '/shopify-bestand.html';
       });
       var foBtn = nav.querySelector('#kios-tool-formulare');
       if (foBtn) foBtn.addEventListener('click', function (ev) {
