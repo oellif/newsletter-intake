@@ -69,6 +69,10 @@
       <input type="checkbox" id="tagsCheck" checked style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
       <span><strong>Tags optimieren</strong> — abwählen, wenn die Tags der Artikel bereits passen</span>
     </label>
+    <label id="mfOption" class="hidden" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;cursor:pointer;user-select:none;">
+      <input type="checkbox" id="mfCheck" checked style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
+      <span><strong>Metafelder aus Tabelle</strong> — Anlass, Saison, Produkt streng aus der Metafeld-Datenbank befüllen</span>
+    </label>
   </div>
 
   <!-- Schritt 2: Master-Vorlage -->
@@ -119,6 +123,7 @@ let selectedKunde  = null;
 let alleArtikel    = [];
 let bestandSheetId = '';
 let masterHandle   = '';
+let gruppenMap     = {}; // handle → { name, abmessung }
 let optZaehler     = 0;
 
 async function init() {
@@ -147,6 +152,7 @@ async function onShopChange() {
   document.getElementById('ssCheck').checked = !!selectedKunde.kein_scharfes_s;
   show('ssOption');
   show('tagsOption');
+  show('mfOption');
   bestandSheetId = '';
   masterHandle   = '';
   document.getElementById('shopName').textContent = selectedKunde.name;
@@ -262,6 +268,33 @@ async function doEinlesen() {
       + `<a href="${esc(data.sheet_url)}" target="_blank" class="sheet-link">Bestandstabelle öffnen ↗</a>`;
     show('einlesenResult');
     show('step4');
+
+    // Gruppen aehnlicher Artikel erkennen (bestimmt die Hauptabmessung im Titel)
+    gruppenMap = {};
+    if (handles.length >= 2) {
+      result.innerHTML += '<div id="gruppenInfo" style="margin-top:8px;color:#6B7280;">Analysiere Artikelgruppen …</div>';
+      try {
+        const gr = await fetch(API + 'masterartikel-gruppen-analyse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kunden_id: selectedKunde.id, sheet_id: bestandSheetId, handles }),
+        });
+        const gd = await gr.json();
+        const gruppen = (gr.ok && gd.gruppen) ? gd.gruppen : [];
+        gruppen.forEach(g => g.handles.forEach(hd => { gruppenMap[hd] = { name: g.name, abmessung: g.abmessung }; }));
+        const info = document.getElementById('gruppenInfo');
+        if (gruppen.length) {
+          info.innerHTML = '<strong>Erkannte Artikelgruppen</strong> (bestimmen die Abmessung im Titel):<br>'
+            + gruppen.map(g => '· „' + esc(g.name) + '" — ' + g.handles.length + ' Artikel, Titel-Abmessung: <strong>' + esc(g.abmessung) + '</strong>').join('<br>')
+            + '<br>Alle übrigen Artikel: Standardregel (Durchmesser, sonst größte Abmessung).';
+        } else {
+          info.textContent = 'Keine Artikelgruppen erkannt — für alle gilt die Standardregel (Durchmesser, sonst größte Abmessung).';
+        }
+      } catch(e) {
+        const info = document.getElementById('gruppenInfo');
+        if (info) info.textContent = 'Gruppen-Analyse nicht möglich — Standardregel gilt für alle Artikel.';
+      }
+    }
   } catch(e) {
     result.className = 'result-box result-err';
     result.innerHTML = '✗ ' + esc(e.message);
@@ -293,7 +326,7 @@ async function doOptimieren() {
       const r = await fetch(API + 'masterartikel-optimieren', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kunden_id: selectedKunde.id, handle, sheet_id: bestandSheetId, modus: 'bestand', master_handle: masterHandle, kein_scharfes_s: document.getElementById('ssCheck').checked, tags_optimieren: document.getElementById('tagsCheck').checked }),
+        body: JSON.stringify({ kunden_id: selectedKunde.id, handle, sheet_id: bestandSheetId, modus: 'bestand', master_handle: masterHandle, kein_scharfes_s: document.getElementById('ssCheck').checked, tags_optimieren: document.getElementById('tagsCheck').checked, metafelder_aus_tabelle: document.getElementById('mfCheck').checked, gruppe: gruppenMap[handle] || null }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Optimierung fehlgeschlagen');
@@ -319,7 +352,8 @@ function renderOptErgebnis(d) {
 
   let html = '<div style="border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;" id="' + oid + '" data-handle="' + esc(d.handle) + '">';
   html += '<div style="font-size:14px;font-weight:700;margin-bottom:2px;">' + esc(d.titel) + badge + '</div>';
-  html += '<div style="font-size:11px;color:#6B7280;font-family:monospace;margin-bottom:10px;">' + esc(d.handle) + ' · ' + d.bilder_analysiert + ' Bild(er) analysiert</div>';
+  const gInfo = gruppenMap[d.handle] ? ' · Gruppe „' + esc(gruppenMap[d.handle].name) + '" → ' + esc(gruppenMap[d.handle].abmessung) : '';
+  html += '<div style="font-size:11px;color:#6B7280;font-family:monospace;margin-bottom:10px;">' + esc(d.handle) + ' · ' + d.bilder_analysiert + ' Bild(er) analysiert' + gInfo + '</div>';
 
   const felderKeys = Object.keys(d.felder || {});
   if (!felderKeys.length && !(d.alt_texte || []).length) {

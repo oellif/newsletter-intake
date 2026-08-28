@@ -68,6 +68,17 @@ exports.handler = async (event) => {
       istLive = !!(liveRes.ok && (liveData.products || []).some(p => p.status === 'active'));
     } catch(e) {}
 
+    // Neue Metafeld-Spalten (z. B. aus der Metafeld-Datenbank) duerfen der
+    // Tabelle hinzugefuegt werden - Kopfzeile wird dann mitgeschrieben
+    let headerErweitert = false;
+    for (const k of Object.keys(felder || {})) {
+      if (k.startsWith('Metafield: ') && CI[k] === undefined) {
+        headerRow.push(k);
+        CI[k] = headerRow.length - 1;
+        headerErweitert = true;
+      }
+    }
+
     const setCell = (rowIdx, col, val) => {
       const ci = CI[col];
       if (ci === undefined) return false;
@@ -109,6 +120,9 @@ exports.handler = async (event) => {
       feldCount++;
     }
 
+    if (headerErweitert) {
+      await sheetsWriteValues(tok, mastertabelleId, [headerRow], 'A1');
+    }
     await sheetsWriteValues(tok, mastertabelleId, updatedRows, 'A2');
 
     return {

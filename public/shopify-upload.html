@@ -84,6 +84,10 @@
       <input type="checkbox" id="tagsCheck" checked style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
       <span><strong>Tags optimieren</strong> — abwählen, wenn die Tags der Artikel bereits passen</span>
     </label>
+    <label id="mfOption" class="hidden" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;cursor:pointer;user-select:none;">
+      <input type="checkbox" id="mfCheck" checked style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
+      <span><strong>Metafelder aus Tabelle</strong> — Anlass, Saison, Produkt streng aus der Metafeld-Datenbank befüllen</span>
+    </label>
   </div>
 
   <!-- Schritt 2: Masterartikel -->
@@ -271,6 +275,7 @@ function onShopChange() {
   document.getElementById('ssCheck').checked = !!selectedKunde.kein_scharfes_s;
   show('ssOption');
   show('tagsOption');
+  show('mfOption');
   selectedArtikel = [];
   entwuerfeCache  = null;
   entwuerfePromise = null;
@@ -749,7 +754,7 @@ async function doOptimieren() {
       const r = await fetch(API + 'masterartikel-optimieren', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kunden_id: selectedKunde.id, handle, kein_scharfes_s: document.getElementById('ssCheck').checked, tags_optimieren: document.getElementById('tagsCheck').checked }),
+        body: JSON.stringify({ kunden_id: selectedKunde.id, handle, kein_scharfes_s: document.getElementById('ssCheck').checked, tags_optimieren: document.getElementById('tagsCheck').checked, metafelder_aus_tabelle: document.getElementById('mfCheck').checked }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Optimierung fehlgeschlagen');

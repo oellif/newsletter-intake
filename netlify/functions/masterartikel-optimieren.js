@@ -11,6 +11,9 @@ const SHOPIFY_KUNDEN_ID = '12ut5Em-7XlkAKjf-heUG6ugVdRDF1D_wK67v6dM17CE';
 // Fallback-Kundenprofil (eydl Wood Jewelry) - siehe Wissensbasis-Anleitung.
 // Entscheidung des Nutzers (Fall A): gilt auch fuer den Shop Marktplatz Helden.
 const KUNDENPROFIL_FALLBACK_ID = '1Go0XDuaR6FthGuaWDliMiMarzP4G1t4w';
+// Zentrale Metafeld-Datenbank: Blatt "Metafelder / Werte" (erlaubte Werte
+// je Metafeld) + Blatt "Regeln" (z. B. "max. 3", "Mind. 1")
+const METAFELD_DB_ID = '1x1wESyw389ijmrZUcBzETEkUxt5bMV3PPBv8sS6oeuA';
 const MAX_BILDER = 6;
 const MAX_BILD_BYTES = 4 * 1024 * 1024; // Anthropic-Limit ~5MB pro Bild, Puffer lassen
 
@@ -80,9 +83,12 @@ exports.handler = async (event) => {
   // Struktur, Tag-Schema und Metafeld-Set werden darauf normalisiert
   // kein_scharfes_s: Schweizer Rechtschreibung - ss statt scharfem s,
   // doppelt abgesichert (KI-Anweisung + maschinelle Ersetzung unten)
-  const { kunden_id, handle, sheet_id, modus, master_handle, kein_scharfes_s } = body;
+  const { kunden_id, handle, sheet_id, modus, master_handle, kein_scharfes_s, gruppe } = body;
   // tags_optimieren: abwaehlbar, weil manche Artikel schon optimierte Tags haben
   const tagsOptimieren = body.tags_optimieren !== false;
+  // metafelder_aus_tabelle: befuellt Anlass/Saison/Produkt (u. a.) streng aus
+  // der zentralen Metafeld-Datenbank (Google Sheet) nach deren Regeln
+  const metafelderAusTabelle = body.metafelder_aus_tabelle === true;
   if (!kunden_id || !handle) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'kunden_id und handle erforderlich' }) };
 
   try {
@@ -161,6 +167,64 @@ ${masterMfs.join('\n') || '(keine)'}\n`;
       } catch(e) {}
     }
 
+    // Metafeld-Datenbank laden (Werte + Regeln + Shopify-Definitionen)
+    let mfDb = null;
+    if (metafelderAusTabelle) {
+      try {
+        const werteRows = await sheetsReadValues(tok, METAFELD_DB_ID, "'Metafelder / Werte'!A1:Z80");
+        const regelRows = await sheetsReadValues(tok, METAFELD_DB_ID, "'Regeln'!A1:E30");
+
+        const kopfIdx = (werteRows || []).findIndex(r => String((r || [])[0] || '').trim() === 'Metafeld');
+        const kopf    = kopfIdx >= 0 ? werteRows[kopfIdx] : [];
+        const namen   = [];
+        for (let c = 1; c < kopf.length; c++) {
+          const n = String(kopf[c] || '').trim();
+          if (n) namen.push({ name: n, col: c });
+        }
+        const werte = {};
+        for (const { name, col } of namen) {
+          werte[name] = [];
+          for (let r = kopfIdx + 1; r < werteRows.length; r++) {
+            const v = String((werteRows[r] || [])[col] || '').trim();
+            if (v) werte[name].push(v);
+          }
+        }
+        const regeln = {};
+        for (const r of (regelRows || [])) {
+          const zeile = (r || []).map(x => String(x || '').trim()).filter(Boolean).join(' ');
+          const m = zeile.match(/^([A-Za-zÄÖÜäöü]+):\s*(.+)$/);
+          if (m && werte[m[1]]) regeln[m[1]] = m[2];
+        }
+
+        // Exakte namespace.key + Typ aus den vorhandenen Shop-Definitionen
+        const gqlRes  = await fetch(`https://${domain}/admin/api/2024-01/graphql.json`, {
+          method: 'POST',
+          headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: '{ metafieldDefinitions(first: 100, ownerType: PRODUCT) { edges { node { name namespace key type { name } } } } }' }),
+        });
+        const gqlData = await gqlRes.json();
+        const defs    = ((((gqlData || {}).data || {}).metafieldDefinitions || {}).edges || []).map(x => x.node);
+
+        const dbFelder = [];
+        for (const { name } of namen) {
+          const def = defs.find(d => d.name.toLowerCase() === name.toLowerCase() || d.key.toLowerCase() === name.toLowerCase());
+          if (!def || !werte[name].length) continue;
+          const regel  = regeln[name] || '';
+          const maxM   = regel.match(/max\.?\s*(\d+)/i);
+          dbFelder.push({
+            name,
+            allowed: werte[name],
+            max: maxM ? parseInt(maxM[1]) : 3,
+            minPflicht: /mind/i.test(regel),
+            colName: `Metafield: ${def.namespace}.${def.key} [${def.type.name}]`,
+            listTyp: def.type.name.startsWith('list.'),
+            regel: regel || 'max. 3',
+          });
+        }
+        if (dbFelder.length) mfDb = { felder: dbFelder };
+      } catch(e) {}
+    }
+
     // Kundenprofil (Pflicht-Input - ohne Profil keine Textgenerierung)
     const kundenprofil = await ladeKundenprofil(tok, kundenName);
     if (!kundenprofil) {
@@ -231,6 +295,11 @@ ${REGELWERK}
 === KUNDENPROFIL (Brand Voice, Tags, Metafelder - fliesst in JEDEN Text ein) ===
 ${kundenprofil}
 ${vorlageText}
+${mfDb ? `=== METAFELD-DATENBANK (strikte Vorgabe) ===
+Befuelle zusaetzlich diese Metafelder AUSSCHLIESSLICH mit Werten aus den erlaubten Listen (exakte Schreibweise uebernehmen, nichts Eigenes erfinden):
+${mfDb.felder.map(f => `- ${f.name} (Regel: ${f.regel}): ${f.allowed.join(', ')}`).join('\n')}
+Gib die Auswahl im Antwort-JSON als eigenen Schluessel "metafelder_tabelle" zurueck, z. B. { ${mfDb.felder.map(f => `"${f.name}": ["..."]`).join(', ')} }. Nur wirklich passende Werte waehlen; leeres Array, wenn nichts passt (ausser die Regel verlangt mindestens einen Wert).
+` : ''}
 
 === ARTIKEL (aktueller Stand aus der Mastertabelle) ===
 URL handle: ${handle}
@@ -242,7 +311,7 @@ Vorhandene Metafeld-Spalten: ${JSON.stringify(metafeldSpalten)}
 ${images.length ? `\n=== BILDER (oben angehaengt, fuer die Alt-Text-Analyse) ===\n${bildBeschreibung.join('\n')}` : '\nKeine Bilder verfuegbar - KEINE alt_texte erzeugen, stattdessen in "offen" vermerken.'}
 
 === AUFGABE ===
-${vorlageText ? 'Normalisiere den Artikel ZUERST auf die NORM-VORLAGE (Struktur, Tag-Schema, Vendor/Typ, Metafeld-Set), dann optimiere die Inhalte. ' : ''}${modus === 'bestand' ? 'TITEL-REGEL (ueberschreibt die Titel-Zeile des Regelwerks): Der Titel wird IMMER neu aufgebaut nach dem Schema "Produktart | Material | Farbe | Besonderheit/Groesse" - die Teile werden mit " | " getrennt, NICHT mit Komma oder Bindestrich (nur belegte Fakten aus dem Artikel, max. 70 Zeichen; Farbe nur aufnehmen, wenn sie im Artikel belegt ist - nicht zwingend). Interne Codes und Kuerzel (z.B. "IB", Artikelnummern) werden entfernt; der bestehende Titel liefert nur Stichworte. Fehlt Material oder Groesse im Artikel, weglassen und in "offen" vermerken. ' : ''}${kein_scharfes_s ? 'SCHWEIZER SCHREIBWEISE: (1) Das Zeichen "ß" darf in KEINEM Text vorkommen - schreibe stattdessen immer "ss" (z. B. "Grösse" statt "Größe"). (2) Dezimalzahlen mit Punkt statt Komma (z. B. "10.5 cm" statt "10,5 cm"). ' : ''}Optimiere alle Text- und SEO-Felder nach dem Regelwerk. Erfinde NIE Fakten.
+${vorlageText ? 'Normalisiere den Artikel ZUERST auf die NORM-VORLAGE (Struktur, Tag-Schema, Vendor/Typ, Metafeld-Set), dann optimiere die Inhalte. ' : ''}${modus === 'bestand' ? `TITEL-REGEL (ueberschreibt die Titel-Zeile des Regelwerks): Der Titel wird IMMER neu aufgebaut nach dem Schema "Produktart | Material | Farbe | Hauptabmessung" - die Teile werden mit " | " getrennt, NICHT mit Komma oder Bindestrich (nur belegte Fakten aus dem Artikel, max. 70 Zeichen; Farbe nur aufnehmen, wenn sie im Artikel belegt ist - nicht zwingend). HAUPTABMESSUNG: Es kommt NUR EINE Abmessung in den Titel${gruppe && gruppe.abmessung ? ` - fuer diesen Artikel ZWINGEND die ${gruppe.abmessung} (er gehoert zur Artikelgruppe "${gruppe.name}", deren Mitglieder sich in dieser Dimension unterscheiden)` : ' - Standardregel: der Durchmesser falls vorhanden, sonst die groesste Abmessung; bei erkennbar stehenden Produkten (Vase, Kerze, Figur) die Hoehe'}. Format kurz: "Ø 30 cm" / "H 15 cm" / "L 49 cm" / "B 39 cm". Alle uebrigen Abmessungen gehoeren NICHT in den Titel, sondern vollstaendig in die Beschreibung. Interne Codes und Kuerzel (z.B. "IB", Artikelnummern) werden entfernt; der bestehende Titel liefert nur Stichworte. Fehlt Material oder jede Abmessung im Artikel, weglassen und in "offen" vermerken. ` : ''}${kein_scharfes_s ? 'SCHWEIZER SCHREIBWEISE: (1) Das Zeichen "ß" darf in KEINEM Text vorkommen - schreibe stattdessen immer "ss" (z. B. "Grösse" statt "Größe"). (2) Dezimalzahlen mit Punkt statt Komma (z. B. "10.5 cm" statt "10,5 cm"). ' : ''}Optimiere alle Text- und SEO-Felder nach dem Regelwerk. Erfinde NIE Fakten.
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown-Zaeune, exakt in dieser Form:
 {
   "felder": { "<Spaltenname wie im Artikel>": "<neuer Wert>", ... },
@@ -273,6 +342,25 @@ Regeln fuer "alt_texte": nur wenn Bilder angehaengt sind; Position = die Image p
       if (k === 'Tags' && !tagsOptimieren) continue; // Tags bewusst unangetastet
       if (CI[k] === undefined) continue; // Spalte existiert nicht in dieser Tabelle
       felder[k] = entschaerfen(v);
+    }
+
+    // Metafeld-Datenbank: KI-Auswahl maschinell gegen die erlaubten Werte
+    // und Regeln pruefen (nur Listenwerte, Obergrenze kappen, Mindestregel)
+    if (mfDb) {
+      const auswahl = ergebnis.metafelder_tabelle || {};
+      for (const f of mfDb.felder) {
+        const roh = Array.isArray(auswahl[f.name]) ? auswahl[f.name] : [];
+        const gueltig = roh
+          .map(v => f.allowed.find(a => a.toLowerCase() === String(v).trim().toLowerCase()))
+          .filter(Boolean)
+          .filter((v, i, arr) => arr.indexOf(v) === i)
+          .slice(0, f.max);
+        if (gueltig.length) {
+          felder[f.colName] = entschaerfen(f.listTyp ? JSON.stringify(gueltig) : gueltig.join(', '));
+        } else if (f.minPflicht) {
+          (ergebnis.offen = ergebnis.offen || []).push(`Metafeld "${f.name}": kein passender Wert aus der Datenbank gefunden (Regel: ${f.regel})`);
+        }
+      }
     }
 
     // Vorher-Werte fuer die Vorher/Nachher-Ansicht
