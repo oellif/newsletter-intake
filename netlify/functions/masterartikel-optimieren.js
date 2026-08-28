@@ -81,6 +81,8 @@ exports.handler = async (event) => {
   // kein_scharfes_s: Schweizer Rechtschreibung - ss statt scharfem s,
   // doppelt abgesichert (KI-Anweisung + maschinelle Ersetzung unten)
   const { kunden_id, handle, sheet_id, modus, master_handle, kein_scharfes_s } = body;
+  // tags_optimieren: abwaehlbar, weil manche Artikel schon optimierte Tags haben
+  const tagsOptimieren = body.tags_optimieren !== false;
   if (!kunden_id || !handle) return { statusCode: 400, headers: h, body: JSON.stringify({ error: 'kunden_id und handle erforderlich' }) };
 
   try {
@@ -240,7 +242,7 @@ Vorhandene Metafeld-Spalten: ${JSON.stringify(metafeldSpalten)}
 ${images.length ? `\n=== BILDER (oben angehaengt, fuer die Alt-Text-Analyse) ===\n${bildBeschreibung.join('\n')}` : '\nKeine Bilder verfuegbar - KEINE alt_texte erzeugen, stattdessen in "offen" vermerken.'}
 
 === AUFGABE ===
-${vorlageText ? 'Normalisiere den Artikel ZUERST auf die NORM-VORLAGE (Struktur, Tag-Schema, Vendor/Typ, Metafeld-Set), dann optimiere die Inhalte. ' : ''}${modus === 'bestand' ? 'TITEL-REGEL (ueberschreibt die Titel-Zeile des Regelwerks): Der Titel wird IMMER neu aufgebaut nach dem Schema Produktart + Material + Farbe + Besonderheit/Groesse (nur belegte Fakten aus dem Artikel, max. 70 Zeichen; Farbe nur aufnehmen, wenn sie im Artikel belegt ist - nicht zwingend). Interne Codes und Kuerzel (z.B. "IB", Artikelnummern) werden entfernt; der bestehende Titel liefert nur Stichworte. Fehlt Material oder Groesse im Artikel, weglassen und in "offen" vermerken. ' : ''}${kein_scharfes_s ? 'SCHWEIZER RECHTSCHREIBUNG: Das Zeichen "ß" darf in KEINEM Text vorkommen - schreibe stattdessen immer "ss" (z. B. "Grösse" statt "Größe", "geniessen" statt "genießen"). ' : ''}Optimiere alle Text- und SEO-Felder nach dem Regelwerk. Erfinde NIE Fakten.
+${vorlageText ? 'Normalisiere den Artikel ZUERST auf die NORM-VORLAGE (Struktur, Tag-Schema, Vendor/Typ, Metafeld-Set), dann optimiere die Inhalte. ' : ''}${modus === 'bestand' ? 'TITEL-REGEL (ueberschreibt die Titel-Zeile des Regelwerks): Der Titel wird IMMER neu aufgebaut nach dem Schema "Produktart | Material | Farbe | Besonderheit/Groesse" - die Teile werden mit " | " getrennt, NICHT mit Komma oder Bindestrich (nur belegte Fakten aus dem Artikel, max. 70 Zeichen; Farbe nur aufnehmen, wenn sie im Artikel belegt ist - nicht zwingend). Interne Codes und Kuerzel (z.B. "IB", Artikelnummern) werden entfernt; der bestehende Titel liefert nur Stichworte. Fehlt Material oder Groesse im Artikel, weglassen und in "offen" vermerken. ' : ''}${kein_scharfes_s ? 'SCHWEIZER SCHREIBWEISE: (1) Das Zeichen "ß" darf in KEINEM Text vorkommen - schreibe stattdessen immer "ss" (z. B. "Grösse" statt "Größe"). (2) Dezimalzahlen mit Punkt statt Komma (z. B. "10.5 cm" statt "10,5 cm"). ' : ''}Optimiere alle Text- und SEO-Felder nach dem Regelwerk. Erfinde NIE Fakten.
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown-Zaeune, exakt in dieser Form:
 {
   "felder": { "<Spaltenname wie im Artikel>": "<neuer Wert>", ... },
@@ -248,7 +250,7 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown-Zaeune, exakt in d
   "unsicher": [ { "feld": "<Spaltenname>", "grund": "<warum unsicher>" } ],
   "offen": [ "<fehlende Info, die ein Mensch nachtragen muss>" ]
 }
-Regeln fuer "felder": nur Spaltennamen aus dem Artikel verwenden; nur Felder aufnehmen, die du wirklich verbesserst; gesperrte Felder (SKU, Preise, Bestaende, Status, Optionen ...) NIEMALS aufnehmen.${handleGeschuetzt ? ' "URL handle" NICHT aufnehmen (Handle ist geschuetzt).' : ''}
+Regeln fuer "felder": nur Spaltennamen aus dem Artikel verwenden; nur Felder aufnehmen, die du wirklich verbesserst; gesperrte Felder (SKU, Preise, Bestaende, Status, Optionen ...) NIEMALS aufnehmen.${tagsOptimieren ? '' : ' Das Feld "Tags" NICHT veraendern und NICHT in "felder" aufnehmen (Tags sind bereits optimiert).'}${handleGeschuetzt ? ' "URL handle" NICHT aufnehmen (Handle ist geschuetzt).' : ''}
 Regeln fuer "alt_texte": nur wenn Bilder angehaengt sind; Position = die Image position des jeweiligen Produktbildes; Variantenbilder bekommen KEINEN Eintrag in alt_texte.`;
 
     const antwort = await callClaudeVision(prompt, images);
@@ -259,12 +261,16 @@ Regeln fuer "alt_texte": nur wenn Bilder angehaengt sind; Position = die Image p
       return { statusCode: 502, headers: h, body: JSON.stringify({ error: 'Claude-Antwort war kein gueltiges JSON: ' + String(antwort).slice(0, 300) }) };
     }
 
-    // Server-seitige Absicherung: Whitelist + Handle-Schutz + ss-Garantie
-    const entschaerfen = (s) => kein_scharfes_s ? String(s).replace(/ß/g, 'ss') : String(s);
+    // Server-seitige Absicherung: Whitelist + Handle-Schutz + Schweiz-Garantie
+    // (ss statt scharfem s; Dezimalkomma zwischen Ziffern wird zum Punkt)
+    const entschaerfen = (s) => kein_scharfes_s
+      ? String(s).replace(/ß/g, 'ss').replace(/(\d),(\d)/g, '$1.$2')
+      : String(s);
     const felder = {};
     for (const [k, v] of Object.entries(ergebnis.felder || {})) {
       if (!istErlaubtesFeld(k)) continue;
       if (k === 'URL handle' && handleGeschuetzt) continue;
+      if (k === 'Tags' && !tagsOptimieren) continue; // Tags bewusst unangetastet
       if (CI[k] === undefined) continue; // Spalte existiert nicht in dieser Tabelle
       felder[k] = entschaerfen(v);
     }

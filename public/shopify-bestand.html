@@ -63,7 +63,11 @@
     </select>
     <label id="ssOption" class="hidden" style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;cursor:pointer;user-select:none;">
       <input type="checkbox" id="ssCheck" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
-      <span>Kein scharfes ß verwenden <strong>(Schweiz)</strong> — alle Texte mit „ss" statt „ß"</span>
+      <span>Kein scharfes ß verwenden <strong>(Schweiz)</strong> — „ss" statt „ß", Dezimalpunkt statt Komma (10.5 statt 10,5)</span>
+    </label>
+    <label id="tagsOption" class="hidden" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;cursor:pointer;user-select:none;">
+      <input type="checkbox" id="tagsCheck" checked style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
+      <span><strong>Tags optimieren</strong> — abwählen, wenn die Tags der Artikel bereits passen</span>
     </label>
   </div>
 
@@ -142,6 +146,7 @@ async function onShopChange() {
   selectedKunde  = JSON.parse(opt.dataset.json);
   document.getElementById('ssCheck').checked = !!selectedKunde.kein_scharfes_s;
   show('ssOption');
+  show('tagsOption');
   bestandSheetId = '';
   masterHandle   = '';
   document.getElementById('shopName').textContent = selectedKunde.name;
@@ -288,7 +293,7 @@ async function doOptimieren() {
       const r = await fetch(API + 'masterartikel-optimieren', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kunden_id: selectedKunde.id, handle, sheet_id: bestandSheetId, modus: 'bestand', master_handle: masterHandle, kein_scharfes_s: document.getElementById('ssCheck').checked }),
+        body: JSON.stringify({ kunden_id: selectedKunde.id, handle, sheet_id: bestandSheetId, modus: 'bestand', master_handle: masterHandle, kein_scharfes_s: document.getElementById('ssCheck').checked, tags_optimieren: document.getElementById('tagsCheck').checked }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Optimierung fehlgeschlagen');
