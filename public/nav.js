@@ -37,6 +37,11 @@
     { label: 'Kundendatenbank',           seite: 'kunden-datenbank.html', withKunde: false },
   ];
 
+  var KUNDEN_NAV_ITEMS = [
+    { group: 'Odoo Kunden' },
+    { label: 'Kundenliste', seite: 'kunden.html', withKunde: false },
+  ];
+
   var SHOPIFY_PAGES = {
     'shopify-dashboard.html': true,
     'shopify-upload.html':    true,
@@ -44,6 +49,10 @@
     'shopify-sync.html':      true,
     'kunden-datenbank.html':  true,
     'kunden-bearbeiten.html': true,
+  };
+
+  var KUNDEN_PAGES = {
+    'kunden.html': true,
   };
 
   function getCurrentPage() {
@@ -217,8 +226,9 @@
     var modus = getModus();
     var kunde = getLoggedInKunde();
 
-    // Shopify-Seiten erzwingen Shopify-Modus
+    // Kunden/Shopify-Seiten erzwingen Modus
     if (SHOPIFY_PAGES[currentPage]) { modus = 'shopify'; setModus('shopify'); }
+    if (KUNDEN_PAGES[currentPage])  { modus = 'kunden';  setModus('kunden');  }
 
     // Logo → immer home.html
     var html = '<a class="kios-nav-home" href="/home.html">'
@@ -245,6 +255,25 @@
         + '<div class="kios-tool-icon">📋</div>'
         + '<div><div class="kios-tool-name">ProjektHub</div><div class="kios-tool-desc">Entscheidungen · Infos · Kommentare</div></div>'
         + '</a>';
+      html += '<a class="kios-nav-tool-btn" href="#" id="kios-tool-kunden">'
+        + '<div class="kios-tool-icon">👥</div>'
+        + '<div><div class="kios-tool-name">Odoo Kunden</div><div class="kios-tool-desc">Kundenliste · Firmen · Kontakte</div></div>'
+        + '</a>';
+
+    } else if (modus === 'kunden') {
+      // ── KUNDEN MODE ─────────────────────────────────
+      html += '<div class="kios-modus-bar">'
+        + '<span class="kios-modus-badge" style="color:#6366F1">👥 Kunden</span>'
+        + '<a class="kios-modus-switch" href="/home.html">wechseln</a>'
+        + '</div>';
+      KUNDEN_NAV_ITEMS.forEach(function (item) {
+        if (item.group) {
+          html += '<div class="kios-nav-group">' + item.group + '</div>';
+        } else {
+          var isActive = item.seite === currentPage;
+          html += '<a class="kios-nav-item' + (isActive ? ' active' : '') + '" href="/' + item.seite + '">' + item.label + '</a>';
+        }
+      });
 
     } else if (modus === 'shopify') {
       // ── SHOPIFY MODE ────────────────────────────────
@@ -296,7 +325,7 @@
         + '</div>';
     }
 
-    if (currentPage === 'home.html' || modus === 'shopify') {
+    if (currentPage === 'home.html' || modus === 'shopify' || modus === 'kunden') {
       html += '<div class="kios-nav-footer">'
         + '<button type="button" id="kios-logout-btn" class="kios-nav-logout">🔒 Ausloggen</button>'
         + '</div>';
@@ -332,6 +361,10 @@
       var foBtn = nav.querySelector('#kios-tool-formulare');
       if (foBtn) foBtn.addEventListener('click', function (ev) {
         ev.preventDefault(); window.location.href = '/formulare.html';
+      });
+      var kuBtn = nav.querySelector('#kios-tool-kunden');
+      if (kuBtn) kuBtn.addEventListener('click', function (ev) {
+        ev.preventDefault(); setModus('kunden'); window.location.href = '/kunden.html';
       });
       return;
     }
@@ -403,6 +436,7 @@
     'formular-masterartikel-optimierer.html': true,
     'kunden-datenbank.html':                  true,
     'kunden-bearbeiten.html':                 true,
+    'kunden.html':                            true,
   };
 
   function autoPromptIfNeeded() {

@@ -240,7 +240,7 @@ Vorhandene Metafeld-Spalten: ${JSON.stringify(metafeldSpalten)}
 ${images.length ? `\n=== BILDER (oben angehaengt, fuer die Alt-Text-Analyse) ===\n${bildBeschreibung.join('\n')}` : '\nKeine Bilder verfuegbar - KEINE alt_texte erzeugen, stattdessen in "offen" vermerken.'}
 
 === AUFGABE ===
-${vorlageText ? 'Normalisiere den Artikel ZUERST auf die NORM-VORLAGE (Struktur, Tag-Schema, Vendor/Typ, Metafeld-Set), dann optimiere die Inhalte. ' : ''}${kein_scharfes_s ? 'SCHWEIZER RECHTSCHREIBUNG: Das Zeichen "ß" darf in KEINEM Text vorkommen - schreibe stattdessen immer "ss" (z. B. "Grösse" statt "Größe", "geniessen" statt "genießen"). ' : ''}Optimiere alle Text- und SEO-Felder nach dem Regelwerk. Erfinde NIE Fakten.
+${vorlageText ? 'Normalisiere den Artikel ZUERST auf die NORM-VORLAGE (Struktur, Tag-Schema, Vendor/Typ, Metafeld-Set), dann optimiere die Inhalte. ' : ''}${modus === 'bestand' ? 'TITEL-REGEL (ueberschreibt die Titel-Zeile des Regelwerks): Der Titel wird IMMER neu aufgebaut nach dem Schema Produktart + Material + Besonderheit/Groesse (nur belegte Fakten aus dem Artikel, max. 70 Zeichen). Interne Codes und Kuerzel (z.B. "IB", Artikelnummern) werden entfernt; der bestehende Titel liefert nur Stichworte. Fehlt Material oder Groesse im Artikel, weglassen und in "offen" vermerken. ' : ''}${kein_scharfes_s ? 'SCHWEIZER RECHTSCHREIBUNG: Das Zeichen "ß" darf in KEINEM Text vorkommen - schreibe stattdessen immer "ss" (z. B. "Grösse" statt "Größe", "geniessen" statt "genießen"). ' : ''}Optimiere alle Text- und SEO-Felder nach dem Regelwerk. Erfinde NIE Fakten.
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown-Zaeune, exakt in dieser Form:
 {
   "felder": { "<Spaltenname wie im Artikel>": "<neuer Wert>", ... },

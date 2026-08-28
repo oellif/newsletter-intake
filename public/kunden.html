@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<script src="/pw-gate.js"></script>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MH Cockpit – Odoo Kunden</title>
+<link rel="stylesheet" href="/mh-ci.css">
+<style>
+  :root { --dark:#202228; --accent:#6366F1; --bg:#F7F6F3; --border:#E5E7EB; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Manrope', Arial, sans-serif; background: var(--bg); color: #191919; margin: 0; padding: 0 0 80px; }
+  .container { max-width: 860px; margin: 0 auto; padding: 36px 28px; }
+  .page-header h1 { font-family: 'Varela Round','Manrope',sans-serif; font-size: 28px; font-weight: 400; letter-spacing: -0.5px; margin: 0 0 6px; }
+  .page-header p { font-size: 14px; color: #6B7280; margin: 0 0 24px; line-height: 1.55; }
+
+  /* Stats */
+  .stats-row { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat-box { background: #fff; border-radius: 12px; padding: 14px 20px; box-shadow: 0 1px 4px rgba(25,25,25,0.06); flex: 1; min-width: 100px; }
+  .stat-val { font-size: 26px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .stat-lbl { font-size: 11px; color: #6B7280; margin-top: 3px; text-transform: uppercase; letter-spacing: .06em; }
+
+  /* Search */
+  .search-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .search-input { flex: 1; min-width: 220px; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 40px; font: inherit; font-size: 14px; background: #fff; outline: none; }
+  .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+  .filter-btn { padding: 10px 16px; border-radius: 40px; border: 1.5px solid var(--border); background: #fff; font: inherit; font-size: 13px; cursor: pointer; color: #6B7280; transition: all .12s; }
+  .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 12px rgba(99,102,241,0.25); }
+
+  /* List */
+  .kunden-list { display: flex; flex-direction: column; gap: 8px; }
+  .kunde-card { background: #fff; border-radius: 12px; padding: 14px 18px; box-shadow: 0 1px 4px rgba(25,25,25,0.05); display: flex; align-items: center; gap: 14px; border: 1.5px solid transparent; transition: border-color .12s; cursor: default; }
+  .kunde-card:hover { border-color: var(--accent); }
+  .kunde-avatar { width: 40px; height: 40px; border-radius: 10px; background: rgba(99,102,241,0.1); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .kunde-avatar.person { background: rgba(16,185,129,0.10); }
+  .kunde-info { flex: 1; min-width: 0; }
+  .kunde-name { font-size: 14px; font-weight: 700; color: #191919; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kunde-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 3px; }
+  .kunde-meta-item { font-size: 12px; color: #6B7280; display: flex; align-items: center; gap: 3px; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .badge.firma { background: rgba(99,102,241,0.1); color: #4338CA; }
+  .badge.person { background: rgba(16,185,129,0.1); color: #065F46; }
+
+  .empty { text-align: center; padding: 60px 20px; color: #9CA3AF; font-size: 15px; }
+  .loading { text-align: center; padding: 60px 20px; color: #9CA3AF; }
+  .error-box { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; padding: 16px 18px; color: #991B1B; font-size: 14px; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="page-header">
+    <h1>Odoo Kunden</h1>
+    <p id="page-sub">Lädt Kundenliste aus Odoo wmfe…</p>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val" id="stat-total">—</div><div class="stat-lbl">Kunden gesamt</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-firmen">—</div><div class="stat-lbl">Firmen</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-personen">—</div><div class="stat-lbl">Personen</div></div>
+  </div>
+
+  <div class="search-row">
+    <input class="search-input" id="search" type="text" placeholder="Name, E-Mail oder Stadt suchen…" />
+    <button class="filter-btn active" data-filter="alle" id="btn-alle">Alle</button>
+    <button class="filter-btn" data-filter="firma" id="btn-firma">Firmen</button>
+    <button class="filter-btn" data-filter="person" id="btn-person">Personen</button>
+  </div>
+
+  <div id="error-area"></div>
+  <div id="list-area"><div class="loading">⏳ Kunden werden geladen…</div></div>
+</div>
+
+<script>
+var allKunden = [];
+var activeFilter = 'alle';
+
+function fmt(v) { return (v && v !== false) ? v : ''; }
+
+function renderList() {
+  var q = document.getElementById('search').value.toLowerCase().trim();
+  var filtered = allKunden.filter(function(k) {
+    if (activeFilter === 'firma' && !k.is_company) return false;
+    if (activeFilter === 'person' && k.is_company) return false;
+    if (!q) return true;
+    return (k.name||'').toLowerCase().includes(q)
+      || (k.email||'').toLowerCase().includes(q)
+      || (k.city||'').toLowerCase().includes(q);
+  });
+
+  var area = document.getElementById('list-area');
+  if (!filtered.length) {
+    area.innerHTML = '<div class="empty">Keine Kunden gefunden.</div>';
+    return;
+  }
+  area.innerHTML = '<div class="kunden-list">' + filtered.map(function(k) {
+    var meta = [];
+    if (fmt(k.email)) meta.push('<span class="kunde-meta-item">✉ ' + esc(k.email) + '</span>');
+    if (fmt(k.phone)) meta.push('<span class="kunde-meta-item">📞 ' + esc(k.phone) + '</span>');
+    if (fmt(k.city))  meta.push('<span class="kunde-meta-item">📍 ' + esc(k.city) + '</span>');
+    var badge = k.is_company
+      ? '<span class="badge firma">Firma</span>'
+      : '<span class="badge person">Person</span>';
+    return '<div class="kunde-card">'
+      + '<div class="kunde-avatar' + (k.is_company ? '' : ' person') + '">' + (k.is_company ? '🏢' : '👤') + '</div>'
+      + '<div class="kunde-info">'
+      + '<div class="kunde-name">' + esc(k.name) + ' ' + badge + '</div>'
+      + '<div class="kunde-meta">' + meta.join('') + '</div>'
+      + '</div></div>';
+  }).join('') + '</div>';
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateStats() {
+  var firmen = allKunden.filter(function(k){ return k.is_company; }).length;
+  document.getElementById('stat-total').textContent   = allKunden.length;
+  document.getElementById('stat-firmen').textContent  = firmen;
+  document.getElementById('stat-personen').textContent= allKunden.length - firmen;
+}
+
+async function load() {
+  try {
+    var res = await fetch('/.netlify/functions/odoo-kunden');
+    var data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'HTTP ' + res.status);
+    allKunden = data.kunden || [];
+    document.getElementById('page-sub').textContent = allKunden.length + ' Kunden aus Odoo wmfe geladen.';
+    updateStats();
+    renderList();
+  } catch(err) {
+    document.getElementById('error-area').innerHTML =
+      '<div class="error-box">⚠ Fehler beim Laden: ' + esc(err.message) + '</div>';
+    document.getElementById('list-area').innerHTML = '';
+    document.getElementById('page-sub').textContent = 'Verbindung zu Odoo fehlgeschlagen.';
+  }
+}
+
+document.getElementById('search').addEventListener('input', renderList);
+
+document.querySelectorAll('.filter-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    renderList();
+  });
+});
+
+load();
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

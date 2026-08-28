@@ -18,6 +18,7 @@
   .tool-card.newsletter:hover { border-color: #FA8700; }
   .tool-card.shopify:hover { border-color: #96BF48; }
   .tool-card.formulare:hover { border-color: #3B82F6; }
+  .tool-card.kunden:hover { border-color: #6366F1; }
   .tool-icon { font-size: 32px; }
   .tool-name { font-size: 18px; font-weight: 800; color: #191919; }
   .tool-desc { font-size: 13px; color: #6B7280; line-height: 1.5; }
@@ -30,6 +31,8 @@
   .tool-card.newsletter:hover .tool-arrow { color: #FA8700; }
   .tool-card.shopify:hover .tool-arrow { color: #96BF48; }
   .tool-card.formulare:hover .tool-arrow { color: #3B82F6; }
+  .tool-card.kunden:hover .tool-arrow { color: #6366F1; }
+  .pill-ku { background: rgba(99,102,241,0.1); color: #4338CA; }
   @media (max-width: 500px) { .tool-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -87,6 +90,18 @@
       </div>
       <div class="tool-arrow">→</div>
     </a>
+
+    <a class="tool-card kunden" href="/kunden.html" id="btn-kunden">
+      <div class="tool-icon">👥</div>
+      <div class="tool-name">Odoo Kunden</div>
+      <div class="tool-desc">Kundenliste live aus Odoo wmfe — Firmen, Personen, Kontaktdaten.</div>
+      <div class="tool-pills">
+        <span class="tool-pill pill-ku">Firmen</span>
+        <span class="tool-pill pill-ku">Kontakte</span>
+        <span class="tool-pill pill-ku">Odoo</span>
+      </div>
+      <div class="tool-arrow">→</div>
+    </a>
   </div>
 </div>
 
@@ -99,6 +114,9 @@ document.getElementById('btn-shopify').addEventListener('click', function () {
 });
 document.getElementById('btn-shopify-bestand').addEventListener('click', function () {
   localStorage.setItem('kios_modus', 'shopify');
+});
+document.getElementById('btn-kunden').addEventListener('click', function () {
+  localStorage.setItem('kios_modus', 'kunden');
 });
 </script>
 <script src="nav.js"></script>
